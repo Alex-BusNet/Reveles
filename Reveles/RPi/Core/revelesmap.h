@@ -1,7 +1,7 @@
 #ifndef REVELESMAP_H
 #define REVELESMAP_H
 
-#include "datatypes.h"
+#include "../Common/datatypes.h"
 #include <vector>
 #include <List>
 #include <string>
@@ -16,8 +16,8 @@ public:
     void AddPoint(GPSCoord gpsc);
     list<GPSCoord> GetNearbyPoints(GPSCoord gpsc);
     void RegisterDestination(string name, GPSCoord gpsc);
-    list<GPSCoord> FindPath(GPSCoord end);
-    list<GPSCoord> FindPath(string dest);
+    list<Node*> FindPath(Node* end);
+    list<Node*> FindPath(string dest);
 
 private:
     map<string, GPSCoord> savedDestinations;

@@ -2,8 +2,9 @@
 #define GPS_H
 
 #include <tuple>
-#include "RPi/Core/datatypes.h"
+#include "../Common/datatypes.h"
 #include <time.h>
+#include <string>
 
 using namespace std;
 

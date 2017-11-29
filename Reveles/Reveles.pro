@@ -24,25 +24,29 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
-        main.cpp \
-        mainwidget.cpp \
     main.cpp \
-    mainwidget.cpp \
     RPi/Core/mainwidget.cpp \
-    main.cpp \
     RPi/Core/revelescore.cpp \
     RPi/Core/revelesmap.cpp \
-    RPi/Sensors/gps.cpp
+    RPi/Sensors/gps.cpp \
+    RPi/Common/gpio.cpp \
+    RPi/Python/revelesio.cpp
 
 HEADERS += \
-        mainwidget.h \
-    mainwidget.h \
     RPi/Core/mainwidget.h \
     RPi/Core/revelescore.h \
     RPi/Core/datatypes.h \
     RPi/Core/revelesmap.h \
-    RPi/Sensors/gps.h
+    RPi/Sensors/gps.h \
+    RPi/Common/gpio.h \
+    RPi/Python/revelesio.h
 
 FORMS += \
-        mainwidget.ui \
     RPi/Core/mainwidget.ui
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../AppData/Local/Programs/Python/Python36/libs/ -lpython36
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../AppData/Local/Programs/Python/Python36/libs/ -lpython36
+else:unix:!macx: LIBS += -L$$PWD/../../../../AppData/Local/Programs/Python/Python36/libs/ -lpython36
+
+INCLUDEPATH += $$PWD/../../../../AppData/Local/Programs/Python/Python36/include
+DEPENDPATH += $$PWD/../../../../AppData/Local/Programs/Python/Python36/include

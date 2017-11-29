@@ -1,14 +1,19 @@
 #include "mainwidget.h"
-#include "ui_mainwidget.h"
+//#include "ui_mainwidget.h"
 
-MainWidget::MainWidget(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::MainWidget)
+MainWidget::MainWidget(/*QWidget *parent, */ int argc, char *argv[])// :
+    //QWidget(parent),
+    //ui(new Ui::MainWidget)
 {
-    ui->setupUi(this);
+    //ui->setupUi(this);
+
+    rc = new RevelesCore();
+    rc->InitPyModule(argc, argv);
 }
 
 MainWidget::~MainWidget()
 {
-    delete ui;
+    rc->FreePyModule();
+    delete rc;
+//    delete ui;
 }

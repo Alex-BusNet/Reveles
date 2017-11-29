@@ -1,0 +1,15 @@
+//
+// Created by Alex on 11/29/2017.
+//
+
+#ifndef REVELES_REVELESANALYTICALENGINE_H
+#define REVELES_REVELESANALYTICALENGINE_H
+
+
+class RevelesAnalyticalEngine
+{
+
+};
+
+
+#endif //REVELES_REVELESANALYTICALENGINE_H

@@ -26,6 +26,8 @@ list<GPSCoord> RevelesMap::GetNearbyPoints(GPSCoord gpsc)
             int checkY;
         }
     }
+
+    return neighbors;
 }
 
 void RevelesMap::RegisterDestination(string name, GPSCoord gpsc)
@@ -33,18 +35,40 @@ void RevelesMap::RegisterDestination(string name, GPSCoord gpsc)
 
 }
 
-list<GPSCoord> RevelesMap::FindPath(GPSCoord end)
+list<Node*> RevelesMap::FindPath(Node* end)
 {
+    list<Node*> path;
 
+    //-------------------
+    // Path Finding Algorithm goes here
+    //-------------------
+
+    //-------------------
+    /* Retrace Path */
+    Node *n = end;
+    while(n->parent != NULL)
+    {
+        path.push_front(n);
+
+        if(n->parent != NULL)
+        {
+            n->parent->child = n;
+        }
+
+        n = n->parent;
+    }
+    //-------------------
+
+    return path;
 }
 
 /*
  * FindPaths(string) assumes that the destination
  * passed to it exists.
  */
-list<GPSCoord> RevelesMap::FindPath(string dest)
+list<Node*> RevelesMap::FindPath(string dest)
 {
-    return FindPath(savedDestinations[dest]);
+    return FindPath(new Node{savedDestinations[dest], NULL, NULL});
 }
 
 void RevelesMap::saveMapData()

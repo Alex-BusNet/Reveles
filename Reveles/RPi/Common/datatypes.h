@@ -1,26 +1,14 @@
 #ifndef DATATYPES_H
 #define DATATYPES_H
 
-struct DecisionPoint {
-    MagDirection face;
-    GPSCoord point;
-};
-
 struct GPSCoord {
     float latitude;
     float longitude;
 
     bool operator==(GPSCoord& other)
     {
-        if((this->latitude == other.latitude)
-                && (this->longitude == other.longitude))
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return ((this->latitude == other.latitude)
+               && (this->longitude == other.longitude));
     }
 };
 
@@ -30,11 +18,19 @@ struct MagDirection {
     float z;
 };
 
+struct DecisionPoint {
+    MagDirection face;
+    GPSCoord point;
+};
+
 struct Path {
     // NOOP
 };
 
 struct Node {
+    GPSCoord coord;
+    Node *child;
+    Node *parent;
     // NOOP
 };
 
