@@ -3,7 +3,9 @@ project(Reveles)
 
 find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
-#target_link_libraries(Reveles ${PYTHON_LIBRARIES})
+
+add_subdirectory(Libraries/pybind11)
+pybind11_add_module(example RPI/Python/revelesio.cpp)
 
 #MinGW CMake:
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -11,9 +13,6 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 #MSVC CMake:
 set(PYBIND11_CPP_STANDARD /std:c++latest)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
-
-add_subdirectory(Libraries/pybind11)
-pybind11_add_module(example RPI/Python/revelesio.cpp)
 
 set(SOURCE_FILES
     Arduino/placeholder_for_INO_files
@@ -35,3 +34,5 @@ set(SOURCE_FILES
     RPi/Core/RevelesAnalyticalEngine.h)
 
 add_executable(Reveles ${SOURCE_FILES})
+
+target_link_libraries(Reveles ${PYTHON_LIBRARIES})
