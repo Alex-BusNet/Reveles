@@ -4,14 +4,14 @@ project(Reveles)
 find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 
-add_subdirectory(Libraries/pybind11)
-pybind11_add_module(example RPI/Python/revelesio.cpp)
+#add_subdirectory(Libraries/pybind11)
+#pybind11_add_module(example RPI/Python/revelesio.cpp)
 
 #MinGW CMake:
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 #MSVC CMake:
-set(PYBIND11_CPP_STANDARD /std:c++latest)
+#set(PYBIND11_CPP_STANDARD /std:c++latest)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
 
 set(SOURCE_FILES
@@ -35,4 +35,4 @@ set(SOURCE_FILES
 
 add_executable(Reveles ${SOURCE_FILES})
 
-target_link_libraries(Reveles ${PYTHON_LIBRARIES})
+#target_link_libraries(Reveles ${PYTHON_LIBRARIES})
