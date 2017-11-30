@@ -1,0 +1,2 @@
+Determine GPS Coordinates based off of a few existing coordinates for when GPS signal is lost.
+	-Will need robot speed (encoders and accelerometer) to assist in this calculation.
