@@ -15,7 +15,7 @@ set(PYBIND11_CPP_STANDARD /std:c++latest)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
 
 set(SOURCE_FILES
-    Arduino/placeholder_for_INO_files
+    Arduino/ultraSensP1.ino
     RPi/Common/datatypes.h
     RPi/Common/gpio.cpp
     RPi/Common/gpio.h
