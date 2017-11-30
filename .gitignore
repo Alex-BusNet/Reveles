@@ -10,6 +10,9 @@
 *.dll
 *.dylib
 
+Reveles/Libraries/pybind11/build/
+Reveles/Libraries/pybind11/tests/
+
 # Qt-es
 
 /.qmake.cache
