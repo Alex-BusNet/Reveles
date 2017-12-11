@@ -25,10 +25,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        widget.cpp
+    addlocationdialog.cpp \
+    revelesgui.cpp
 
 HEADERS += \
-        widget.h
+    locationpushbutton.h \
+    addlocationdialog.h \
+    revelesgui.h \
+    datatypes.h
 
 FORMS += \
-        widget.ui
+    revelesgui.ui
