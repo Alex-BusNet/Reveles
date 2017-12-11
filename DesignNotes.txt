@@ -1,2 +1,10 @@
-Determine GPS Coordinates based off of a few existing coordinates for when GPS signal is lost.
+->Determine GPS Coordinates based off of a few existing coordinates for when GPS signal is lost.
 	-Will need robot speed (encoders and accelerometer) to assist in this calculation.
+	-'Dead reckoning' libraries from STMicro?
+
+->Time of Flight sensors for human detection?
+->Accuracy of GPS module?
+	-May need to use Accel/Encoders to help get more accurate coordinates.
+	-WiFi assisted GPS?
+->Task Scheduling on Arduino
+	-Move some sensors to RPi?
