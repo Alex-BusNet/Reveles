@@ -29,8 +29,17 @@ RevelesGui::RevelesGui(QWidget *parent) :
     sc->setLayout(new QVBoxLayout);
     sc->layout()->addWidget(sa);
     ui->tabWidget->addTab(sc, "Locations");
+    QIcon *loc, *nLoc, *settings;
 
-//    setupLocations();
+    loc = new QIcon("Assets/Icons/locations.png");
+    nLoc = new QIcon("Assets/Icons/newLocation.png");
+    settings = new QIcon("Assets/Icons/settings.png");
+
+    ui->locationsScreenPB->setIcon(*loc);
+    ui->addLocationPB->setIcon(*nLoc);
+    ui->settingsScreenPB->setIcon(*settings);
+
+    this->setLayout(ui->horizontalLayout);
     this->setStyleSheet(menuStyle);
 }
 

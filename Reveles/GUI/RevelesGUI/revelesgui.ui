@@ -24,6 +24,12 @@
   </property>
   <property name="maximumSize">
    <size>
+    <width>2400</width>
+    <height>1440</height>
+   </size>
+  </property>
+  <property name="sizeIncrement">
+   <size>
     <width>800</width>
     <height>480</height>
    </size>
@@ -36,7 +42,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>805</width>
+     <width>812</width>
      <height>481</height>
     </rect>
    </property>
@@ -51,7 +57,19 @@
       </property>
       <item>
        <widget class="QToolButton" name="locationsScreenPB">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
+        </property>
         <property name="maximumSize">
+         <size>
+          <width>400</width>
+          <height>400</height>
+         </size>
+        </property>
+        <property name="sizeIncrement">
          <size>
           <width>100</width>
           <height>100</height>
@@ -60,11 +78,29 @@
         <property name="text">
          <string>Locations</string>
         </property>
+        <property name="iconSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
+        </property>
        </widget>
       </item>
       <item>
        <widget class="QToolButton" name="addLocationPB">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
+        </property>
         <property name="maximumSize">
+         <size>
+          <width>400</width>
+          <height>400</height>
+         </size>
+        </property>
+        <property name="sizeIncrement">
          <size>
           <width>100</width>
           <height>100</height>
@@ -73,11 +109,29 @@
         <property name="text">
          <string>Add Location</string>
         </property>
+        <property name="iconSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
+        </property>
        </widget>
       </item>
       <item>
        <widget class="QToolButton" name="settingsScreenPB">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
+        </property>
         <property name="maximumSize">
+         <size>
+          <width>400</width>
+          <height>400</height>
+         </size>
+        </property>
+        <property name="sizeIncrement">
          <size>
           <width>100</width>
           <height>100</height>
@@ -85,6 +139,12 @@
         </property>
         <property name="text">
          <string>Settings</string>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
         </property>
        </widget>
       </item>
@@ -132,6 +192,24 @@
       </property>
       <item>
        <widget class="QTabWidget" name="tabWidget">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>659</width>
+          <height>477</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>2400</width>
+          <height>1440</height>
+         </size>
+        </property>
         <property name="tabPosition">
          <enum>QTabWidget::North</enum>
         </property>
