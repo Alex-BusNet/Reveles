@@ -1,27 +1,63 @@
 #include <SPI.h>
+#include <Wire.h>
+
+#define SLAVE_ADDRESS 0x04
+//i2c pins on A4 and A5
+int number = 0;
+int state = 0;
 
 long durat;
 int dist;
 int inch;
-int slavePin = 10;
+
+
+void recieveData(int byteCount)
+{
+  while(Wire.available())
+  {
+    number = Wire.read();
+    Serial.print("data recieved");
+    Serial.println(number);
+
+    if(number == 1)
+    {
+      if(state == 0)
+      {
+        digitalWrite(13, HIGH);
+        state = 1;
+      }
+      else 
+      {
+        digitalWrite(13, LOW);
+        state = 0;
+      }
+    }
+  }
+}
+
+void sendData()
+{
+  Wire.write(number);
+}
+
 
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
-  pinMode(5, OUTPUT);
-  pinMode(6, OUTPUT);
   pinMode(9, OUTPUT);
   pinMode(8, INPUT);
-  pinMode(slavePin, OUTPUT);
-  SPI.begin();
+  pinMode(13, OUTPUT);//LED pin
   Serial.begin(9600);
+
+  //initialize i2c as slave
+  Wire.begin(SLAVE_ADDRESS);
+
+  //define callbacks for i2c communication
+  Wire.onReceive(recieveData);
+  Wire.onRequest(sendData);
+
+  Serial.println("Ready!");
 }
 
 void loop() {
-  SPI.beginTransaction(SPISettings(14000000, MSBFIRST, SPI_MODE0));
-  
   digitalWrite(9, LOW);
   delayMicroseconds(2);
   digitalWrite(9, HIGH);
@@ -35,115 +71,15 @@ void loop() {
   {
     Serial.print(inch);
     Serial.println(" inches");
-    digitalWrite(2, HIGH);
   }
   else //Red LED is LOW and distance in feet is shown
   {
     inch = inch/12;
     Serial.print(inch);
     Serial.println(" feet");
-    digitalWrite(2, LOW);
   }
-  
-switch (inch) //Shows distance in binary on green LEDS
-{
-  case 1:
-    digitalWrite(6, HIGH);
-    digitalWrite(5, LOW);
-    digitalWrite(4, LOW);
-    digitalWrite(3, LOW);
-    break;
-  case 2:
-    digitalWrite(6, LOW);
-    digitalWrite(5, HIGH);
-    digitalWrite(4, LOW);
-    digitalWrite(3, LOW);
-    break;
-  case 3:
-    digitalWrite(6, HIGH);
-    digitalWrite(5, HIGH);
-    digitalWrite(4, LOW);
-    digitalWrite(3, LOW);
-    break;
-  case 4:
-    digitalWrite(6, LOW);
-    digitalWrite(5, LOW);
-    digitalWrite(4, HIGH);
-    digitalWrite(3, LOW);
-    break;
-  case 5:
-    digitalWrite(6, HIGH);
-    digitalWrite(5, LOW);
-    digitalWrite(4, HIGH);
-    digitalWrite(3, LOW);
-    break;
-  case 6:
-    digitalWrite(6, LOW);
-    digitalWrite(5, HIGH);
-    digitalWrite(4, HIGH);
-    digitalWrite(3, LOW);
-    break;
-  case 7:
-    digitalWrite(6, HIGH);
-    digitalWrite(5, HIGH);
-    digitalWrite(4, HIGH);
-    digitalWrite(3, LOW);
-    break;
-  case 8:
-    digitalWrite(6, LOW);
-    digitalWrite(5, LOW);
-    digitalWrite(4, LOW);
-    digitalWrite(3, HIGH);
-    break;
-  case 9:
-    digitalWrite(6, HIGH);
-    digitalWrite(5, LOW);
-    digitalWrite(4, LOW);
-    digitalWrite(3, HIGH);
-    break;
-  case 10:
-    digitalWrite(6, LOW);
-    digitalWrite(5, HIGH);
-    digitalWrite(4, LOW);
-    digitalWrite(3, HIGH);
-    break;
-  case 11:
-    digitalWrite(6, HIGH);
-    digitalWrite(5, HIGH);
-    digitalWrite(4, LOW);
-    digitalWrite(3, HIGH);
-    break;
-  case 12:
-    digitalWrite(6, LOW);
-    digitalWrite(5, LOW);
-    digitalWrite(4, HIGH);
-    digitalWrite(3, HIGH);
-    break;
-  case 13:
-    digitalWrite(6, HIGH);
-    digitalWrite(5, LOW);
-    digitalWrite(4, HIGH);
-    digitalWrite(3, HIGH);
-    break;
-  case 14:
-    digitalWrite(6, LOW);
-    digitalWrite(5, HIGH);
-    digitalWrite(4, HIGH);
-    digitalWrite(3, HIGH);
-    break;
-  case 15:
-    digitalWrite(6, HIGH);
-    digitalWrite(5, HIGH);
-    digitalWrite(4, HIGH);
-    digitalWrite(3, HIGH);
-    break;  
-  default: //0
-    digitalWrite(6, LOW);
-    digitalWrite(5, LOW);
-    digitalWrite(4, LOW);
-    digitalWrite(3, LOW);
 }
 
-  
 
-}
+
+
