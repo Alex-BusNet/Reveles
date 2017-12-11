@@ -3,7 +3,7 @@
 #define enableA 10
 #define input1 11
 #define input2 12
-#define b1 13
+#define b1 1
 
 int rD = 0;
 int pressed = false;
