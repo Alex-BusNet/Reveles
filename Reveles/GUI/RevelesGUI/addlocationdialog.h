@@ -8,7 +8,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include "revelesgui.h"
-#include "datatypes.h"
+#include "../../RPi/Common/datatypes.h"
 
 class RevelesGui;
 

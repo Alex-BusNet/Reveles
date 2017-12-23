@@ -26,27 +26,27 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     RPi/Core/mainwidget.cpp \
+    RPI/Core/IO/revelesio.cpp \
     RPi/Core/revelescore.cpp \
     RPi/Core/revelesmap.cpp \
+    RPI/Core/RevelesAnalyticalEngine.cpp \
     RPi/Sensors/gps.cpp \
     RPi/Common/gpio.cpp \
-    RPi/Python/revelesio.cpp
+    Libraries/wiringPi/wiringPi.c \
+    Libraries/wiringPi/wiringPiI2C.c \
 
 HEADERS += \
     RPi/Core/mainwidget.h \
     RPi/Core/revelescore.h \
     RPi/Core/datatypes.h \
     RPi/Core/revelesmap.h \
+    RPi/Core/RevelesAnalyticalEngine.h \
     RPi/Sensors/gps.h \
     RPi/Common/gpio.h \
-    RPi/Python/revelesio.h
+    RPi/Common/datatypes.h \
+    RPi/Core/IO/revelesio.h \
+    Libraries/wiringPi/wiringPi.h \
+    Libraries/wiringPi/wiringPiI2C.h \
 
 FORMS += \
     RPi/Core/mainwidget.ui
-
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../AppData/Local/Programs/Python/Python36/libs/ -lpython36
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../AppData/Local/Programs/Python/Python36/libs/ -lpython36
-else:unix:!macx: LIBS += -L$$PWD/../../../../AppData/Local/Programs/Python/Python36/libs/ -lpython36
-
-INCLUDEPATH += $$PWD/../../../../AppData/Local/Programs/Python/Python36/include
-DEPENDPATH += $$PWD/../../../../AppData/Local/Programs/Python/Python36/include

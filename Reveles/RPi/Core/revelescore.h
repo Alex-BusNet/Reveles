@@ -2,19 +2,14 @@
 #define REVELESCORE_H
 
 #include "../Common/datatypes.h"
-#include "../Common/gpio.h"
+#include "RPi/Core/IO/revelesio.h"
 
 class RevelesCore
 {
 public:
     RevelesCore();
 
-    int InitPyModule(int argc, char *argv[]);
-    int FreePyModule();
-
 private:
-
-    wchar_t *program;
 
 };
 

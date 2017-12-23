@@ -34,11 +34,25 @@ struct Node {
     // NOOP
 };
 
+struct Accel { float x, y, z; };
+struct Gyro  { float x, y, z; };
+struct Mag   { float x, y, z; };
+
 enum Direction {
     N, NE, NW,
     S, SE, SW,
     W, WN, WS,
     E, EN, ES
 };
+
+enum UltrasonicPos {
+    FORWARD, REAR, LEFT, RIGHT, STAIR
+};
+
+enum Mode { IN, OUT };
+
+enum SensorType {US, PIR, TOF};
+
+
 
 #endif // DATATYPES_H

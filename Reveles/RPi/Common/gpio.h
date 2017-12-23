@@ -1,14 +1,24 @@
 #ifndef GPIO_H
 #define GPIO_H
 
-#include <stdint.h>
+#include <cstdint>
+#include "datatypes.h"
+#include "../../Libraries/wiringPi/wiringPi.h"
 
 class GPIO
 {
 public:
-    GPIO();
+    GPIO(int pin = 0, Mode m = OUT);
 
+    void writeMotor();
+    GPSCoord readGPS();
+    int readMotor();
 
+    int readUltrasonic(UltrasonicPos usp);
+
+private:
+    int pin;
+    Mode mode;
 };
 
 class Uart : public GPIO

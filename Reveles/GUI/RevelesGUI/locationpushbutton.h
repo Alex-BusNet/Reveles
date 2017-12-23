@@ -2,7 +2,7 @@
 #define LOCATIONPUSHBUTTON_H
 
 #include <QToolButton>
-#include "datatypes.h"
+#include "../../RPi/Common/datatypes.h"
 
 class LocationPushButton : public QToolButton
 {

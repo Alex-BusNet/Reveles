@@ -1,12 +1,12 @@
 #include "RPi/Core/mainwidget.h"
-//#include <QApplication>
+#include <QApplication>
 
 int main(int argc, char *argv[])
 {
-//    QApplication a(argc, argv);
-//    MainWidget w(/*NULL,*/ argc, argv);
-//    w.show();
-//
-//    return a.exec();
+    QApplication a(argc, argv);
+    MainWidget w(NULL, argc, argv);
+    w.show();
+
+    return a.exec();
     return 0;
 }

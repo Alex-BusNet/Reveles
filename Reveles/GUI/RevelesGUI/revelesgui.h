@@ -8,7 +8,7 @@
 
 #include "locationpushbutton.h"
 #include "addlocationdialog.h"
-#include "datatypes.h"
+#include "../../RPi/Common/datatypes.h"
 
 
 namespace Ui {

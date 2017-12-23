@@ -1,9 +1,11 @@
 #include "gpio.h"
 
-GPIO::GPIO()
+GPIO::GPIO(int pin, Mode m)
 {
-
+    this->pin = pin;
+    this->mode = mode;
 }
+
 
 Uart::Uart(int txPin, int rxPin, int baudRate)
 {
