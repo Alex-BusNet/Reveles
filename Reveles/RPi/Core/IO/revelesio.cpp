@@ -9,11 +9,6 @@ RevelesIO *RevelesIO::instance()
 
 void RevelesIO::initIO()
 {
-
-}
-
-RevelesIO::RevelesIO()
-{
     wiringPiSetup();
     pinMode(SEL_A, OUTPUT);
     pinMode(SEL_B, OUTPUT);
@@ -25,6 +20,11 @@ RevelesIO::RevelesIO()
     wiringPiI2CSetup(MAG_ADDR);
     wiringPiI2CSetup(XG_ADDR);
     wiringPiI2CSetup(ARDUINO);
+}
+
+RevelesIO::RevelesIO()
+{
+
 }
 
 void RevelesIO::SendMotorUpdate(int motorSpeedFactor)
