@@ -2,10 +2,10 @@
 #define REVELESIO_H
 
 #include <QObject>
-#include "Libraries/wiringPi/wiringPi.h"
-#include "Libraries/wiringPi/wiringPiI2C.h"
 #include <stdint.h>
 #include "RPi/Common/datatypes.h"
+#include "Libraries/wiringPi/wiringPi.h"
+#include "Libraries/wiringPi/wiringPiI2C.h"
 
 //----------------------
 //  Sensor GPIO pins
