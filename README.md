@@ -116,15 +116,67 @@ If all the path variables are set correctly then the folder where the _Reveles_ 
 
 Whether you have the .AppImage file or just the folder we deployed from, you should be able to run Reveles on any linux system without needing Qt installed. (Needs to be tested).
 
-# Pushing to Reveles Repo
+# Updating the Reveles Repository with Git
 
 The following command assume you are in the top level folder of where the repository is located on your hard drive. (For me this is /home/USER_NAME/Reveles/Reveles)
 
-1. To create a commit use:
-	`git commit -a`
-> NOTE: This will ask you to enter a message to go with the commit. (You MUST give a message or it will not commit the files).
-2. Push the commit to the repo use:
++. Add files to staging area: <br>
+	Add all unstaged files: `git add .`<br>
+	Add specific file: `git add <filename>`<br>
+	Add entire directory: `git add <directory name>` <br>
+
++. To create a commit use:
+	`git commit [-a] [-m <message>]`
+> NOTE (1): The `-a` flag tells Git to commit everything this is both staged and unstaged. Omit the `-a` flag to commit only staged files. 
+> NOTE (2): If `-m` is omitted, or no message is given, Git will prompt you to enter a commit message. If a commit does not have a message with it, it will NOT be pushed to the repository.
+
++. Push the commit to the repo use:
 	`git push origin master`
+
++. If you wish to see what files are staged or affected by the current commit, use: `git status`.
+
++. To get the latest updates from the repo to your local working version use: `git pull origin master`
+> NOTE: There is another command call `fetch` which will check if there are updates, but will not change the files in your working version.
+ 
+
+## Tips on how to avoid merge conflicts with Git
+
+1. Before you push new changes to the repository, run the `fetch` command to check if any updates have been made since you last pulled from the repo.
+
+2. If changes have been made since you last pulled, you can save your changes using the `stash` command.
+> `Stash` will save a 'snapshot' of your local working version and store it in a different location. This will revert your working version to match the last commit you pulled.
+  1. To save your changes use: `git stash -u`
+  2. Update your local version.
+  3. (OPTIONAL) To see a list of all your stored stashes, use: `git stash list`
+> NOTE: stash@{0} is always your most recently created stash.
+  4. Reapply your changes by using `git stash pop`.
+> NOTE (1): Most of the time, you will only need to pass 0 as N in this command.
+
+> NOTE (2): This method is not fool-proof. There can still be merge conflicts if the changes on the repo override code you changed in your working version. At this point, you will have to go through the conflicted files manually and delete the code that should be changed.
+
+> HINT: In each conflicted file, the sections that could not be merged will look like this:
+>```
+/*
+ * Unaffected code.
+ */
+<<<<<<< HEAD
+/* 
+ * Conflicted code 
+ * from repository
+ */
+=======
+/* 
+ * Conflicted code 
+ * from your changes
+ */
+>>>>>>> <branch name>
+/*
+ * Unaffected code.
+ */
+>```
+> From here, simply modify the code as needed by deleting the HEAD or local section, or join the two together. Once you have fixed a conflict, besure to remove the `<<<<<<< HEAD`, `=======`, and `>>>>>>> <branch name>` markers from the file before commiting files.
+  5. Once all all the files are conflict free (and correct), you can push your newest changes to the repo.
+
 
 # Credits
 Code base for Trine University ECE Senior Design Project 2017-18.
