@@ -1,5 +1,7 @@
 Reveles (<i>verb</i>) - Latin; to discover or detect.
 
+[TOC]
+
 # About
 Reveles is designed to be an autonomous navigation robot. It will be capable of taking a coordinate provided to it and travel to that location using an onboard GPS sensor, in addition to ultrasonic and passive infrared (PIR) sensors. 
 
@@ -7,7 +9,7 @@ This project contains one Qt .pro project file for RevelesCore and the GUI. Addi
 
 This walkthrough will assume that the end user is starting from a clean slate (no linux install) and has little experience using linux.
 
-You can skip to [Bringing it all Together](Bringing it all Together) if you have Reveles already set up on a linux system and built.
+You can skip to [Bringing it all Together](##Bringing-it-all-Together) if you have Reveles already set up on a linux system and built.
 
 ## Tools needed: 
 * Any linux distro (I did this successfully on Ubuntu 16.04 LTS)
@@ -71,12 +73,15 @@ Reveles requires Qt version 5.7.2 or newer. The latest version can be acquired [
 
 ### Obtaining Reveles
 1. Create a folder you can easily find to store the Reveles project (I used '/home/USER_NAME/Reveles').
-2. Inside this folder, open a terminal window (right-click in the window and select 'Open in Terminal')
+
+2. Inside this folder, open a terminal window (right-click in the window and select 'Open in Terminal').
+
 3. Enter the following command into the terminal to get the Reveles project<br>
 	`git clone https://github.com/Alex-BusNet/Reveles.git`
 
 ### Obtaining linuxdeployqt
 1. Create another folder for the linuxdeployqt project (I used '/home/USER_NAME/Documents/linuxdeployqt').
+
 2. Download the latest version of linuxdeployqt [here](https://github.com/probonopd/linuxdeployqt/releases).
 > NOTE: Be sure to download the .AppImage file and save it to the folder we created in step 1.
 
@@ -104,7 +109,7 @@ Before we can deploy the application we need to set some path variables.
 We should now be ready to deploy Reveles
 
 7. In the terminal make sure we are operating in the folder where the _Reveles_ application file is located. This is usually indicated by blue text preceding the cursor. If we are not in the correct folder, we can get there by opening a new window as done previously with the `cd` command. 
-> NOTE (1): in Linux, `~` denotes the user's home path ('/home/<USER NAME>').
+> NOTE (1): in Linux, `~` denotes the user's home path ('/home/USER_NAME').
 > NOTE (2): cd means 'Change Directory' to back out of the current folder one level, use the command `cd ..`. You can also jump directly to a folder by 
 >	    typing in `cd <PATH>`.
 
@@ -112,7 +117,7 @@ We should now be ready to deploy Reveles
 	`linuxdeployqt.AppImage Reveles -appimage`
 >NOTE: If you skipped step 6, then you will need to give the full path to _linuxdeployqt.AppImage_ in order for this step to work.
 
-If all the path variables are set correctly then the folder where the _Reveles_ application file is should begin to populate with all the dependencies needed to run the application. If done correctly there should be a file called 'Reveles-x86_64.AppImage' located somewhere in your user folder (most likely at '/home/<USER NAME>'. I can't seem to find this file even though the output says it was generated.)
+If all the path variables are set correctly then the folder where the _Reveles_ application file is should begin to populate with all the dependencies needed to run the application. If done correctly there should be a file called 'Reveles-x86_64.AppImage' located somewhere in your user folder (most likely at '/home/USER_NAME'. I can't seem to find this file even though the output says it was generated.)
 
 Whether you have the .AppImage file or just the folder we deployed from, you should be able to run Reveles on any linux system without needing Qt installed. (Needs to be tested).
 
@@ -120,22 +125,22 @@ Whether you have the .AppImage file or just the folder we deployed from, you sho
 
 The following command assume you are in the top level folder of where the repository is located on your hard drive. (For me this is /home/USER_NAME/Reveles/Reveles)
 
-+. Add files to staging area: <br>
-	Add all unstaged files: `git add .`<br>
-	Add specific file: `git add <filename>`<br>
-	Add entire directory: `git add <directory name>` <br>
++ Adding files to staging area: <br>
+  + Add all unstaged files: `git add .`<br>
+  + Add specific file: `git add <filename>`<br>
+  + Add entire directory: `git add <directory name>` <br>
 
-+. To create a commit use:
++ To create a commit use:
 	`git commit [-a] [-m <message>]`
 > NOTE (1): The `-a` flag tells Git to commit everything this is both staged and unstaged. Omit the `-a` flag to commit only staged files. 
 > NOTE (2): If `-m` is omitted, or no message is given, Git will prompt you to enter a commit message. If a commit does not have a message with it, it will NOT be pushed to the repository.
 
-+. Push the commit to the repo use:
++ Push the commit to the repo use:
 	`git push origin master`
 
-+. If you wish to see what files are staged or affected by the current commit, use: `git status`.
++ If you wish to see what files are staged or affected by the current commit, use: `git status`.
 
-+. To get the latest updates from the repo to your local working version use: `git pull origin master`
++ To get the latest updates from the repo to your local working version use: `git pull origin master`
 > NOTE: There is another command call `fetch` which will check if there are updates, but will not change the files in your working version.
  
 
@@ -156,23 +161,23 @@ The following command assume you are in the top level folder of where the reposi
 
 > HINT: In each conflicted file, the sections that could not be merged will look like this:
 >```
-/*
- * Unaffected code.
- */
-<<<<<<< HEAD
-/* 
- * Conflicted code 
- * from repository
- */
-=======
-/* 
- * Conflicted code 
- * from your changes
- */
+>/*
+> * Unaffected code.
+> */
+><<<<<<< HEAD
+>/* 
+> * Conflicted code 
+> * from repository
+> */
+>=======
+>/* 
+> * Conflicted code 
+> * from your changes
+> */
 >>>>>>> <branch name>
-/*
- * Unaffected code.
- */
+>/*
+> * Unaffected code.
+> */
 >```
 > From here, simply modify the code as needed by deleting the HEAD or local section, or join the two together. Once you have fixed a conflict, besure to remove the `<<<<<<< HEAD`, `=======`, and `>>>>>>> <branch name>` markers from the file before commiting files.
   5. Once all all the files are conflict free (and correct), you can push your newest changes to the repo.
