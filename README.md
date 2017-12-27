@@ -1,19 +1,42 @@
-Reveles (<i>verb</i>) - Latin; to discover or detect.
+**Reveles** (<i>verb</i>) - Latin; to discover or detect.
 
-[TOC]
+<ul>
+	<li><a href="#about">About</a></li>
+	<li><a href="#tools-needed">Tools needed</a></li>
+	<li><a href="#setup">Setup</a>
+		<ul>
+			<li><a href="#installing-linux">Installing Linux</a></li>
+			<li><a href="#installing-git">Installing Git</a></li>
+			<li><a href="#installing-qt">Installing Qt</a></li>
+		</ul>
+	</li>
+	<li><a href="#building-reveles">Building Reveles</a>
+		<ul>
+			<li><a href="#obtaining-reveles">Obtaining Reveles</a></li>
+			<li><a href="#obtaining-linuxdeployqt">Obtaining linuxdeployqt</a></li>
+			<li><a href="#bringing-it-all-together">Bringing it all Together</a></li>
+		</ul>
+	</li>
+	<li><a href="#updating-the-reveles-repository-with-git">Updating the Reveles Repository with Git</a>
+		<ul>
+			<li><a href="#tips-on-how-to-avoid-merge-conflicts-with-git">Tips on How to Avoid Merge Conflicts with Git</a></li>
+		</ul>
+	</li>
+	<li><a href="#credits">Credits</a></li>
+</ul>
 
-# About
+## About
 Reveles is designed to be an autonomous navigation robot. It will be capable of taking a coordinate provided to it and travel to that location using an onboard GPS sensor, in addition to ultrasonic and passive infrared (PIR) sensors. 
 
 This project contains one Qt .pro project file for RevelesCore and the GUI. Additionally there are Arduino .ino and Python .py files that are used for device communication and motor control.
 
 This walkthrough will assume that the end user is starting from a clean slate (no linux install) and has little experience using linux.
 
-You can skip to [Bringing it all Together](##Bringing-it-all-Together) if you have Reveles already set up on a linux system and built.
+You can skip to [Bringing it all Together](#bringing-it-all-together "Bringing it all Together") if you have Reveles already set up on a linux system and built.
 
-## Tools needed: 
+## Tools needed
 * Any linux distro (I did this successfully on Ubuntu 16.04 LTS)
-* [Qt 5.9.2](https://www.qt.io/download-qt-for-application-development)
+* [Qt 5.9.2](https://www.qt.io/download-qt-for-application-development "Qt Latest download")
 * qmake (comes with Qt) 
 * linuxdeployqt
 * Reveles project (obviously)
@@ -21,11 +44,10 @@ You can skip to [Bringing it all Together](##Bringing-it-all-Together) if you ha
 
 ## Setup
 ### Installing Linux
-
 There are two ways to run linux 1) Virtual Machine (VM) or 2) Dual Boot. This guide will walk through a VM install.
 
-1. Download Oracle Virtual Box [here](https://www.virtualbox.org/wiki/Downloads).
-2. Download a Linux distribution of your choice. I used [Ubuntu 16.04 LTS](https://www.ubuntu.com/download/desktop).
+1. Download Oracle Virtual Box [here](https://www.virtualbox.org/wiki/Downloads "Oracle VirtualBox").
+2. Download a Linux distribution of your choice. I used [Ubuntu 16.04 LTS](https://www.ubuntu.com/download/desktop "Ubuntu Desktop").
 > NOTE: Save the .iso file to a location you can get to easily. We will need this later.
 > NOTE: Ubuntu is a pretty widely used Linux distro and is pretty friendly for beginners.
 
@@ -48,7 +70,6 @@ You are now ready to load the VM.
 Once the install completes, the VM will restart. You may be prompted to remove the installation media before restarting. VitrualBox should automatically remove the .iso file. Simply press 'Enter' to continue with the reboot.
 
 ### Installing Git
-
 1. Open a terminal window and check to see if Git is already installed by entering the following into the terminal: `git`
 > NOTE: Where the terminal is varies by distro. On Ubuntu it can be found by opening the search and typing 'terminal'
 > into the text field. Some Debian based distros have the terminal accessible in the taskbar by default. You may want 
@@ -63,14 +84,14 @@ Once the install completes, the VM will restart. You may be prompted to remove t
 	`git config --global user.name "Your name"`
  
 ### Installing Qt
-
 All linux distros have a built-in package manager (aptitude on Debian/Ubuntu) which does include a Qt package. However this will install version 5.3.2 which may not compile Reveles correctly. 
-Reveles requires Qt version 5.7.2 or newer. The latest version can be acquired [here](https://www.qt.io/download-qt-for-application-development).  
+Reveles requires Qt version 5.7.2 or newer. The latest version can be acquired [here](https://www.qt.io/download-qt-for-application-development "Qt Latest download").  
 
 1. The download from Qt's web site will download a .run file. To make this file run as an executable,<br>	right-click -> Properties -> Permissions -> 'Allow executing file as program'.
 2. Run the installation file the same as you would on windows.
 > NOTE: Set the install location somewhere easily accessible such as '/home/USER_NAME/Qt'. This will make some setup for linuxdeployqt a bit easier for us later.
 
+## Building Reveles
 ### Obtaining Reveles
 1. Create a folder you can easily find to store the Reveles project (I used '/home/USER_NAME/Reveles').
 
@@ -82,11 +103,10 @@ Reveles requires Qt version 5.7.2 or newer. The latest version can be acquired [
 ### Obtaining linuxdeployqt
 1. Create another folder for the linuxdeployqt project (I used '/home/USER_NAME/Documents/linuxdeployqt').
 
-2. Download the latest version of linuxdeployqt [here](https://github.com/probonopd/linuxdeployqt/releases).
+2. Download the latest version of linuxdeployqt [here](https://github.com/probonopd/linuxdeployqt/releases "linuxdeployqt download page").
 > NOTE: Be sure to download the .AppImage file and save it to the folder we created in step 1.
 
-## Bringing it all Together
-
+### Bringing it all Together
 1. In QtCreator, open the Reveles.pro file. This will load the entire project.
 > If it isn't already, you may want to pin QtCreator to the taskbar for later.
 
@@ -121,8 +141,7 @@ If all the path variables are set correctly then the folder where the _Reveles_ 
 
 Whether you have the .AppImage file or just the folder we deployed from, you should be able to run Reveles on any linux system without needing Qt installed. (Needs to be tested).
 
-# Updating the Reveles Repository with Git
-
+## Updating the Reveles Repository with Git
 The following command assume you are in the top level folder of where the repository is located on your hard drive. (For me this is /home/USER_NAME/Reveles/Reveles)
 
 + Adding files to staging area: <br>
@@ -144,8 +163,7 @@ The following command assume you are in the top level folder of where the reposi
 > NOTE: There is another command call `fetch` which will check if there are updates, but will not change the files in your working version.
  
 
-## Tips on how to avoid merge conflicts with Git
-
+### Tips on How to Avoid Merge Conflicts with Git
 1. Before you push new changes to the repository, run the `fetch` command to check if any updates have been made since you last pulled from the repo.
 
 2. If changes have been made since you last pulled, you can save your changes using the `stash` command.
@@ -183,8 +201,7 @@ The following command assume you are in the top level folder of where the reposi
   5. Once all all the files are conflict free (and correct), you can push your newest changes to the repo.
 
 
-# Credits
+## Credits
 Code base for Trine University ECE Senior Design Project 2017-18.
 Created by Frank Hittel, Alisha Johnson, and Alex Portoelse
 All rights reserved. &copy; 2017
-
