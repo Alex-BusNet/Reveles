@@ -45,136 +45,23 @@ You can skip to [Bringing it all Together](#bringing-it-all-together "Bringing i
 * Git
 
 ## Setup
+**UNDER CONSTRUCTION**<br>
+The following instructions are no longer valid
+
 ### Installing Linux
-There are two ways to run linux 1) Virtual Machine (VM) or 2) Dual Boot. This guide will walk through a VM install.
-
-1. Download Oracle Virtual Box [here](https://www.virtualbox.org/wiki/Downloads "Oracle VirtualBox").
-2. Download a Linux distribution of your choice. I used [Ubuntu 16.04 LTS](https://www.ubuntu.com/download/desktop "Ubuntu Desktop").
-> NOTE: Save the .iso file to a location you can get to easily. We will need this later.
-> NOTE: Ubuntu is a pretty widely used Linux distro and is pretty friendly for beginners.
-
-3. Once both are downloaded, install Oracle Virtual Box and then run it once the installation completes.
-4. Select "New" from the toolbar and give the machine a name. Set the type as 'Linux' and set the version to Ubuntu.
-> NOTE: The bit type will depend on what you downloaded. The default should be 64-bit.
-
-5. Set how much memory you want the VM to use. This uses the memory built in to your computer so be sure to leave some for your regular OS to run. 2-3 GB should be plenty for Ubuntu.
-6. You will need to create a new virtual disk for the VM to run. Give it a name and allocate at least 20 GB to the system. If you don't know what you are doing, you can leave the other settings at their defaults.
-
-At this point you should now be back on the VirtualBox Manager screen. Select your newly created VM and scroll down the info screen to the 'Storage' window. 
-
-7. Find the Controller: IDE setting and click on "[Optical Drive] Empty".
-8. Navigate to where you saved the linux distro and select it. 
-
-You are now ready to load the VM.
-9. Click the 'Start' arrow in the toolbar and follow the on screen steps to installing the distro.
-> NOTE: During the install, the OS may throw a warning about wiping the hard drive and formatting it. Don't worry about this; The VM acts only within the virtual disk you created in step 6. This will NOT modify any hard drive on your computer.
-
-Once the install completes, the VM will restart. You may be prompted to remove the installation media before restarting. VitrualBox should automatically remove the .iso file. Simply press 'Enter' to continue with the reboot.
+**UNDER CONSTRUCTION**
 
 ### Installing Git
-1. Open a terminal window and check to see if Git is already installed by entering the following into the terminal: `git`
-> NOTE: Where the terminal is varies by distro. On Ubuntu it can be found by opening the search and typing 'terminal'
-> into the text field. Some Debian based distros have the terminal accessible in the taskbar by default. You may want 
-> to lock the terminal to the taskbar for later use (right-click icon and select 'Lock to Launcher').
+**UNDER CONSTRUCTION**
 
-2. If git was not found enter the following command:
-	`sudo apt-get install git`
-
-3. (OPTIONAL) You can configure git for easier use with the following commands:
-
-	`git config --global user.email "you@example.com"`<br>
-	`git config --global user.name "Your name"`
- 
 ### Installing Qt
-All linux distros have a built-in package manager (aptitude on Debian/Ubuntu) which does include a Qt package. However this will install version 5.3.2 which may not compile Reveles correctly. 
-Reveles requires Qt version 5.7.2 or newer. The latest version can be acquired [here](https://www.qt.io/download-qt-for-application-development "Qt Latest download").  
-
-1. The download from Qt's web site will download a .run file. To make this file run as an executable,<br>	right-click -> Properties -> Permissions -> 'Allow executing file as program'.
-2. Run the installation file the same as you would on windows.
-> NOTE: Set the install location somewhere easily accessible such as **/home/USER_NAME/Qt**. This will make some setup for linuxdeployqt a bit easier for us later.
+Reveles requires Qt version 5.7.2 or newer. The latest version can be acquired [here](https://www.qt.io/download-qt-for-application-development "Qt Latest download"). 
 
 ## Building Reveles
-### Obtaining Reveles
-1. Create a folder you can easily find to store the Reveles project (I used **/home/USER_NAME/Reveles**).
-
-2. Inside this folder, open a terminal window (right-click in the window and select 'Open in Terminal').
-
-3. Enter the following command into the terminal to get the Reveles project<br>
-	`git clone https://github.com/Alex-BusNet/Reveles.git`
-
-### Obtaining linuxdeployqt
-1. Create another folder for the linuxdeployqt project (I used **/home/USER_NAME/Documents/linuxdeployqt**).
-
-2. Download the latest version of linuxdeployqt [here](https://github.com/probonopd/linuxdeployqt/releases "linuxdeployqt download page").
-> NOTE: Be sure to download the _.AppImage_ file and save it to the folder we created in step 1.
-
-### Bringing it all Together
-1. In QtCreator, open the Reveles.pro file. This will load the entire project.
-> If it isn't already, you may want to pin QtCreator to the taskbar for later.
-
-2. Set the build target to 'Release' and build the project.
-
-3. Create a new folder on the desktop and label it **Reveles**.
-
-4. Inside this new folder, create another folder called **Reveles.AppDir**.
-
-5. Copy the _Reveles_ application file and the **Assets** folder to **Reveles.AppDir**.
-> NOTE: The **Assets** folder is not in your build folder, then it will need to be copied from **Reveles_Path**/RPi/GUI into both the build folder and the **Reveles.AppDir** folder.
-
-6. Open a terminal window where the _Reveles_ application file is.
-
-Before we can deploy the application we need to set some path variables.
-
-7. If you changed the install location of Qt, then the system will not know where the qmake executable is. To fix this we need to enter the following command:<br>
-	`export PATH=<PATH TO Qt>/<Qt VERSION>/gcc_64/bin:$PATH`
-> Even if you didn't change the install directory, I am not 100% certain the system will know where qmake is, so you may wish to run this command anyways.
-
-8. Test that the system can find qmake by running the command: `qmake -v` in the terminal. Also check the displayed path is correct.
-
-9. (OPTIONAL) If you want to make things a tad easier on yourself. You can repeat the same command for linuxdeployqt. For me this looked like:<br>
-	`export PATH=/home/<USER NAME>/Documents/linuxdeployqt:$PATH`
-
-> HINT: If you do not wish to export the path every time you want to build and deploy Reveles, you can add the qmake path to the PATH environment variable. To do this, run `sudo nano /etc/environment` (Debian/Ubuntu systems). Make sure you add the qmake path to the FRONT of the PATH variable or else the system will not find qmake. You can also add the path to linuxdeployqt in this file (front or end, it does not matter). The file can then be saved by pressing CTRL+X->y->ENTER. Your linux distro will need to be rebooted for the changes to this file to take effect.
-
-Before we can build the application, we need to add one more file inside the **Reveles.AppDir** folder, the _.desktop_ file.
-
-10. Inside the **Reveles.AppDir** folder, right click and select 'New Document'->'Empty Document'. Name the document _Reveles.desktop_.
-
-11. Open the document in a text editor and add the following lines:
-
->```
->[Desktop Entry]
->Type=Application
->Name=RevelesCore
->Exec=Reveles
->Path=Assets/Icons/reveles_icon
->Icon=reveles_icon
->Comment=Reveles Core Program
->Terminal=true
->Categories=Robotics;
->```
-
-12. Save the file and close the text editor.
-
-We should now be ready to deploy Reveles
-
-11. In the terminal make sure we are operating in the folder where the **Reveles.AppDir** folder is located (e.g. **~/Desktop/Reveles**. The current folder is usually indicated by blue text preceding the cursor (On Ubuntu and Debian-based systems). If we are not in the correct folder, we can get there by opening a new window as done previously, or with the `cd` command. 
-> NOTE (1): in Linux, `~` denotes the user's home path (**/home/USER_NAME**).
-> NOTE (2): cd means 'Change Directory' to back out of the current folder one level, use the command `cd ..`. You can also jump directly to a folder by 
->	    typing in `cd <PATH>`.
-
-12. To deploy the application run the following command:<br>
-	`linuxdeployqt.AppImage Reveles.AppDir/Reveles.desktop -appimage -bundle-non-qt-libs -no-translations`
->NOTE (1): If you skipped step 9, or did not add linuxdeployqt's path to the PATH environment variable, then you will need to give the full path to _linuxdeployqt.AppImage_ in order for this step to work.
->NOTE (2): If you are building over a previous build, then you can add the `-always-overwrite` flag to the end of the command.
-
-If all the path variables are set correctly then the folder where the _Reveles_ application file is should begin to populate with all the dependencies needed to run the application. If linuxdeployqt runs correctly there should be a file called <em>Reveles-x86_64.AppImage</em> located in the folder containing the **Reveles.AppDir** folder (for me this is **~/Desktop/Reveles**)
-
-13. Copy the <em>Reveles-x86\_64.AppImage</em> file to the **Reveles_Release_Builds** folder.
-
-From here you can commit your changes to the repo. 
+**UNDER CONSTRUCTION**
 
 ## Updating the Reveles Repository with Git
+**THESE INSTRUCTIONS ARE STILL MOSTLY VALID. JUST NOTE THE REPOSITORY PATH GIVEN IS FOR UNIX-BASED SYSTEMS. THE COMMANDS WORK THE SAM E ON WINDOWS-BASED MACHINES**
 The following command assume you are in the top level folder of where the repository is located on your hard drive. (For me this is /home/USER_NAME/Reveles/Reveles)
 
 + Adding files to staging area: <br>
