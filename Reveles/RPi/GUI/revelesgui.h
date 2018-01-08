@@ -35,6 +35,8 @@ private slots:
 
     void on_addLocationPB_clicked();
 
+    void on_exitBtn_clicked();
+
 private:
     Ui::RevelesGui *ui;
     QScrollArea *sa;

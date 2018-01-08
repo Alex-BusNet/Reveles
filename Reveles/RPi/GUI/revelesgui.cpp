@@ -41,6 +41,8 @@ RevelesGui::RevelesGui(QWidget *parent) :
 
     this->setLayout(ui->horizontalLayout);
     this->setStyleSheet(menuStyle);
+
+    this->ui->exitBtn->setShortcut(QKeySequence(Qt::Key_Escape));
 }
 
 RevelesGui::~RevelesGui()
@@ -112,4 +114,9 @@ void RevelesGui::addLocation(QString name, GPSCoord coord)
     gl->addWidget(pb, row-1, col);
     pb->setFixedSize(pb->width() / 3, pb->height() / 3);
     lpbs.push_back(pb);
+}
+
+void RevelesGui::on_exitBtn_clicked()
+{
+    this->close();
 }

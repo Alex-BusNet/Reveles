@@ -63,7 +63,8 @@ SOURCES += \
     RPi/GUI/addlocationdialog.cpp \
     RPi/GUI/revelesgui.cpp \
     RPi/Sensors/gps.cpp \
-    main.cpp
+    main.cpp \
+    RPi/GUI/keyboard.cpp
 
 HEADERS += \
     Libraries/wiringPi/wiringPi.h \
@@ -112,7 +113,8 @@ HEADERS += \
     RPi/GUI/addlocationdialog.h \
     RPi/GUI/locationpushbutton.h \
     RPi/GUI/revelesgui.h \
-    RPi/Sensors/gps.h
+    RPi/Sensors/gps.h \
+    RPi/GUI/keyboard.h
 
 
 FORMS += \
@@ -124,3 +126,8 @@ DISTFILES += \
     RPi/GUI/Assets/Icons/newLocation.png \
     RPi/GUI/Assets/Icons/settings.png \
     RPi/Python/ArduinoPICommunication.py
+
+INSTALLS = target
+target.files = reveles \
+               Assets
+target.path = /home/pi/Desktop/Reveles

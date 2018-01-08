@@ -8,6 +8,8 @@ MainWidget::MainWidget(QWidget *parent, int argc, char *argv[]) :
     ui->setupUi(this);
 
     rc = new RevelesCore();
+
+
 }
 
 MainWidget::~MainWidget()
