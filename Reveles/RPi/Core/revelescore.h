@@ -3,13 +3,23 @@
 
 #include "../Common/datatypes.h"
 #include "RPi/Core/IO/revelesio.h"
+#include <QTimer>
+#include <QObject>
 
-class RevelesCore
+class RevelesCore : public QObject
 {
+    Q_OBJECT
 public:
     RevelesCore();
 
 private:
+    QTimer *coreTimer;
+
+private slots:
+    void readSensor();
+
+signals:
+    void usTriggered();
 
 };
 

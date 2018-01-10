@@ -1,5 +1,6 @@
 #include "revelesgui.h"
 #include "ui_revelesgui.h"
+#include "RPi/Core/IO/revelesio.h"
 #include <QDebug>
 
 Q_GLOBAL_STATIC(RevelesGui, rGui)
@@ -17,6 +18,7 @@ RevelesGui::RevelesGui(QWidget *parent) :
     ui(new Ui::RevelesGui)
 {
     ui->setupUi(this);
+    rc = new RevelesCore();
 
     scrollWidget = new QWidget();
     sa = new QScrollArea();
@@ -39,10 +41,15 @@ RevelesGui::RevelesGui(QWidget *parent) :
     ui->addLocationPB->setIcon(*nLoc);
     ui->settingsScreenPB->setIcon(*settings);
 
-    this->setLayout(ui->horizontalLayout);
+    this->setLayout(ui->horizontalLayout_2);
     this->setStyleSheet(menuStyle);
 
     this->ui->exitBtn->setShortcut(QKeySequence(Qt::Key_Escape));
+
+    this->ui->distLabel->setText(QChar(0x221E));
+
+    connect(rc, SIGNAL(usTriggered()), this, SLOT(TrigDispToggle()));
+    connect(RevelesIO::instance(), SIGNAL(echoReady(float,QString)), this, SLOT(displayDist(float,QString)));
 }
 
 RevelesGui::~RevelesGui()
@@ -120,3 +127,28 @@ void RevelesGui::on_exitBtn_clicked()
 {
     this->close();
 }
+
+//=====================================================================
+// These functions are for development purposes
+
+void RevelesGui::displayDist(float dist, QString unit)
+{
+    if (dist < 0)
+        this->ui->distLabel->setText(QChar(0x221E));
+    else
+        this->ui->distLabel->setText(QString("%0 %1").arg(dist).arg(unit));
+
+    this->ui->TrigLabel->setStyleSheet("QLabel { background-color: transparent; } ");
+}
+
+void RevelesGui::TrigDispToggle()
+{
+    if( !trigOn )
+        this->ui->TrigLabel->setStyleSheet("QLabel { background-color: green; } ");
+    else
+        this->ui->TrigLabel->setStyleSheet("QLabel { background-color: red; } ");
+
+    trigOn = !trigOn;
+}
+
+//======================================================================

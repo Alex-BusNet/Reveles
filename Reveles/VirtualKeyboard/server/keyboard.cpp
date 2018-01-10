@@ -1,11 +1,13 @@
 #include "keyboard.h"
+
+#include "keyboard.h"
 #include <QGridLayout>
 #include <QSignalMapper>
 #include <QPushButton>
 
 static QString keyToCharacter(int key)
 {
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < 5; i++)
     {
         for(int j = 0; j < 11; j++)
         {
@@ -14,12 +16,12 @@ static QString keyToCharacter(int key)
         }
     }
 
-    return QString('');
+    return QString();
 }
 
 Keyboard::Keyboard(QWidget *parent)
 {
-    setWindowFlags(Qt::WindowDoesNotAcceptFocus | Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    setWindowFlags(Qt::WindowDoesNotAcceptFocus | Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::BypassWindowManagerHint);
 
     QGridLayout *gridLayout = new QGridLayout(this);
     QSignalMapper *mapper = new QSignalMapper(this);
@@ -33,9 +35,9 @@ Keyboard::Keyboard(QWidget *parent)
         {
             QPushButton *b = new QPushButton();
             b->setFixedWidth(width);
-            b->setText(QString(kbLayoutArray[i][j]));
+            b->setText(QString(kbLayoutArray[i][j].label));
 
-            mapper->setMapping(button, kbLayoutArray[i][j].key);
+            mapper->setMapping(b, kbLayoutArray[i][j].key);
             connect(b, SIGNAL(clicked(bool)), mapper, SLOT(map()));
             gridLayout->addWidget(b, i, j);
         }
@@ -62,5 +64,5 @@ void Keyboard::buttonClicked(int key)
     if((key == Qt::Key_Enter) || (key == Qt::Key_Backspace))
         emit specialKeyClicked(key);
     else
-        emit keyClicked(key);
+        emit keyClicked(keyToCharacter(key));
 }

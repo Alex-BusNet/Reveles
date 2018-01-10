@@ -3,19 +3,23 @@
 
 #include <QObject>
 #include <stdint.h>
+#include <chrono>
 #include "RPi/Common/datatypes.h"
 #include "Libraries/wiringPi/wiringPi.h"
 #include "Libraries/wiringPi/wiringPiI2C.h"
 
-//----------------------
-//  Sensor GPIO pins
-#define SEL_A   17
-#define SEL_B   27
-#define SEL_C   22
-#define  ECHO   10
-#define   SIG    9
-#define  TRIG    4
-//-----------------------
+//---------------------------
+//     Sensor GPIO pins
+//(use wiringPi's numbering)
+#define SEL_A    0 // GPIO-17
+#define SEL_B    2 // GPIO-27
+#define SEL_C    3 // GPIO-22
+#define  ECHO   12 // GPIO-10
+#define   SIG   13 // GPIO-9
+#define  TRIG    7 // GPIO-4
+//---------------------------
+
+#define TIMEOUT 500000
 
 //-----------------------
 //  I2C Device Addresses
@@ -34,8 +38,17 @@ public:
     void initIO();
     void SendMotorUpdate(int motorSpeedFactor);
     GPSCoord ReadGPS();
-    int readSensor(uint8_t sel, SensorType type);
-    void triggerUltrasonic();
+    int readSensor(SensorType type);
+    void triggerUltrasonic(uint8_t sel);
+
+    long durat;
+    float dist, inch;
+    bool isrWait;
+    std::chrono::steady_clock::time_point begin, end;
+private:
+
+signals:
+    void echoReady(float dist, QString unit);
 };
 
 #endif // REVELESIO_H

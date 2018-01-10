@@ -64,7 +64,6 @@ SOURCES += \
     RPi/GUI/revelesgui.cpp \
     RPi/Sensors/gps.cpp \
     main.cpp \
-    RPi/GUI/keyboard.cpp
 
 HEADERS += \
     Libraries/wiringPi/wiringPi.h \
@@ -114,7 +113,6 @@ HEADERS += \
     RPi/GUI/locationpushbutton.h \
     RPi/GUI/revelesgui.h \
     RPi/Sensors/gps.h \
-    RPi/GUI/keyboard.h
 
 
 FORMS += \

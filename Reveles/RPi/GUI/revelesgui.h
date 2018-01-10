@@ -5,11 +5,13 @@
 #include <QWidget>
 #include <QString>
 #include <QScrollArea>
+#include <QtDBus/QDBusConnection>
 
 #include "locationpushbutton.h"
 #include "addlocationdialog.h"
 #include "../../RPi/Common/datatypes.h"
-
+#include "RPi/Core/revelescore.h"
+#include "keyboard.h"
 
 namespace Ui {
 class RevelesGui;
@@ -37,12 +39,17 @@ private slots:
 
     void on_exitBtn_clicked();
 
+    void displayDist(float dist, QString unit);
+
+    void TrigDispToggle();
+
 private:
     Ui::RevelesGui *ui;
     QScrollArea *sa;
     QGridLayout *gl;
     QWidget *scrollWidget, *sc;
-
+    RevelesCore *rc;
+    bool trigOn;
     void setupLocations();
 
     vector<LocationPushButton*> lpbs;
