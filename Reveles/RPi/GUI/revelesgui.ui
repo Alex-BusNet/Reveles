@@ -34,6 +34,11 @@
     <height>480</height>
    </size>
   </property>
+  <property name="font">
+   <font>
+    <family>DejaVu Serif</family>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>RevelesGUI</string>
   </property>

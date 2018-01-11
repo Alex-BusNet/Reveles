@@ -4,10 +4,10 @@ RevelesCore::RevelesCore()
 {
     RevelesIO::instance()->initIO();
 
-    coreTimer = new QTimer();
-    coreTimer->setInterval(1000);
-    connect(coreTimer, SIGNAL(timeout()), this, SLOT(readSensor()));
-    coreTimer->start();
+//    coreTimer = new QTimer();
+//    coreTimer->setInterval(1000);
+//    connect(coreTimer, SIGNAL(timeout()), this, SLOT(readSensor()));
+//    coreTimer->start();
 }
 
 void RevelesCore::readSensor()

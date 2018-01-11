@@ -1,7 +1,7 @@
 #include "revelesgui.h"
 #include "ui_revelesgui.h"
 #include "RPi/Core/IO/revelesio.h"
-#include <QDebug>
+#include <iostream>
 
 Q_GLOBAL_STATIC(RevelesGui, rGui)
 
@@ -11,7 +11,7 @@ RevelesGui *RevelesGui::instance()
     return rGui;
 }
 
-QString menuStyle = "QWidget { background-color: white; } QToolButton { background-color: #CECECE; } QToolButton:checked { background-color: #bdfd96 }";
+QString menuStyle = "QWidget { background-color: #0d0d0d; } QToolButton, QPushButton { background-color: #0d0d0d; border-radius: 4px; border: 2px solid #5ac5cc; color: white; } QToolButton:checked { background-color: #bdfd96 }";
 
 RevelesGui::RevelesGui(QWidget *parent) :
     QWidget(parent),
@@ -102,8 +102,10 @@ void RevelesGui::setupLocations()
 
 void RevelesGui::on_addLocationPB_clicked()
 {
-    AddLocationDialog *adl = new AddLocationDialog();
-    adl->show();
+    AddLocationDialog *ald = new AddLocationDialog();
+    ald->setGeometry((this->width() / 2) - 400, this->height() - 500, 800, 300);
+    ald->setFocus();
+    ald->show();
 }
 
 void RevelesGui::addLocation(QString name, GPSCoord coord)

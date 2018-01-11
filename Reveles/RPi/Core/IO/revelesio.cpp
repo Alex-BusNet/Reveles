@@ -23,7 +23,6 @@ void RevelesIO::initIO()
     wiringPiI2CSetup(ARDUINO);
 
     isrWait = false;
-//    wiringPiISR(ECHO, INT_EDGE_RISING, &usInterupt);
 }
 
 RevelesIO::RevelesIO()
@@ -81,6 +80,9 @@ void RevelesIO::triggerUltrasonic(uint8_t sel)
     digitalWrite(SEL_B, 0b010 & sel);
     digitalWrite(SEL_C, 0b100 & sel);
 
+    //===============================================
+    // May need to thread this or place on interrupt.
+    // This may start to slow down the GUI.
     unsigned long ping, pong, trigStart;
 
     trigStart = micros();
@@ -107,4 +109,5 @@ void RevelesIO::triggerUltrasonic(uint8_t sel)
         dist /= 12;
         emit echoReady(dist, "ft");
     }
+    //===============================================
 }

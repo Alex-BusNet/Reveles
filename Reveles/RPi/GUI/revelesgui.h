@@ -5,7 +5,6 @@
 #include <QWidget>
 #include <QString>
 #include <QScrollArea>
-#include <QtDBus/QDBusConnection>
 
 #include "locationpushbutton.h"
 #include "addlocationdialog.h"
@@ -50,6 +49,7 @@ private:
     QWidget *scrollWidget, *sc;
     RevelesCore *rc;
     bool trigOn;
+
     void setupLocations();
 
     vector<LocationPushButton*> lpbs;
