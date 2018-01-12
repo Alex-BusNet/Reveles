@@ -2,7 +2,7 @@
 #define REVELESCORE_H
 
 #include "../Common/datatypes.h"
-#include "RPi/Core/IO/revelesio.h"
+#include "IO/revelesio.h"
 #include <QTimer>
 #include <QObject>
 
