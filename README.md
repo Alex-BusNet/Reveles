@@ -17,7 +17,7 @@
 			<li><a href="#bringing-it-all-together">Bringing it all Together</a></li>
 		</ul>
 	</li>
-	<li><a href="#troubleshooting">Troubleshooting>/a>
+	<li><a href="#troubleshooting">Troubleshooting</a>
 		<ul>
 			<li><a href="#eglfs-not-found">EGLFS not found</a></li>
 			<li><a href="#0x300b">Error = 0x300b</a></li>
@@ -179,7 +179,7 @@ git clone git://code.qt.io/qt/qtbase.git -b 5.9.4
 
 cd qtbase
 
-./configure -release -opengl es2 -device linux-rasp-pi3-g++ -device-option CROSS_COMPILE=~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- -sysroot ~/raspi/sysroot -opensource -confirm-license -make libs -prefix /usr/local/qt5pi -extprefix ~/raspi/qt5pi -hostprefix ~/raspi/qt5pi
+./configure -release -opengl es2 -device linux-rasp-pi3-g++ -device-option CROSS_COMPILE=~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- -sysroot ~/raspi/sysroot -opensource -confirm-license -make libs -prefix /usr/local/qt5pi -extprefix ~/raspi/qt5pi -hostprefix ~/raspi/qt5
 
 make -jN
 
