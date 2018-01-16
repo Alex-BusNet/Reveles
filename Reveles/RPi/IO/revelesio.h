@@ -26,6 +26,8 @@
 #define  XG_ADDR  0x6B
 #define MAG_ADDR  0x1E
 #define  ARDUINO  0x04
+
+/// TODO: Add ToF I2C addresses
 //-----------------------
 
 class RevelesIO : public QObject
@@ -40,12 +42,12 @@ public:
     GPSCoord ReadGPS();
     int readSensor(SensorType type);
     void triggerUltrasonic(uint8_t sel);
-
-    long durat;
-    float dist, inch;
-    bool isrWait;
-    std::chrono::steady_clock::time_point begin, end;
+    void TriggerTimeOfFlight();
 private:
+    bool isrWait;
+    float dist, inch;
+    long durat;
+    std::chrono::steady_clock::time_point begin, end;
 
 signals:
     void echoReady(float dist, QString unit);

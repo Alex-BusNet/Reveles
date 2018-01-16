@@ -112,3 +112,8 @@ void RevelesIO::triggerUltrasonic(uint8_t sel)
         emit echoReady(dist, "ft");
     }
 }
+
+void RevelesIO::TriggerTimeOfFlight()
+{
+    // TODO: Do we need a trigger?
+}

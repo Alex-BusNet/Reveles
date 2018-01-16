@@ -53,14 +53,14 @@ struct DecisionPoint {
 };
 
 struct Path {
-    // NOOP
+    GPSCoord coord;
+    Node *child;
+    Node *parent;
 };
 
 struct Node {
     GPSCoord coord;
-    Node *child;
-    Node *parent;
-    // NOOP
+    NodeType nt;
 };
 
 struct Accel { float x, y, z; };
@@ -79,9 +79,11 @@ enum UltrasonicPos {
     FORWARD, REAR, LEFT, RIGHT, STAIR
 };
 
-// GPIO Pin mode.
-// Most likely will be deprecated.
-enum Mode { IN, OUT };
+// Used in RevelesAnalyticalEngine::Navigate()
+enum TravelMode { BLIND, WANDER };
+
+// The DOOR type may not be used.
+enum NodeType { WALL, PATH, STAIR, DOOR, UNKNOWN };
 
 enum SensorType {US, PIR, TOF};
 

@@ -13,7 +13,7 @@
 	</li>
 	<li><a href="#building-reveles">Building Reveles</a>
 		<ul>
-			<li><a href="#obtaining-reveles">Obtaining Reveles</a></li>
+			<li><a href="#obtaining-reveles-and-wiringpi">Obtaining Reveles and WiringPi</a></li>
 			<li><a href="#bringing-it-all-together">Bringing it all Together</a></li>
 		</ul>
 	</li>
@@ -249,10 +249,21 @@ cd ~/
 <hr>
 
 ## Building Reveles
-### Obtaining Reveles
-1.This is the simple part. Just clone the repository to your VM.
+### Obtaining Reveles and WiringPi
+1. For obtaining Reveles, clone the repository to your VM.
 ```
-git clone https://github.com/Alex-BusNet/Reveles.git
+$ git clone https://github.com/Alex-BusNet/Reveles.git
+```
+
+In order to use the GPIO on the Raspberry Pi, Reveles uses the wiringPi library.
+
+2. Clone the wiringPi repository to a folder (Not in the reveles directory)
+`$ git clone git://git.drogon.net/wiringPi`
+
+3. Build the wiringPi library:
+```
+$ cd wiringPi
+$ ./build
 ```
 
 Now just open _Reveles.pro_ in QtCreator.

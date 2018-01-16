@@ -16,10 +16,16 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     connect(this, SIGNAL(commResponse(bool)), rdba, SIGNAL(commResponse(bool)));
     connect(this, SIGNAL(currentLocation(GPSCoord)), rdba, SIGNAL(locationUpdate(GPSCoord)));
 
+    // Additional comms (CORE -> CORE)
+    connect(this, SIGNAL(currentLocation(GPSCoord)), RevelesAnalyticalEngine::instance(), SLOT(updateLocation(GPSCoord)));
+
     // Variable Init
+    RevelesAnalyticalEngine::instance()->Init();
     RevelesIO::instance()->initIO();
     commsGood = false;
     updateInterval = 1000;
+
+    /// TODO: Change this to ping GPS module for current location
     dest = GPSCoord{0, 0};
     loc = dest;
 
@@ -42,6 +48,7 @@ void RevelesCore::setDestination(GPSCoord gpsc)
 {
     cout << "Setting Target Destination to " << gpsc.latitude << ", " << gpsc.longitude << endl;
     dest = gpsc;
+    RevelesAnalyticalEngine::instance()->Start(dest);
 }
 
 void RevelesCore::setMapUpdateInterval(int milliseconds)

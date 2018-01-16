@@ -1,5 +1,5 @@
 QT -= gui
-QT += core dbus
+QT += core dbus concurrent
 
 CONFIG += c++11 console
 CONFIG -= app_bundle

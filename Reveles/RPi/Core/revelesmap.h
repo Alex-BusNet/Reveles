@@ -22,6 +22,8 @@ public:
 private:
     map<string, GPSCoord> savedDestinations;
     vector<GPSCoord> grid;
+    double offsetLat, offsetLong;
+
     void saveMapData();
     void LoadMapData();
     bool gridHasPoint(GPSCoord gpsc);

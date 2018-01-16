@@ -6,6 +6,9 @@
 #include "reveles_dbus_adaptor.h"
 #include "../Common/datatypes.h"
 #include "IO/revelesio.h"
+#include "RevelesAnalyticalEngine.h"
+
+class RevelesAnalyticalEngine;
 
 class RevelesCore : public QObject
 {
