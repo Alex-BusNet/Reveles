@@ -411,7 +411,7 @@ A signal is formatted like so in the _.xml_ file:
 >NOTE (3): To give a signal a parameter, declare the argument as `out`. If an annotation node is included in the definition of the signal, be sure to use `.In0` in the annotation name. When we run _qdbusxml2cpp_ we will get a warning about using `In0` and declaring the `arg` as `out`, just ignore these. If you fix them to make _qdbusxml2cpp_ happy, your signals will not be genereated correctly.
 
 #### D-Bus Standard-Type Parameters:
-The [D-Bus Specification](dbus.freedesktop.org/doc/dbus-specification.html) outlines the ASCii characters that can be used in the `type` field of the `arg` node. The specification is pretty long and contains a lot of lower-level information that most of us aren't too concerned with. So here's a table of all the type codes:
+The [D-Bus Specification](https://dbus.freedesktop.org/doc/dbus-specification.html) outlines the ASCii characters that can be used in the `type` field of the `arg` node. The specification is pretty long and contains a lot of lower-level information that most of us aren't too concerned with. So here's a table of all the type codes:
 
 | D-Bus type | ASCII code | Qt type  |
 |:----------:|:----------:|:--------:|
