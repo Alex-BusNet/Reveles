@@ -31,10 +31,10 @@
 	</li>
 	<li><a href="#d-bus">D-Bus</a>
 		<ul>
-			<li><a href="#making-changes-to-revelesdbus.xml">Making Changes to revelesdbus.xml</a>
+			<li><a href="#making-changes-to-the-xml-d-bus-definition-file">Making Changes to the XML D-Bus Definition File</a>
 				<li><a href="#adding-new-signals-and-methods">Adding New Signals and Methods</a></li>
 				<li><a href="#d-bus-standard-type-parameters">D-Bus Standard-Type Parameters</a></li>
-				<li><a href="#adding-new-signals-and-methods-with-custom-type-parameters">Adding New Signals and Methods with Custom-Type Parameters</a></li>
+				<li><a href="#adding-new-signals-and-methods-with-custom-type-objects">Adding New Signals and Methods with Custom-Type Objects</a></li>
 			</li>
 			<li><a href="#updating-the-interface-and-adaptor">Updating the Interface and Adaptor</a></li>
 		</ul>
@@ -136,112 +136,89 @@ reboot
   1. Open the sources list with `sudo nano /etc/apt/sources.list` and uncomment the deb-src line (this should be about the third line of the file).<br>
   2. Save the file (CTRL+X -> y -> ENTER).<br>
   3. Update the system and get some additional libraries.
-		```
-		sudo apt-get update
-		
-		sudo apt-get build-dep qt4-x11
-		
-		sudo apt-get build-dep libqt5gui5		
-		
-		sudo apt-get install libudev-dev libinput-dev libts-dev libxcb-xinerama0-dev libxcb-xinerama0
+		```ShellSession
+		$ sudo apt-get update		
+		$ sudo apt-get build-dep qt4-x11		
+		$ sudo apt-get build-dep libqt5gui5		
+		$ sudo apt-get install libudev-dev libinput-dev libts-dev libxcb-xinerama0-dev libxcb-xinerama0
 		```
 		
 4.**[RPi]** Prepare the target directory
-```
-sudo mkdir /usr/local/qt5pi
-
-sudo chown pi:pi /usr/local/qt5pi
+```ShellSession
+$ sudo mkdir /usr/local/qt5pi
+$ sudo chown pi:pi /usr/local/qt5pi
 ```
 
 5.**[Host PC]** Create the working directory
-```
-mkdir ~/raspi
-
-cd ~/raspi
-
-git clone https://github.com/raspberrypi/tools`
+```ShellSession
+$ mkdir ~/raspi
+$ cd ~/raspi
+$ git clone https://github.com/raspberrypi/tools`
 ```
 
 6.**[Host PC]** Create a sysroot. This folder contains a copy of files on the pi that we need for compilation.
+```ShellSession
+$ mkdir sysroot sysroot/usr sysroot/opt
+$ rsync -avz pi@<IP address of RPi>:/lib sysroot
+$ rsync -avz pi@<IP address of RPi>:/usr/include sysroot/usr
+$ rsync -avz pi@<IP address of RPi>:/usr/lib sysroot/usr
+$ rsync -avz pi@<IP address of RPi>:/opt/vc sysroot/opt
 ```
-mkdir sysroot sysroot/usr sysroot/opt
 
-rsync -avz pi@<IP address of RPi>:/lib sysroot
-
-rsync -avz pi@<IP address of RPi>:/usr/include sysroot/usr
-
-rsync -avz pi@<IP address of RPi>:/usr/lib sysroot/usr
-
-rsync -avz pi@<IP address of RPi>:/opt/vc sysroot/opt
-```
 7.**[Host PC]** Adjust symlinks by running the following script:
+```ShellSession
+$ wget https://raw.githubusercontent.com/riscv/riscv-poky/master/scripts/sysroot-relativelinks.py
+$ chmod +x sysroot-relativelinks.py
+$ ./sysroot-relativelinks.py sysroot
 ```
-wget https://raw.githubusercontent.com/riscv/riscv-poky/master/scripts/sysroot-relativelinks.py
 
-chmod +x sysroot-relativelinks.py
-
-./sysroot-relativelinks.py sysroot
-```
 Now we are ready to set up Qt for Raspberry Pi
 8.**[Host PC]** Get the qtbase and configure Qt with the following:
-```
-git clone git://code.qt.io/qt/qtbase.git -b 5.9.4
-
-cd qtbase
-
-./configure -release -opengl es2 -device linux-rasp-pi3-g++ -device-option CROSS_COMPILE=~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- -sysroot ~/raspi/sysroot -opensource -confirm-license -make libs -prefix /usr/local/qt5pi -extprefix ~/raspi/qt5pi -hostprefix ~/raspi/qt5
-
-make -jN
-
-make install
+```ShellSession
+$ git clone git://code.qt.io/qt/qtbase.git -b 5.9.4
+$ cd qtbase
+$ ./configure -release -opengl es2 -device linux-rasp-pi3-g++ -device-option CROSS_COMPILE=~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- -sysroot ~/raspi/sysroot -opensource -confirm-license -make libs -prefix /usr/local/qt5pi -extprefix ~/raspi/qt5pi -hostprefix ~/raspi/qt5
+$ make -jN
+$ make install
 ```
 > NOTE (1):  N is the number of parallel jobs to run (assume 1 per core) You can use this to speed up the build time. e.g. A computer with a quad-core processor would use the command `make -j3`
 > 
 >NOTE (2): If you fail at any point, you can reset qtbase with `git clean -dfx` while in the qtbase folder. 
 
 9.**[Host PC]** Once `make install` completes, deploy Qt to the Pi:
+```ShellSession
+$ cd ~/raspi
+$ rsync -avz qt5pi pi@r<IP address of Pi>:/usr/local
 ```
-cd ~/raspi
 
-rsync -avz qt5pi pi@r<IP address of Pi>:/usr/local
-```
 10.**[Host PC]** We can test that everything works by building and running an example. First, build an example:
-```
-cd ~/raspi/qtbase/examples/opengl/qopenglwidget
-
-~/raspi/qt5/bin/qmake
-
-make
-
-scp qopenglwidget pi@<IP address of Pi>:/home/pi
+```ShellSession
+$ cd ~/raspi/qtbase/examples/opengl/qopenglwidget
+$ ~/raspi/qt5/bin/qmake
+$ make
+$ scp qopenglwidget pi@<IP address of Pi>:/home/pi
 ```
 
 11.**[RPi]** Before we can run the example, we need to configure a few things on the Pi.
+```ShellSession
+$ echo /usr/local/qt5pu/lib | sudo tee /etc/ld.so.conf/d/00-qt5pi.conf
+$ sudo ldconfig
 ```
-echo /usr/local/qt5pu/lib | sudo tee /etc/ld.so.conf/d/00-qt5pi.conf
 
-sudo ldconfig
-```
 12.**[RPi]** We now need to fix some of the EGL/GLES libraries for the Pi.
-```
-sudo mv /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0 /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0_backup
-
-sudo mv /usr/lib/arm-linux-gnueabihf/libGLESv2.so.2.0.0 /usr/lib/arm-linux-gnueabihf/libGLESv2.so.2.0.0_backup
-
-sudo ln -s /opt/vc/lib/libEGL.so /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0
-
-sudo ln -s /opt/vc/lib/libGLESv2.so /usr/lib/arm-linux-gnueabihf/libGLES.so.2.0.0
-
-sudo ln -s /opt/vc/lib/libEGL.so /opt/vc/lib/libEGL.so.1
-
-sudo ln -s /opt/vc/lib/libGLESv2.so /opt/vc/lib/libGLESv2.so.2
+```ShellSession
+$ sudo mv /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0 /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0_backup
+$ sudo mv /usr/lib/arm-linux-gnueabihf/libGLESv2.so.2.0.0 /usr/lib/arm-linux-gnueabihf/libGLESv2.so.2.0.0_backup
+$ sudo ln -s /opt/vc/lib/libEGL.so /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0
+$ sudo ln -s /opt/vc/lib/libGLESv2.so /usr/lib/arm-linux-gnueabihf/libGLES.so.2.0.0
+$ sudo ln -s /opt/vc/lib/libEGL.so /opt/vc/lib/libEGL.so.1
+$ sudo ln -s /opt/vc/lib/libGLESv2.so /opt/vc/lib/libGLESv2.so.2
 ```
 
-13.We should now be able to run the example we built before.
-```
-cd ~/
-
-./qopenglwidget
+13.**[RPI]** We should now be able to run the example we built before.
+```ShellSession
+$ cd ~/
+$ ./qopenglwidget
 ```
 
 >NOTE: If the example does not run, see [Troubleshooting](#troubleshooting) for more help
@@ -251,8 +228,8 @@ cd ~/
 ## Building Reveles
 ### Obtaining Reveles
 1.This is the simple part. Just clone the repository to your VM.
-```
-git clone https://github.com/Alex-BusNet/Reveles.git
+```ShellSession
+$ git clone https://github.com/Alex-BusNet/Reveles.git
 ```
 
 Now just open _Reveles.pro_ in QtCreator.
@@ -316,15 +293,15 @@ Additional Qbs Profile Settings = (Do not change)
 #### EGLFS not found.
 __Error message:__ The application failed to start because it could not find or load the Qt platform plugin "eglfs" in ""
 __Solution:__<br>
-	`export QT_QPA_PLATFORM_PLUGIN_PATH=/usr/local/qt5/plugins/platforms`<br>
-	`export QT_QPA_PLATFORM=eglfs`
+	`$ export QT_QPA_PLATFORM_PLUGIN_PATH=/usr/local/qt5/plugins/platforms`<br>
+	`$ export QT_QPA_PLATFORM=eglfs`
 
 #### 0x300b
 __Error message:__ Error: could not draw egl surface: Error = 0x300b
 __Solution:__<br>
 Check first that the system is trying to use `eglfs_brcm` for EGL device integration:<br>
-	`export QT_LOGGING_RULES=qt.qpa.*=true`<br>
-	`./qopenglwidget`<br>
+	`$ export QT_LOGGING_RULES=qt.qpa.*=true`<br>
+	`$ ./qopenglwidget`<br>
 Your output should look something like: 
 ```
 	qt.qpa.egldeviceintegration: EGL device integration plugin keys: ("eglfs_brcm", "eglfs_kms")
@@ -343,28 +320,30 @@ If the system is not using `eglfs_brcm` then try rerunning step 11 in [Setting U
 #### Fonts not found
 __Error message:__ QFontDatabase: Could not find font directory <directory>/lib/fonts.<br>
 __Solution:__<br>
-`sudo mkdir -p <directory>/lib/fonts>`<br>
-`sudo cp /usr/share/fonts/truetype/dejavu/* <directory>/lib/fonts>`
-
+```ShellSession
+$ sudo mkdir -p <directory>/lib/fonts>
+$ sudo cp /usr/share/fonts/truetype/dejavu/* <directory>/lib/fonts>
+```
+	
 ## Updating the Reveles Repository with Git
 The following command assume you are in the top level folder of where the repository is located on your hard drive. (For me this is /home/USER_NAME/Reveles/Reveles)
 
 + Adding files to staging area: <br>
-  + Add all unstaged files: `git add .`<br>
-  + Add specific file: `git add <filename>`<br>
-  + Add entire directory: `git add <directory name>` <br>
+  + Add all unstaged files: `$ git add .`<br>
+  + Add specific file: `$ git add <filename>`<br>
+  + Add entire directory: `$ git add <directory name>` <br>
 
 + To create a commit use:
-	`git commit [-a] [-m <message>]`
+	`$ git commit [-a] [-m <message>]`
 > NOTE (1): The `-a` flag tells Git to commit everything this is both staged and unstaged. Omit the `-a` flag to commit only staged files. 
 > NOTE (2): If `-m` is omitted, or no message is given, Git will prompt you to enter a commit message. If a commit does not have a message with it, it will NOT be pushed to the repository.
 
 + Push the commit to the repo use:
-	`git push origin master`
+	`$ git push origin master`
 
-+ If you wish to see what files are staged or affected by the current commit, use: `git status`.
++ If you wish to see what files are staged or affected by the current commit, use: `$ git status`.
 
-+ To get the latest updates from the repo to your local working version use: `git pull origin master`
++ To get the latest updates from the repo to your local working version use: `$ git pull origin master`
 > NOTE: There is another command call `fetch` which will check if there are updates, but will not change the files in your working version.
  
 
@@ -373,11 +352,11 @@ The following command assume you are in the top level folder of where the reposi
 
 2. If changes have been made since you last pulled, you can save your changes using the `stash` command.
 > `Stash` will save a 'snapshot' of your local working version and store it in a different location. This will revert your working version to match the last commit you pulled.
-  1. To save your changes use: `git stash -u`
+  1. To save your changes use: `$ git stash -u`
   2. Update your local version.
-  3. (OPTIONAL) To see a list of all your stored stashes, use: `git stash list`
+  3. (OPTIONAL) To see a list of all your stored stashes, use: `$ git stash list`
 > NOTE: stash@{0} is always your most recently created stash.
-  4. Reapply your changes by using `git stash pop`.
+  4. Reapply your changes by using `$ git stash pop`.
 > NOTE (1): Most of the time, you will only need to pass 0 as N in this command.
 
 > NOTE (2): This method is not fool-proof. There can still be merge conflicts if the changes on the repo override code you changed in your working version. At this point, you will have to go through the conflicted files manually and delete the code that should be changed.
@@ -408,28 +387,28 @@ The following command assume you are in the top level folder of where the reposi
 ## D-Bus
 The Core and GUI programs communicate along the D-Bus on the service named "com.reveles.core" and through the object "/Core". The definition for the D-Bus interface and adapter is outlined in _revelesdbus.xml_ in the GUI and RPi subprojects. These two files MUST BE THE SAME in order for the two programs to communicate properly. 
 
-### Making Changes to revelesdbus.xml
+### Making Changes to the XML D-Bus Definition file
 #### Adding New Signals and Methods
 A signal is formatted like so in the _.xml_ file:
 
-```
-// Signal with no parameters
+```xml
+<!-- Signal with no parameters -->
 <signal name="<signal name>" />
 
-// Signal with standard-type parameters
+<!-- Signal with standard-type parameters -->
 <signal name="<signal name>">
 	<arg name="<arg name>" type="<variable type>" direction="[in|out]">	
 </signal>
 
-// Signal with custom-type parameters
+<!-- Signal with custom-type parameters -->
 <signal name="<signal name>">
 	<annotation name="org.qtproject.QtDBus.QtTypeName.[In0|Out0]" value="<custom type name>" />
 	<arg name="<arg name>" type="<variable type>" direction="[in|out]">	
 </signal>
-
 ```
->NOTE (1): Methods are formatted the same as signals, except the word `signal` is replaced with `method`
->NOTE (2): When adding an annotation for custom-type parameters, using `.Out0` will result in the first `arg` configured as `out` being used as the return type.
+
+>NOTE (1): Methods are formatted the same as signals, except the word `signal` is replaced with `method`<br>
+>NOTE (2): When adding an annotation for custom-type parameters, using `.Out0` will result in the first `arg` configured as `out` being used as the return type.<br>
 >NOTE (3): To give a signal a parameter, declare the argument as `out`. If an annotation node is included in the definition of the signal, be sure to use `.In0` in the annotation name. When we run _qdbusxml2cpp_ we will get a warning about using `In0` and declaring the `arg` as `out`, just ignore these. If you fix them to make _qdbusxml2cpp_ happy, your signals will not be genereated correctly.
 
 #### D-Bus Standard-Type Parameters:
@@ -461,12 +440,11 @@ The [D-Bus Specification](dbus.freedesktop.org/doc/dbus-specification.html) outl
 The Qt D-Bus module supports custom types but some additional code is needed.<br>
 Say for example we have the following struct:
 
-```
+```c++
 struct MyStruct {
 	int foo;
 	string bar;
 };
-
 ```
 
 In order to use `MyStruct` on the D-Bus, we have to tell Qt that it is a type that can be sent along the bus. To do this we add the following line:<br>
@@ -474,7 +452,7 @@ In order to use `MyStruct` on the D-Bus, we have to tell Qt that it is a type th
 We will also need to add `#include <QMetaType>` to to our source file.<br>
 If we are using a `struct`, we need to also tell Qt how to marshall and demarshall the datatype. We can do this by adding:
 
-```
+```c++
 QDBusArgument &operator<<(QDBusArgument &argument, const MyStruct& ms)
 {
     argument.beginStructure();
@@ -495,7 +473,8 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, MyStruct &ms)
 ```
 
 Our source file should now look like so:
-```
+
+```c++
 #include <QMetaType>
 #include <QtDBus/QDBusArgument>
 #include <cstring>
@@ -524,9 +503,12 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, MyStruct &ms)
     argument.endStructure();
     return argument;
 }
-```<br>
-In our _.xml_ file we would then use our `MyStruct` object like so:
 ```
+
+<br>
+In our _.xml_ file we would then use our `MyStruct` object like so:
+
+```xml
 <signal name="mySignal">
 	<annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MyStruct" />
 	<arg name="ms" type="(xs)" direction="out">	
@@ -535,6 +517,7 @@ In our _.xml_ file we would then use our `MyStruct` object like so:
 
 ### Updating the Interface and Adaptor
 If changes are made to _revelesdbus.xml_ the following commands will generate the corresponding _.cpp_ and _.h_ files. The commands will NOT update anyother source file, so make sure any changes to the slots or signals are properly reflected in _revelesgui.cpp_ and _revelescore.cpp_<br>
+
 	```
 	export PATH=/path/to/Qt/%VERSION%/gcc_64/bin:$PATH
 	
@@ -554,3 +537,4 @@ All rights reserved. &copy; 2017
 
 Walkthrough written against the following resources:
 * [RaspberryPi2EGLFS](https://wiki.qt.io/RaspberryPi2EGLFS)
+* [Using Custom Types with D-Bus](https://techbase.kde.org/Development/Tutorials/D-Bus/CustomTypes)
