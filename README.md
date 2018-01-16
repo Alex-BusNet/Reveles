@@ -517,17 +517,13 @@ In our _.xml_ file we would then use our `MyStruct` object like so:
 ### Updating the Interface and Adaptor
 If changes are made to _revelesdbus.xml_ the following commands will generate the corresponding _.cpp_ and _.h_ files. The commands will NOT update anyother source file, so make sure any changes to the slots or signals are properly reflected in _revelesgui.cpp_ and _revelescore.cpp_<br>
 
-	```
-	export PATH=/path/to/Qt/%VERSION%/gcc_64/bin:$PATH
-	
-	cd /path/to/reveles/RPi
-
-	qdbusxml2cpp -i Common/datatypes.h -c RevelesDBusAdaptor -a reveles_dbus_adaptor.h:reveles_dbus_adaptor.cpp revelesdbus.xml
-	
-	cd ../GUI
-
-	qdbusxml2cpp -c RevelesDBusInterface -p reveles_dbus_interface.h:reveles_dbus_interface.cpp -i ../RPi/Common/datatypes.h revelesdbus.xml
-	```
+```ShellSession
+$ export PATH=/path/to/Qt/%VERSION%/gcc_64/bin:$PATH	
+$ cd /path/to/reveles/RPi
+$ qdbusxml2cpp -i Common/datatypes.h -c RevelesDBusAdaptor -a reveles_dbus_adaptor.h:reveles_dbus_adaptor.cpp revelesdbus.xml
+$ cd ../GUI
+$ qdbusxml2cpp -c RevelesDBusInterface -p reveles_dbus_interface.h:reveles_dbus_interface.cpp -i ../RPi/Common/datatypes.h revelesdbus.xml
+```
 
 ## Credits
 Code base for Trine University ECE Senior Design Project 2017-18.
