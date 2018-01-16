@@ -51,12 +51,12 @@ This walkthrough will assume that the end user is starting from a clean slate (n
 
 > From herein, folders will be denoted in **bold** while filenames will be denoted in _italics_.
 
-You can skip to [Bringing it all Together](#bringing-it-all-together "Bringing it all Together") if you have Reveles already set up on a linux system and built.
+You can skip to [Bringing it all Together](#bringing-it-all-together "Bringing it all Together") if you have Reveles already set up on a linux system and built.<br>
 Required space (Host machine): 10 GB (During setup and build. This can be reduced later.)
 
 ## Tools needed 
 + Any linux distro (I did this successfully on Ubuntu 16.04 LTS)
-+ [Qt 5.9.2](https://www.qt.io/download-qt-for-application-development "Qt Latest download")
++ [Latest version of QtCreator](https://www.qt.io/download-qt-for-application-development "Qt Latest download")
 + Reveles project (obviously)
 + Git
 + A Raspberry Pi running Raspbian Stretch
@@ -96,11 +96,11 @@ Once the install completes, the VM will restart. You may be prompted to remove t
 > NOTE: Where the terminal is varies by distro. On Ubuntu it can be found by opening the search and typing 'terminal' into the text field. Some Debian based distros have the terminal accessible in the taskbar by default. You may want to lock the terminal to the taskbar for later use (right-click icon and select 'Lock to Launcher').
 
 2. If git was not found enter the following command:
-	`sudo apt-get install git`
+	`$ sudo apt-get install git`
 
 3. (OPTIONAL) You can configure git for easier use with the following commands:<br>
-	`git config --global user.email "you@example.com"`<br>
-	`git config --global user.name "Your name"`
+	`$ git config --global user.email "you@example.com"`<br>
+	`$ git config --global user.name "Your name"`
 
 ### Installing Qt (Host PC)
 All linux distros have a built-in package manager (aptitude on Debian/Ubuntu) which does include a Qt package. However this will install Qt version 5.3.2 which may not compile Reveles correctly.
@@ -126,10 +126,9 @@ SSH	   = enable
 Reboot when prompted to do so.
 
 2.**[RPi]**  If you are running Raspbian Stretch, then you will also need to update the RPi:  
-```
-sudo rpi-update
-
-reboot
+```ShellSession
+$ sudo rpi-update
+$ reboot
 ```
 
 3.**[RPi]** Now we need to configure some dependencies for Qt.<br>
