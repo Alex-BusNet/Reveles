@@ -1,5 +1,5 @@
 QT -= gui
-QT += dbus
+QT += core dbus
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -16,6 +16,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+#DBUS_ADAPTORS += revelesdbus.xml
 
 SOURCES += main.cpp \
     ../Libraries/wiringPi/ads1115.c \
@@ -53,7 +55,8 @@ SOURCES += main.cpp \
     Core/revelescore.cpp \
     Core/revelesmap.cpp \
     IO/revelesio.cpp \
-    IO/gps.cpp
+    IO/gps.cpp \
+    reveles_dbus_adaptor.cpp
 
 HEADERS += \
     ../Libraries/wiringPi/wiringPi.h \
@@ -98,7 +101,8 @@ HEADERS += \
     Core/revelescore.h \
     Core/revelesmap.h \
     IO/revelesio.h \
-    IO/gps.h
+    IO/gps.h \
+    reveles_dbus_adaptor.h
 
 INSTALLS = target
 target.files = revelescore

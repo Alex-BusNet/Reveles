@@ -1,0 +1,27 @@
+<!DOCTYPE node PUBLIC "-//freedesktop/DTD D-BUS Object Introspection 1.0//EN"
+	"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/com/reveles/core">
+	<interface name="com.reveles.RevelesCoreInterface">
+		<signal name="commQuery"></signal>
+		<signal name="requestCurrentLocation"></signal>
+		<signal name="requestMapUpdate"></signal>
+		<signal name="setDestination">
+			<annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="GPSCoord"/>
+			<arg name="gpsc" type="(dd)" direction="out"/>		
+		</signal>
+		<signal name="AutoMapUpdate">
+			<annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="GPSCoord"/>
+			<arg name="gpsc" type="(dd)" direction="out"/>
+		</signal>
+		<signal name="setMapUpdateInterval">
+			<arg name="milliseconds" type="i" direction="out"/>
+		</signal>
+		<signal name="commResponse">
+			<arg name="good" type="b" direction="out" />
+		</signal>
+		<signal name="locationUpdate">
+			<annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="GPSCoord" />
+			<arg name="loc" type="(dd)" direction="out" />
+		</signal>	
+	</interface>
+</node>

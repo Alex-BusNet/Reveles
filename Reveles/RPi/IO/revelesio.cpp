@@ -1,5 +1,6 @@
 #include "revelesio.h"
 #include <iostream>
+#include <random>
 
 Q_GLOBAL_STATIC(RevelesIO, rio)
 
@@ -37,7 +38,11 @@ void RevelesIO::SendMotorUpdate(int motorSpeedFactor)
 
 GPSCoord RevelesIO::ReadGPS()
 {
-    return GPSCoord();
+    // Stubbed GPS module.
+    return GPSCoord{
+        ((static_cast<double>(rand()) / RAND_MAX) * 180.0),
+        ((static_cast<double>(rand()) / RAND_MAX) * 180.0)
+    };
 }
 
 int RevelesIO::readSensor(SensorType type)
@@ -80,9 +85,6 @@ void RevelesIO::triggerUltrasonic(uint8_t sel)
     digitalWrite(SEL_B, 0b010 & sel);
     digitalWrite(SEL_C, 0b100 & sel);
 
-    //===============================================
-    // May need to thread this or place on interrupt.
-    // This may start to slow down the GUI.
     unsigned long ping, pong, trigStart;
 
     trigStart = micros();
@@ -109,5 +111,4 @@ void RevelesIO::triggerUltrasonic(uint8_t sel)
         dist /= 12;
         emit echoReady(dist, "ft");
     }
-    //===============================================
 }

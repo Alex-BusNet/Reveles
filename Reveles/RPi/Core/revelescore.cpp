@@ -1,18 +1,75 @@
 #include "revelescore.h"
+#include <iostream>
 
-RevelesCore::RevelesCore()
+using namespace  std;
+
+RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
+    rdba(dbusAdaptor)
 {
-    RevelesIO::instance()->initIO();
+    // Inbound comms (GUI -> CORE)
+    connect(rdba, SIGNAL(commQuery()), this, SLOT(commCheck()));
+    connect(rdba, SIGNAL(requestCurrentLocation()), this, SLOT(updateMapData()));
+    connect(rdba, SIGNAL(setMapUpdateInterval(int)), this, SLOT(setMapUpdateInterval(int)));
+    connect(rdba, SIGNAL(requestMapUpdate()), this, SLOT(updateMapData()));
 
-//    coreTimer = new QTimer();
-//    coreTimer->setInterval(1000);
-//    connect(coreTimer, SIGNAL(timeout()), this, SLOT(readSensor()));
-//    coreTimer->start();
+    // Outbound comms (CORE -> GUI)
+    connect(this, SIGNAL(commResponse(bool)), rdba, SIGNAL(commResponse(bool)));
+    connect(this, SIGNAL(currentLocation(GPSCoord)), rdba, SIGNAL(locationUpdate(GPSCoord)));
+
+    // Variable Init
+    RevelesIO::instance()->initIO();
+    commsGood = false;
+    updateInterval = 1000;
+    dest = GPSCoord{0, 0};
+    loc = dest;
+
+    coreTimer = new QTimer();
+    coreTimer->setInterval(updateInterval);
+    connect(coreTimer, SIGNAL(timeout()), this, SLOT(updateMapData()));
+    coreTimer->start();
+
+    cout << "RevelesCore init complete." << endl;
+}
+
+void RevelesCore::commCheck()
+{
+    cout << "Signal recieved from GUI" << endl;
+    commsGood = true;
+    emit commResponse(commsGood);
+}
+
+void RevelesCore::setDestination(GPSCoord gpsc)
+{
+    cout << "Setting Target Destination to " << gpsc.latitude << ", " << gpsc.longitude << endl;
+    dest = gpsc;
+}
+
+void RevelesCore::setMapUpdateInterval(int milliseconds)
+{
+    cout << "Changing Map Update Interval" << endl;
+
+    updateInterval = milliseconds;
+    coreTimer->stop();
+    coreTimer->setInterval(updateInterval);
+    coreTimer->start();
+
+    cout << "--Done" << endl;
+}
+
+void RevelesCore::getCurrentLocation()
+{
+    emit currentLocation(loc);
 }
 
 void RevelesCore::readSensor()
 {
     RevelesIO::instance()->triggerUltrasonic(0b001);
     emit usTriggered();
+}
+
+void RevelesCore::updateMapData()
+{
+    loc = RevelesIO::instance()->ReadGPS();
+    emit currentLocation(loc);
 }
 

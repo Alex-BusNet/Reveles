@@ -29,6 +29,16 @@
 			<li><a href="#tips-on-how-to-avoid-merge-conflicts-with-git">Tips on How to Avoid Merge Conflicts with Git</a></li>
 		</ul>
 	</li>
+	<li><a href="#d-bus">D-Bus</a>
+		<ul>
+			<li><a href="#making-changes-to-revelesdbus.xml">Making Changes to revelesdbus.xml</a>
+				<li><a href="#adding-new-signals-and-methods">Adding New Signals and Methods</a></li>
+				<li><a href="#d-bus-standard-type-parameters">D-Bus Standard-Type Parameters</a></li>
+				<li><a href="#adding-new-signals-and-methods-with-custom-type-parameters">Adding New Signals and Methods with Custom-Type Parameters</a></li>
+			</li>
+			<li><a href="#updating-the-interface-and-adaptor">Updating the Interface and Adaptor</a></li>
+		</ul>
+	</li>
 	<li><a href="#credits">Credits</a></li>
 </ul>
 
@@ -395,6 +405,147 @@ The following command assume you are in the top level folder of where the reposi
 > From here, simply modify the code as needed by deleting the HEAD or local section, or join the two together. Once you have fixed a conflict, besure to remove the `<<<<<<< HEAD`, `=======`, and `>>>>>>> <branch name>` markers from the file before commiting files.
   5. Once all all the files are conflict free (and correct), you can push your newest changes to the repo.
 
+## D-Bus
+The Core and GUI programs communicate along the D-Bus on the service named "com.reveles.core" and through the object "/Core". The definition for the D-Bus interface and adapter is outlined in _revelesdbus.xml_ in the GUI and RPi subprojects. These two files MUST BE THE SAME in order for the two programs to communicate properly. 
+
+### Making Changes to revelesdbus.xml
+#### Adding New Signals and Methods
+A signal is formatted like so in the _.xml_ file:
+
+```
+// Signal with no parameters
+<signal name="<signal name>" />
+
+// Signal with standard-type parameters
+<signal name="<signal name>">
+	<arg name="<arg name>" type="<variable type>" direction="[in|out]">	
+</signal>
+
+// Signal with custom-type parameters
+<signal name="<signal name>">
+	<annotation name="org.qtproject.QtDBus.QtTypeName.[In0|Out0]" value="<custom type name>" />
+	<arg name="<arg name>" type="<variable type>" direction="[in|out]">	
+</signal>
+
+```
+>NOTE (1): Methods are formatted the same as signals, except the word `signal` is replaced with `method`
+>NOTE (2): When adding an annotation for custom-type parameters, using `.Out0` will result in the first `arg` configured as `out` being used as the return type.
+>NOTE (3): To give a signal a parameter, declare the argument as `out`. If an annotation node is included in the definition of the signal, be sure to use `.In0` in the annotation name. When we run _qdbusxml2cpp_ we will get a warning about using `In0` and declaring the `arg` as `out`, just ignore these. If you fix them to make _qdbusxml2cpp_ happy, your signals will not be genereated correctly.
+
+#### D-Bus Standard-Type Parameters:
+The [D-Bus Specification](dbus.freedesktop.org/doc/dbus-specification.html) outlines the ASCii characters that can be used in the `type` field of the `arg` node. The specification is pretty long and contains a lot of lower-level information that most of us aren't too concerned with. So here's a table of all the type codes:
+
+| D-Bus type | ASCII code | Qt type  |
+|:----------:|:----------:|:--------:|
+|BYTE        |y           |uchar     |
+|BOOLEAN     |b           |bool      |
+|INT16       |n           |short     |
+|UINT16	     |q           |ushort    |
+|INT32       |i           |int       |
+|UINT32      |u           |uint      |
+|INT64       |x           |qlonglong |
+|UINT64      |t           |qulonglong|
+|DOUBLE      |d           |double    |
+|STRING      |s           |QString   |
+|OBJECT\_PATH|o           |QDBusObject\_Path |
+|SIGNATURE   |g           |QDBusSignature   |
+|VARIANT     |v           |QDBusVariant     |
+|Struct      |(\<type(s)\>)|          |
+|Array	     |a\<type\>   |          |
+|Dictionary  |{\<type(s)\>}|          |
+
+>NOTE: Don't worry too much about OBJECT\_PATH and SIGNATURE types. We will hardly see them in this project.
+
+
+#### Adding New Signals and Methods with Custom Type Objects
+The Qt D-Bus module supports custom types but some additional code is needed.<br>
+Say for example we have the following struct:
+
+```
+struct MyStruct {
+	int foo;
+	string bar;
+};
+
+```
+
+In order to use `MyStruct` on the D-Bus, we have to tell Qt that it is a type that can be sent along the bus. To do this we add the following line:<br>
+`Q_DECLARE_METATYPE(MyStruct)`. <br>
+We will also need to add `#include <QMetaType>` to to our source file.<br>
+If we are using a `struct`, we need to also tell Qt how to marshall and demarshall the datatype. We can do this by adding:
+
+```
+QDBusArgument &operator<<(QDBusArgument &argument, const MyStruct& ms)
+{
+    argument.beginStructure();
+    argument << ms.foo;
+    argument << ms.bar;
+    argument.endStructure();
+    return argument;
+}
+
+const QDBusArgument &operator>>(const QDBusArgument &argument, MyStruct &ms)
+{
+    argument.beginStructure();
+    argument >> ms.foo;
+    argument >> ms.bar;
+    argument.endStructure();
+    return argument;
+}
+```
+
+Our source file should now look like so:
+```
+#include <QMetaType>
+#include <QtDBus/QDBusArgument>
+#include <cstring>
+
+struct MyStruct {
+	int foo;
+	string bar;
+};
+
+Q_DECLARE_METATYPE(MyStruct)
+
+QDBusArgument &operator<<(QDBusArgument &argument, const MyStruct& ms)
+{
+    argument.beginStructure();
+    argument << ms.foo;
+    argument << ms.bar;
+    argument.endStructure();
+    return argument;
+}
+
+const QDBusArgument &operator>>(const QDBusArgument &argument, MyStruct &ms)
+{
+    argument.beginStructure();
+    argument >> ms.foo;
+    argument >> ms.bar;
+    argument.endStructure();
+    return argument;
+}
+```<br>
+In our _.xml_ file we would then use our `MyStruct` object like so:
+```
+<signal name="mySignal">
+	<annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MyStruct" />
+	<arg name="ms" type="(xs)" direction="out">	
+</signal>
+```
+
+### Updating the Interface and Adaptor
+If changes are made to _revelesdbus.xml_ the following commands will generate the corresponding _.cpp_ and _.h_ files. The commands will NOT update anyother source file, so make sure any changes to the slots or signals are properly reflected in _revelesgui.cpp_ and _revelescore.cpp_<br>
+	```
+	export PATH=/path/to/Qt/%VERSION%/gcc_64/bin:$PATH
+	
+	cd /path/to/reveles/RPi
+
+	qdbusxml2cpp -i Common/datatypes.h -c RevelesDBusAdaptor -a reveles_dbus_adaptor.h:reveles_dbus_adaptor.cpp revelesdbus.xml
+	
+	cd ../GUI
+
+	qdbusxml2cpp -c RevelesDBusInterface -p reveles_dbus_interface.h:reveles_dbus_interface.cpp -i ../RPi/Common/datatypes.h revelesdbus.xml
+	```
 
 ## Credits
 Code base for Trine University ECE Senior Design Project 2017-18.

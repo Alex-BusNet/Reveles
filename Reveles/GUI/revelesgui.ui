@@ -196,22 +196,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="testingLabel">
-         <property name="maximumSize">
-          <size>
-           <width>100</width>
-           <height>50</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QPushButton" name="exitBtn">
          <property name="text">
           <string>Exit</string>
@@ -237,17 +221,39 @@
        <item>
         <widget class="QLabel" name="TrigLabel">
          <property name="text">
-          <string>TRIG</string>
+          <string>LOC UPDATE</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="EchoLabel">
          <property name="text">
-          <string>ECHO</string>
+          <string>D-Bus Comms</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="testingLabel">
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>TextLabel</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

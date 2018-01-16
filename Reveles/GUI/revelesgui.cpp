@@ -1,6 +1,5 @@
 #include "revelesgui.h"
 #include "ui_revelesgui.h"
-//#include "RPi/Core/IO/revelesio.h"
 #include <iostream>
 
 Q_GLOBAL_STATIC(RevelesGui, rGui)
@@ -10,17 +9,22 @@ RevelesGui *RevelesGui::instance()
     return rGui;
 }
 
-RevelesGui::RevelesGui(QWidget *parent) :
+RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::RevelesGui)
+    ui(new Ui::RevelesGui),
+    rci(iface)
 {
+    qRegisterMetaType<GPSCoord>("GPSCoord");
+    qDBusRegisterMetaType<GPSCoord>();
 
     QString menuStyle = "QWidget { background-color: #0d0d0d; color: white; }";
     menuStyle += "QToolButton, QPushButton { background-color: #0d0d0d; border-radius: 4px; border: 2px solid #5ac5cc; color: white; }";
     menuStyle += "QToolButton:checked { background-color: #bdfd96 }";
 
     ui->setupUi(this);
-//    rc = new RevelesCore();
+    ss = NULL;
+    ald = NULL;
+    trigOn = false;
 
     scrollWidget = new QWidget();
     sa = new QScrollArea();
@@ -49,9 +53,6 @@ RevelesGui::RevelesGui(QWidget *parent) :
 
     this->ui->distLabel->setText(QChar(0x221E));
 
-    /// Change this to use Qt D-Bus
-//    connect(rc, SIGNAL(usTriggered()), this, SLOT(TrigDispToggle()));
-//    connect(RevelesIO::instance(), SIGNAL(echoReady(float,QString)), this, SLOT(displayDist(float,QString)));
 }
 
 RevelesGui::~RevelesGui()
@@ -85,6 +86,16 @@ void RevelesGui::setLocation(LocationPushButton *pb)
                 lpbs[j]->setChecked(false);
         }
     }
+
+    /// TODO: Add Confirm selection dialog box.
+
+    rci->setDestination(pb->GetIndex());
+}
+
+void RevelesGui::updateLocation(GPSCoord gpsc)
+{
+    ui->testingLabel->setText(QString::number(gpsc.latitude) + ", " + QString::number(gpsc.longitude));
+    TrigDispToggle();
 }
 
 void RevelesGui::setupLocations()
@@ -104,7 +115,10 @@ void RevelesGui::setupLocations()
 
 void RevelesGui::on_addLocationPB_clicked()
 {
-    AddLocationDialog *ald = new AddLocationDialog();
+    if(ald != NULL)
+        delete ald;
+
+    ald = new AddLocationDialog();
     ald->setGeometry((this->width() / 2) - 400, this->height() - 500, 800, 300);
     ald->show();
 }
@@ -124,6 +138,24 @@ void RevelesGui::addLocation(QString name, GPSCoord coord)
     gl->addWidget(pb, row-1, col);
     pb->setFixedSize(pb->width() / 3, pb->height() / 3);
     lpbs.push_back(pb);
+}
+
+void RevelesGui::setDBusInterface(com::reveles::RevelesCoreInterface *iface)
+{
+    rci = iface;
+
+    connect(rci, SIGNAL(commResponse(bool)), this, SLOT(commCheck(bool)));
+    connect(rci, SIGNAL(locationUpdate(GPSCoord)), this, SLOT(updateLocation(GPSCoord)));
+
+    rci->commQuery();
+}
+
+void RevelesGui::commCheck(bool good)
+{
+    if(good)
+        ui->EchoLabel->setStyleSheet("QLabel { background-color: green; }");
+    else
+        ui->EchoLabel->setStyleSheet("QLabel { background-color: red; }");
 }
 
 void RevelesGui::on_exitBtn_clicked()
@@ -155,3 +187,13 @@ void RevelesGui::TrigDispToggle()
 }
 
 //======================================================================
+
+void RevelesGui::on_settingsScreenPB_clicked()
+{
+    if(ss != NULL)
+        delete ss;
+
+    ss = new SettingsScreen(this);
+    ss->setGeometry(0,0, 800, 400);
+    ss->show();
+}
