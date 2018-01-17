@@ -17,7 +17,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     connect(this, SIGNAL(currentLocation(GPSCoord)), rdba, SIGNAL(locationUpdate(GPSCoord)));
 
     // Additional comms (CORE -> CORE)
-    connect(this, SIGNAL(currentLocation(GPSCoord)), RevelesAnalyticalEngine::instance(), SLOT(updateLocation(GPSCoord)));
+    connect(this, SIGNAL(currentLocation(GPSCoord)), AnalyticalEngine::instance(), SLOT(updateLocation(GPSCoord)));
 
     // Variable Init
     RevelesAnalyticalEngine::instance()->Init();

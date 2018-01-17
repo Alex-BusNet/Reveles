@@ -19,9 +19,13 @@ void RevelesIO::initIO()
     pinMode(SIG, INPUT);
     pinMode(TRIG, OUTPUT);
 
-    wiringPiI2CSetup(MAG_ADDR);
-    wiringPiI2CSetup(XG_ADDR);
     wiringPiI2CSetup(ARDUINO);
+
+    agm = new LSM9DS1();
+    agm->setup();
+
+    XGAvailable = agm->AccelGyroFound();
+    MagAvailable = agm->MagFound();
 
     isrWait = false;
 }
@@ -45,6 +49,12 @@ GPSCoord RevelesIO::ReadGPS()
     };
 }
 
+/*
+ * This function may be removed at a later time
+ * once all the sensors are sorted out. I feel
+ * this may be a redundant function that is not
+ * needed. -Alex 1/17/2018
+ */
 int RevelesIO::readSensor(SensorType type)
 {
     if(type == US)
@@ -116,4 +126,25 @@ void RevelesIO::triggerUltrasonic(uint8_t sel)
 void RevelesIO::TriggerTimeOfFlight()
 {
     // TODO: Do we need a trigger?
+}
+
+MagDirection RevelesIO::ReadMagnetometer()
+{
+    if(!MagAvailable) { return new MagDirection{0.0f, 0.0f, 0.0f}; }
+
+    return agm->ReadMag();
+}
+
+AccelDirection RevelesIO::ReadAccelerometer()
+{
+    if(!XGAvailable) { return new AccelDirection {0.0f, 0.0f, 0.0f}; }
+
+    return agm->ReadAccel();
+}
+
+GyroDirection RevelesIO::ReadGyroscope()
+{
+    if(!XGAvailable) { return new GyroDirection {0.0f, 0.0f, 0.0f}; }
+
+    return agm->ReadGyro();
 }

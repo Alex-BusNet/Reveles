@@ -41,7 +41,20 @@ inline const QDBusArgument &operator>>(const QDBusArgument &argument, GPSCoord &
 QT_END_NAMESPACE
 //====================================================
 
+struct AccelDirection
+{
+    float x;
+    float y;
+    float z;
+};
+
 struct MagDirection {
+    float x;
+    float y;
+    float z;
+};
+
+struct GyroDirection {
     float x;
     float y;
     float z;

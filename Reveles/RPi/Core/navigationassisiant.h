@@ -1,19 +1,22 @@
-#ifndef REVELES_REVELESANALYTICALENGINE_H
-#define REVELES_REVELESANALYTICALENGINE_H
+#ifndef NAVIGATIONASSISIANT_H
+#define NAVIGATIONASSISIANT_H
+
 #include <QObject>
 #include <QList>
-#include "Common/datatypes.h"
+#include <Common/datatypes.h>
+#include <Common/vector2i.h>
 #include "revelescore.h"
 
-//class RevelesCore;
-
-class RevelesAnalyticalEngine : public QObject
+/*
+ * The NavigationAssistant class is intended to
+ * handle the more traditional traversal tasks
+ * such as pathfinding and updating map nodes.
+ */
+class NavigationAssisiant
 {
-    Q_OBJECT
-
 public:
-    static RevelesAnalyticalEngine *instance();
-    RevelesAnalyticalEngine();
+    NavigationAssisiant();
+    static NavigationAssisiant *instance();
 
     void Init();
     void Start(GPSCoord dest);
@@ -28,19 +31,15 @@ private:
     QList<GPSCoord> GetNeighbors(GPSCoord node);
     int GetDistance(GPSCoord a, GPSCoord b);
 
+    void Orient();
     void Navigate();
 
     void DeadReckon();
-    void CheckEnv();
-    void ProcessEnv();
-
-    void AdjustPath_Inanimate();
-    void AdjustPath_Animate();
 
     // Variables
     QList<GPSCoord> path;
     GPSCoord currentLocation, destination;
+    Direction heading;
 };
 
-
-#endif //REVELES_REVELESANALYTICALENGINE_H
+#endif // NAVIGATIONASSISIANT_H

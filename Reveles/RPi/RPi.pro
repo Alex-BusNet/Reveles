@@ -51,12 +51,15 @@ SOURCES += main.cpp \
     ../Libraries/wiringPi/wiringSerial.c \
     ../Libraries/wiringPi/wiringShift.c \
     Common/gpio.cpp \
-    Core/RevelesAnalyticalEngine.cpp \
     Core/revelescore.cpp \
     Core/revelesmap.cpp \
     IO/revelesio.cpp \
     IO/gps.cpp \
-    reveles_dbus_adaptor.cpp
+    reveles_dbus_adaptor.cpp \
+    Common/vector2i.cpp \
+    Core/navigationassisiant.cpp \
+    Core/analyticalengine.cpp \
+    IO/lsm9ds1.cpp
 
 HEADERS += \
     ../Libraries/wiringPi/wiringPi.h \
@@ -97,12 +100,15 @@ HEADERS += \
     ../Libraries/version.h \
     Common/datatypes.h \
     Common/gpio.h \
-    Core/RevelesAnalyticalEngine.h \
     Core/revelescore.h \
     Core/revelesmap.h \
     IO/revelesio.h \
     IO/gps.h \
-    reveles_dbus_adaptor.h
+    reveles_dbus_adaptor.h \
+    Common/vector2i.h \
+    Core/navigationassisiant.h \
+    Core/analyticalengine.h \
+    IO/lsm9ds1.h
 
 INSTALLS = target
 target.files = revelescore
