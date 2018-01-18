@@ -25,7 +25,6 @@ public slots:
     void updateLocation(GPSCoord loc);
 
 private:
-
     // Functions
     void FindPath();
     QList<GPSCoord> GetNeighbors(GPSCoord node);

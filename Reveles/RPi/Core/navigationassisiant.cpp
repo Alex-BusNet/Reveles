@@ -1,5 +1,10 @@
 #include "navigationassisiant.h"
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent>
+#include <tuple>
+
+#define TI(a,b) (std::tuple<int, int>(a, b))
+#define TD(a,b) (std::tuple<double, double>(a,b))
+#define TF(a,b) (std::tuple<float, float>(a,b))
 
 Q_GLOBAL_STATIC(NavigationAssisiant, navi)
 
@@ -19,7 +24,8 @@ NavigationAssisiant::NavigationAssisiant()
 
 void NavigationAssisiant::Init()
 {
-
+    destination = GPSCoord{0,0};
+    Orient();
 }
 
 /*
@@ -30,7 +36,8 @@ void NavigationAssisiant::Init()
 void NavigationAssisiant::Start(GPSCoord dest)
 {
     destination = dest;
-    QFuture<void> pathGen = QtConcurrent::run(this, NavigationAssisiant::FindPath);
+
+    FindPath();
 }
 
 void NavigationAssisiant::updateLocation(GPSCoord loc)
@@ -59,6 +66,26 @@ int NavigationAssisiant::GetDistance(GPSCoord a, GPSCoord b)
 
 }
 
+void NavigationAssisiant::Orient()
+{
+    MagDirection md = RevelesIO::instance()->ReadMagnetometer();
+    Vector2i locVec(currentLocation.latitude, currentLocation.longitude);
+    Vector2i destVec(destination.latitude, destination.longitude);
+
+    // relate the gausian values (x, z) to the Direction enumeration.
+
+    if(destVec == TI(0,0))
+    {
+        // No destination set
+    }
+    else
+    {
+        // Determine:
+        //  Turn direction
+        //  Turn distance
+    }
+}
+
 /*
  * Navigate is used to travel when we do not know
  * how to fully reach the destination (Blind mode)
@@ -76,5 +103,7 @@ void NavigationAssisiant::Navigate()
 
 void NavigationAssisiant::DeadReckon()
 {
-
+    // Need to find the relation between travel speed,
+    // and degrees of lat/long changed.
+    // This will also need to be adjusted with vectoring as well.
 }

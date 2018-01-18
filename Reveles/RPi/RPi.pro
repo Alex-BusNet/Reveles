@@ -50,7 +50,6 @@ SOURCES += main.cpp \
     ../Libraries/wiringPi/wiringPiSPI.c \
     ../Libraries/wiringPi/wiringSerial.c \
     ../Libraries/wiringPi/wiringShift.c \
-    Common/gpio.cpp \
     Core/revelescore.cpp \
     Core/revelesmap.cpp \
     IO/revelesio.cpp \
@@ -99,7 +98,6 @@ HEADERS += \
     ../Libraries/wiringPi/wiringShift.h \
     ../Libraries/version.h \
     Common/datatypes.h \
-    Common/gpio.h \
     Core/revelescore.h \
     Core/revelesmap.h \
     IO/revelesio.h \

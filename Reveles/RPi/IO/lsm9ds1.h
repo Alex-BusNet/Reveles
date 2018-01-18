@@ -55,13 +55,6 @@ private:
     float accelLSB;
     float gyroDPSDigit;
 
-    // Functions
-    void readBuffer(bool type, uint8_t *buf);
-
-    void setupMag(MagGain gain);
-    void setupAccel(AccelRange range);
-    void setupGyro(GyroScale scale);
-
     // Enumerations
     typedef enum
     {
@@ -171,6 +164,13 @@ private:
         MDR_50HZ        = (0b100 << 2),
         MDR_100HZ       = (0b101 << 2)
     } MagDataRate;
+
+    // Functions
+    void readBuffer(bool type, uint8_t *buf);
+
+    void setupMag(MagGain gain);
+    void setupAccel(AccelRange range);
+    void setupGyro(GyroScale scale);
 
 };
 

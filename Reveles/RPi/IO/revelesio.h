@@ -56,6 +56,8 @@ public:
     void TriggerTimeOfFlight();
 
     MagDirection ReadMagnetometer();
+    AccelDirection ReadAccelerometer();
+    GyroDirection ReadGyroscope();
 
 private:
     bool isrWait;

@@ -7,6 +7,7 @@
 #include "../Common/datatypes.h"
 #include "IO/revelesio.h"
 #include "analyticalengine.h"
+#include "navigationassisiant.h"
 
 class AnalyticalEngine;
 

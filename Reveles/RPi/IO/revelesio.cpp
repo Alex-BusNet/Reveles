@@ -130,21 +130,21 @@ void RevelesIO::TriggerTimeOfFlight()
 
 MagDirection RevelesIO::ReadMagnetometer()
 {
-    if(!MagAvailable) { return new MagDirection{0.0f, 0.0f, 0.0f}; }
+    if(!MagAvailable) { return MagDirection{0.0f, 0.0f, 0.0f}; }
 
     return agm->ReadMag();
 }
 
 AccelDirection RevelesIO::ReadAccelerometer()
 {
-    if(!XGAvailable) { return new AccelDirection {0.0f, 0.0f, 0.0f}; }
+    if(!XGAvailable) { return AccelDirection {0.0f, 0.0f, 0.0f}; }
 
     return agm->ReadAccel();
 }
 
 GyroDirection RevelesIO::ReadGyroscope()
 {
-    if(!XGAvailable) { return new GyroDirection {0.0f, 0.0f, 0.0f}; }
+    if(!XGAvailable) { return GyroDirection {0.0f, 0.0f, 0.0f}; }
 
     return agm->ReadGyro();
 }

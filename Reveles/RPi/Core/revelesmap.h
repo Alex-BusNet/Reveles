@@ -20,7 +20,7 @@ public:
     list<Node*> FindPath(string dest);
 
 private:
-    map<string, GPSCoord> savedDestinations;
+    map<string, Node> savedDestinations;
     vector<GPSCoord> grid;
     double offsetLat, offsetLong;
 

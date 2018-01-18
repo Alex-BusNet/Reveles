@@ -45,18 +45,7 @@ list<Node*> RevelesMap::FindPath(Node* end)
 
     //-------------------
     /* Retrace Path */
-    Node *n = end;
-    while(n->parent != NULL)
-    {
-        path.push_front(n);
 
-        if(n->parent != NULL)
-        {
-            n->parent->child = n;
-        }
-
-        n = n->parent;
-    }
     //-------------------
 
     return path;
@@ -68,7 +57,7 @@ list<Node*> RevelesMap::FindPath(Node* end)
  */
 list<Node*> RevelesMap::FindPath(string dest)
 {
-    return FindPath(new Node{savedDestinations[dest], NULL, NULL});
+    return FindPath(&savedDestinations[dest]);
 }
 
 void RevelesMap::saveMapData()

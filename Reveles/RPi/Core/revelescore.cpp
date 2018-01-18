@@ -20,7 +20,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     connect(this, SIGNAL(currentLocation(GPSCoord)), AnalyticalEngine::instance(), SLOT(updateLocation(GPSCoord)));
 
     // Variable Init
-    RevelesAnalyticalEngine::instance()->Init();
+    AnalyticalEngine::instance()->Init();
     RevelesIO::instance()->initIO();
     commsGood = false;
     updateInterval = 1000;
@@ -48,7 +48,7 @@ void RevelesCore::setDestination(GPSCoord gpsc)
 {
     cout << "Setting Target Destination to " << gpsc.latitude << ", " << gpsc.longitude << endl;
     dest = gpsc;
-    RevelesAnalyticalEngine::instance()->Start(dest);
+    NavigationAssisiant::instance()->Start(dest);
 }
 
 void RevelesCore::setMapUpdateInterval(int milliseconds)

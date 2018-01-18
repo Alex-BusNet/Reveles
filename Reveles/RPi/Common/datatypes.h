@@ -65,15 +65,19 @@ struct DecisionPoint {
     GPSCoord point;
 };
 
-struct Path {
-    GPSCoord coord;
-    Node *child;
-    Node *parent;
-};
+// The DOOR type may not be used.
+enum NodeType { WALL, PATH, STAIRS, DOOR, UNKNOWN };
 
 struct Node {
     GPSCoord coord;
     NodeType nt;
+};
+
+// This struct may be removed.
+struct Path {
+    GPSCoord coord;
+    Node *child;
+    Node *parent;
 };
 
 struct Accel { float x, y, z; };
@@ -94,9 +98,6 @@ enum UltrasonicPos {
 
 // Used in RevelesAnalyticalEngine::Navigate()
 enum TravelMode { BLIND, WANDER };
-
-// The DOOR type may not be used.
-enum NodeType { WALL, PATH, STAIR, DOOR, UNKNOWN };
 
 enum SensorType {US, PIR, TOF};
 
