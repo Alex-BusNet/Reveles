@@ -28,10 +28,9 @@ void NavigationAssisiant::Init()
     Orient();
 }
 
-/*
- * Begin traversal.
- * param loc: starting location
- * param dest: target destination
+/*!
+ * @brief Begin traversal.
+ * @param dest target destination
  */
 void NavigationAssisiant::Start(GPSCoord dest)
 {
