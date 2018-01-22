@@ -58,7 +58,9 @@ SOURCES += main.cpp \
     Common/vector2i.cpp \
     Core/navigationassisiant.cpp \
     Core/analyticalengine.cpp \
-    IO/lsm9ds1.cpp
+    IO/lsm9ds1.cpp \
+    Common/vector2f.cpp \
+    Common/vectorpolar2f.cpp
 
 HEADERS += \
     ../Libraries/wiringPi/wiringPi.h \
@@ -106,7 +108,9 @@ HEADERS += \
     Common/vector2i.h \
     Core/navigationassisiant.h \
     Core/analyticalengine.h \
-    IO/lsm9ds1.h
+    IO/lsm9ds1.h \
+    Common/vector2f.h \
+    Common/vectorpolar2f.h
 
 INSTALLS = target
 target.files = revelescore

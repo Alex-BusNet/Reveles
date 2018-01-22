@@ -51,9 +51,10 @@ public:
 
     GPSCoord ReadGPS();
 
-    int readSensor(SensorType type);
-    void triggerUltrasonic(uint8_t sel);
+    float triggerUltrasonic(uint8_t sel);
     void TriggerTimeOfFlight();
+
+    int readPIR(uint8_t sel);
 
     MagDirection ReadMagnetometer();
     AccelDirection ReadAccelerometer();

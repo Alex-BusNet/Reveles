@@ -5,6 +5,19 @@
 #include "Common/datatypes.h"
 #include "revelescore.h"
 
+// Passive Infrared Select bits
+#define PIR_FL 0b000 // Front-left
+#define PIR_FR 0b001 // Front-right
+#define PIR_BL 0b010 // Back-left
+#define PIR_BR 0b011 // Back-right
+
+// Ultrasonic Select bits
+#define US_LEFT  0b000
+#define US_FRONT 0b001
+#define US_RIGHT 0b010
+#define US_STAIR 0b011
+#define US_BACK  0b100
+
 /*
  * The AnalyticalEngine class is intended to process
  * the environment and make adjustments to Reveles' path
@@ -27,6 +40,7 @@ public slots:
 private:
     // Variables
 
+    int pirs[4], uss[4], tofs[6];
     // The transition matrix is a 7x7 array
     // of probabilities. The index at (i,j)
     // represents the probability that a

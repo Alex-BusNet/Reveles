@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QList>
 #include <Common/datatypes.h>
-#include <Common/vector2i.h>
+#include <Common/vector2f.h>
 #include "revelescore.h"
 
 /*
@@ -28,7 +28,7 @@ private:
     // Functions
     void FindPath();
     QList<GPSCoord> GetNeighbors(GPSCoord node);
-    int GetDistance(GPSCoord a, GPSCoord b);
+    double GetDistance(GPSCoord pt1, GPSCoord pt2);
 
     void Orient();
     void Navigate();
@@ -39,6 +39,7 @@ private:
     QList<GPSCoord> path;
     GPSCoord currentLocation, destination;
     Direction heading;
+    double headingAngle;
 };
 
 #endif // NAVIGATIONASSISIANT_H

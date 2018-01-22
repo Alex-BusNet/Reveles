@@ -4,6 +4,7 @@
 #include <QByteArray>
 #include <QString>
 #include <QStringList>
+#include <vector>
 
 using namespace  std;
 
@@ -91,7 +92,15 @@ AnalyticalEngine::AnalyticalEngine()
  */
 void AnalyticalEngine::CheckEnv()
 {
+    pirs[0] = RevelesIO::instance()->readPIR(PIR_FL);
+    pirs[1] = RevelesIO::instance()->readPIR(PIR_FR);
+    pirs[2] = RevelesIO::instance()->readPIR(PIR_BL);
+    pirs[3] = RevelesIO::instance()->readPIR(PIR_BR);
 
+    uss[0] = RevelesIO::instance()->triggerUltrasonic(US_LEFT);
+    uss[0] = RevelesIO::instance()->triggerUltrasonic(US_FRONT);
+    uss[0] = RevelesIO::instance()->triggerUltrasonic(US_RIGHT);
+    uss[0] = RevelesIO::instance()->triggerUltrasonic(US_BACK);
 }
 
 /*!
@@ -99,6 +108,8 @@ void AnalyticalEngine::CheckEnv()
  */
 void AnalyticalEngine::ProcessEnv()
 {
+    /// Can this be threaded?
+
     // Determine if object exists
 
     // Determine if object is moving
@@ -108,7 +119,7 @@ void AnalyticalEngine::ProcessEnv()
     /// TODO: Multi obstacle avoidance handling.
     ///     Note: Some of this handling will
     ///             be able to use available map data
-    ///             to determine if a short response
+    ///             to determine if a short response distance
     ///             is a foreign object or a wall.
 }
 
@@ -144,7 +155,7 @@ void AnalyticalEngine::updateProbabilities()
 AnalyticalEngine::ActionState AnalyticalEngine::GetMostProbableAction()
 {
     uint8_t hiProbIdx = -1, hi = -1, p = 0;
-    list<int> ties;
+    vector<int> ties;
     ActionState as;
 
     for(int j = 0; j < 7; j++)
@@ -166,6 +177,13 @@ AnalyticalEngine::ActionState AnalyticalEngine::GetMostProbableAction()
 
     if(ties.size() > 0)
     {
+        int stateIdx = -1;
+        for(int i = 0; i < ties.size(); i++)
+        {
+            if(ties[i] == 7) { continue; }
+
+
+        }
         // Tie breaker conditions:
         //  1) State 7 (STOP) always has lowest priority
         //  2) If Reveles is close to a wall (need to determine 'close'),

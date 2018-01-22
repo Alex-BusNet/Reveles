@@ -8,6 +8,10 @@ RevelesMap::RevelesMap()
 
 void RevelesMap::AddPoint(GPSCoord gpsc)
 {
+    if(gpsc.latitude < offsetLat)
+    {
+
+    }
     if(!gridHasPoint(gpsc))
         grid.push_back(gpsc);
 }

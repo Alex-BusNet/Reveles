@@ -1,6 +1,7 @@
 #include "revelesio.h"
 #include <iostream>
 #include <random>
+#include <math.h>
 
 Q_GLOBAL_STATIC(RevelesIO, rio)
 
@@ -18,6 +19,7 @@ void RevelesIO::initIO()
     pinMode(ECHO, INPUT);
     pinMode(SIG, INPUT);
     pinMode(TRIG, OUTPUT);
+    /// TODO: Add pins for ToF
 
     wiringPiI2CSetup(ARDUINO);
 
@@ -37,11 +39,12 @@ RevelesIO::RevelesIO()
 
 void RevelesIO::SendMotorUpdate(int motorSpeedFactor)
 {
+    /// TODO: Figure out what motorSpeedFactor is. (Frank/Alicia)
     wiringPiI2CWrite(ARDUINO, motorSpeedFactor);
 }
 
 GPSCoord RevelesIO::ReadGPS()
-{
+{    
     // Stubbed GPS module.
     return GPSCoord{
         ((static_cast<double>(rand()) / RAND_MAX) * 180.0),
@@ -50,39 +53,10 @@ GPSCoord RevelesIO::ReadGPS()
 }
 
 /*
- * This function may be removed at a later time
- * once all the sensors are sorted out. I feel
- * this may be a redundant function that is not
- * needed. -Alex 1/17/2018
- */
-int RevelesIO::readSensor(SensorType type)
-{
-    if(type == US)
-    {
-        return dist;
-    }
-    else if (type == PIR)
-    {
-        return digitalRead(SIG);
-    }
-    else if(type == TOF)
-    {
-        // TODO: Determine if Time of Flight sensors will be used.
-        //       if so, determine how data formatted.
-        return 0;
-    }
-    else
-    {
-        return 0;
-    }
-
-}
-
-/*
  * triggerUltrasonic written based of hc-sr04.c
  * from https://github.com/dmeziere/rpi-hc-sr04/blob/master/util/hc-sr04.c
  */
-void RevelesIO::triggerUltrasonic(uint8_t sel)
+float RevelesIO::triggerUltrasonic(uint8_t sel)
 {
     digitalWrite(TRIG, LOW);
     delay(50);
@@ -91,9 +65,11 @@ void RevelesIO::triggerUltrasonic(uint8_t sel)
     delayMicroseconds(10);
     digitalWrite(TRIG, LOW);
 
-    digitalWrite(SEL_A, 0b001 & sel);
-    digitalWrite(SEL_B, 0b010 & sel);
-    digitalWrite(SEL_C, 0b100 & sel);
+    // Check this, I don't believe it
+    // works the way I think it does. -Alex 1/21/18
+    digitalWrite(SEL_A, 0b1 & sel);         // Get the A select bit. This should already by in index 0
+    digitalWrite(SEL_B, (0b10 & sel) >> 1); // Get the B select bit and shift into index 0
+    digitalWrite(SEL_C, (0b100 & sel) >> 2);// Get the C select bit and shift into index 0
 
     unsigned long ping, pong, trigStart;
 
@@ -101,13 +77,13 @@ void RevelesIO::triggerUltrasonic(uint8_t sel)
 
     while(digitalRead(ECHO) == LOW && ((micros() - trigStart) < TIMEOUT)){;}
 
-    if(((micros() - trigStart) > TIMEOUT)) { emit echoReady(-1, ""); std::cout << "timeout 1" << std::endl; return; }
+    if(((micros() - trigStart) > TIMEOUT)) { emit echoReady(-1, ""); std::cout << "timeout 1" << std::endl; return -1;}
 
     ping = micros();
 
     while(digitalRead(ECHO) == HIGH && ((micros() - trigStart) < TIMEOUT)) {;}
 
-    if(((micros() - trigStart) > TIMEOUT)) { emit echoReady(-1, ""); std::cout << "timeout 2" << std::endl; return; }
+    if(((micros() - trigStart) > TIMEOUT)) { emit echoReady(-1, ""); std::cout << "timeout 2" << std::endl; return -1; }
 
     pong = micros();
 
@@ -121,11 +97,24 @@ void RevelesIO::triggerUltrasonic(uint8_t sel)
         dist /= 12;
         emit echoReady(dist, "ft");
     }
+
+    return dist;
 }
 
 void RevelesIO::TriggerTimeOfFlight()
 {
-    // TODO: Do we need a trigger?
+    // TODO: setup trigger conditions.
+}
+
+int RevelesIO::readPIR(uint8_t sel)
+{
+    // Check this, I don't believe it
+    // works the way I think it does. -Alex 1/21/18
+    digitalWrite(SEL_A,  0b1 & sel);        // Get the A select bit. This should already by in index 0
+    digitalWrite(SEL_B, (0b10 & sel) >> 1); // Get the B select bit and shift into index 0
+    digitalWrite(SEL_C, (0b100 & sel) >> 2);// Get the C select bit and shift into index 0
+
+    return digitalRead(SIG);
 }
 
 MagDirection RevelesIO::ReadMagnetometer()

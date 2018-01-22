@@ -28,6 +28,8 @@ private:
     void LoadMapData();
     bool gridHasPoint(GPSCoord gpsc);
 
+    double GetDistance(GPSCoord pt1, GPSCoord pt2);
+
 };
 
 #endif // REVELESMAP_H
