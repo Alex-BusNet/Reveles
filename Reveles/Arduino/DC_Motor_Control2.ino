@@ -1,4 +1,4 @@
-//Reveles Motor Control Program
+/*DC Motor Tech Demo Program*/
 
 #include <Wire.h>
 #include <SPI.h>
@@ -11,6 +11,7 @@
 #define echoPIN1 2
 #define trigPIN2 6
 #define echoPIN2 7
+#define LED 13
 
 long duration;
 int distance;
@@ -18,9 +19,9 @@ int inch;
 int pwmOUT;
 int rD = 0;
 int destination;
-bool pressed = false;
 int number = 0;
 int state = 0;
+bool fwd;
 
 void recieveData(int byteCount)
 {
@@ -55,12 +56,12 @@ void sendData()
 FUTURE ITERATIONS SHOULD INVOLVE A DECISION TO CHANGE ITS STARTING DIRECTION!*/
 void start()
 {
-  if(enableA == LOW)
+  if(fwd)
   {
     motorON();
-   }
-  forward();
   }
+  forward();
+}
 /*This function is designed to enable the robot to move forward. The inputs are adjusted to
 the orientation that spins the motors forward and begins incrementing*/
 void forward()
@@ -92,12 +93,14 @@ drivers will be turned high so that the robot may begin moving.*/
 void motorON()
 {
   digitalWrite(enableA, HIGH);
+  fwd = true;
   delay(20);
   }
 /*This function is designed as the Emergency Stop for the robot. When the time-of-flight sensor is flagged, the robot will shut off.*/
 void motorOFF()
 {
   digitalWrite(enableA, LOW);
+  fwd = false;
   }
 /*This function is designed to accelerate and deccelerate the motors in increments\
 while moving forward. There are two individual incremental settings based on the signals
@@ -107,18 +110,19 @@ sensor is flagged, the function will go into the the steeper section. If the tim
 is flagged, then the system will go into an emergency stop function. */
 void driveFORWARD()
 {
-  digitalWrite(1, LOW);
+  digitalWrite(LED, HIGH);
+  digitalWrite(trigPIN1, LOW);
   delayMicroseconds(2);
-  digitalWrite(1, HIGH);
+  digitalWrite(trigPIN1, HIGH);
   delayMicroseconds(10);
-  digitalWrite(1, LOW);
-  duration = pulseIn(2, HIGH);
+  digitalWrite(trigPIN1, LOW);
+  duration = pulseIn(echoPIN1, HIGH);
   distance = duration*0.034/2;//calculate distance in cm
   inch = distance/2.5; //calculate in inches 
   pwmOUT = (inch * 2)-1;
   if(pwmOUT < 48)
   {
-    motorOFF();
+    motorSTOP();
     backward();
    }
   else if (pwmOUT > 255)
@@ -135,12 +139,13 @@ sensor is flagged, the function will go into the the steeper section. If the tim
 is flagged, then the system will go into an emergency stop function. */
 void driveBACKWARD()
 {
-  digitalWrite(3, LOW);
+  digitalWrite(LED, LOW);
+  digitalWrite(trigPIN2, LOW);
   delayMicroseconds(2);
-  digitalWrite(3, HIGH);
+  digitalWrite(trigPIN2, HIGH);
   delayMicroseconds(10);
-  digitalWrite(3, LOW);
-  duration = pulseIn(4, HIGH);
+  digitalWrite(trigPIN2, LOW);
+  duration = pulseIn(echoPIN2, HIGH);
   distance = duration*0.034/2;//calculate distance in cm
   inch = distance/2.5; //calculate in inches
   pwmOUT = (inch * 2)-1;
@@ -178,13 +183,12 @@ void setup() {
   //define callbacks for i2c communication
   Wire.onReceive(recieveData);
   Wire.onRequest(sendData);
+  fwd = true;
 }
 
 void loop()
 { 
-  int destination = 0;
-  do
-  {
     start();
-  } while(destination == 0);
 }
+
+
