@@ -22,9 +22,9 @@
 //(use wiringPi's numbering)
 #define SEL_A    0 // GPIO-17
 #define SEL_B    2 // GPIO-27
-#define SEL_C    3 // GPIO-22
-#define  ECHO   12 // GPIO-10
-#define   SIG   13 // GPIO-9
+#define  ECHO    3 // GPIO-22
+#define SIG_1   12 // GPIO-10
+#define SIG_2   13 // GPIO-9
 #define  TRIG    7 // GPIO-4
 //---------------------------
 
@@ -47,14 +47,14 @@ public:
     static RevelesIO *instance();
     void initIO();
 
-    void SendMotorUpdate(int motorSpeedFactor);
+    void SendMotorUpdate(float usDist, float tofDist);
 
     GPSCoord ReadGPS();
 
     float triggerUltrasonic(uint8_t sel);
     void TriggerTimeOfFlight();
 
-    int readPIR(uint8_t sel);
+    int readPIR(bool rear);
 
     MagDirection ReadMagnetometer();
     AccelDirection ReadAccelerometer();

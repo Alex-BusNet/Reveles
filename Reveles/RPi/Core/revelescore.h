@@ -30,9 +30,14 @@ public slots:
     void setMapUpdateInterval(int milliseconds);
     void getCurrentLocation();
 
+private:
+    void updateOrientation();
+
 private slots:
     void readSensor();
     void updateMapData();
+    void coreLoop();
+
 signals:
     void usTriggered();
     void currentLocation(GPSCoord gpsc);

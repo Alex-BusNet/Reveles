@@ -6,12 +6,12 @@
 #include "Common/datatypes.h"
 #include "revelescore.h"
 
-#include <opencv2/core.hpp>
-#include <opencv2/tracking.hpp>
-#include <opencv2/core/ocl.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/objdetect.hpp>
-#include <opencv2/highgui.hpp>
+//#include <opencv2/core.hpp>
+//#include <opencv2/tracking.hpp>
+//#include <opencv2/core/ocl.hpp>
+//#include <opencv2/videoio.hpp>
+//#include <opencv2/objdetect.hpp>
+//#include <opencv2/highgui.hpp>
 
 // Passive Infrared Select bits
 #define PIR_FL 0b000 // Front-left
@@ -26,7 +26,7 @@
 #define US_STAIR 0b011
 #define US_BACK  0b100
 
-using namespace cv;
+//using namespace cv;
 
 /*
  * The AnalyticalEngine class is intended to process
@@ -117,7 +117,7 @@ private:
 
     ActionState lastState, presentState, predictedState, actualState;
 
-    Point objects[16];
+//    Point objects[16];
     bool frameUpdated[16];
     ActionState objectDirection[16];
 
@@ -128,8 +128,8 @@ private:
     void AdjustPath_Inanimate();
     void AdjustPath_Animate();
 
-    void PeopleDetect();
-    void DetectAndDraw(const HOGDescriptor &hog, Mat &img);
+//    void PeopleDetect();
+//    void DetectAndDraw(const HOGDescriptor &hog, Mat &img);
 
     void updateProbabilities();
 

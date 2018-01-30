@@ -31,7 +31,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
 
     coreTimer = new QTimer();
     coreTimer->setInterval(updateInterval);
-    connect(coreTimer, SIGNAL(timeout()), this, SLOT(updateMapData()));
+    connect(coreTimer, SIGNAL(timeout()), this, SLOT(coreLoop()));
     coreTimer->start();
 
     cout << "RevelesCore init complete." << endl;
@@ -68,15 +68,27 @@ void RevelesCore::getCurrentLocation()
     emit currentLocation(loc);
 }
 
+void RevelesCore::updateOrientation()
+{
+}
+
 void RevelesCore::readSensor()
 {
-    RevelesIO::instance()->triggerUltrasonic(0b001);
-    emit usTriggered();
+    float us = RevelesIO::instance()->triggerUltrasonic(0b001);
+    RevelesIO::instance()->SendMotorUpdate(us, 0.0f);
+//    emit usTriggered();
 }
 
 void RevelesCore::updateMapData()
 {
     loc = RevelesIO::instance()->ReadGPS();
     emit currentLocation(loc);
+}
+
+void RevelesCore::coreLoop()
+{
+    readSensor();
+    NavigationAssisiant::instance()->Orient();
+    updateMapData();
 }
 

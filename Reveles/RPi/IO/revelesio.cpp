@@ -15,9 +15,9 @@ void RevelesIO::initIO()
     wiringPiSetup();
     pinMode(SEL_A, OUTPUT);
     pinMode(SEL_B, OUTPUT);
-    pinMode(SEL_C, OUTPUT);
     pinMode(ECHO, INPUT);
-    pinMode(SIG, INPUT);
+    pinMode(SIG_1, INPUT);
+    pinMode(SIG_2, INPUT);
     pinMode(TRIG, OUTPUT);
     /// TODO: Add pins for ToF
 
@@ -37,10 +37,10 @@ RevelesIO::RevelesIO()
 
 }
 
-void RevelesIO::SendMotorUpdate(int motorSpeedFactor)
+void RevelesIO::SendMotorUpdate(float usDist, float tofDist)
 {
-    /// TODO: Figure out what motorSpeedFactor is. (Frank/Alicia)
-    wiringPiI2CWrite(ARDUINO, motorSpeedFactor);
+    /// TODO: Figure out I2C Comm format
+    wiringPiI2CWrite(ARDUINO, usDist);
 }
 
 GPSCoord RevelesIO::ReadGPS()
@@ -69,7 +69,6 @@ float RevelesIO::triggerUltrasonic(uint8_t sel)
     // works the way I think it does. -Alex 1/21/18
     digitalWrite(SEL_A, 0b1 & sel);         // Get the A select bit. This should already by in index 0
     digitalWrite(SEL_B, (0b10 & sel) >> 1); // Get the B select bit and shift into index 0
-    digitalWrite(SEL_C, (0b100 & sel) >> 2);// Get the C select bit and shift into index 0
 
     unsigned long ping, pong, trigStart;
 
@@ -106,15 +105,12 @@ void RevelesIO::TriggerTimeOfFlight()
     // TODO: setup trigger conditions.
 }
 
-int RevelesIO::readPIR(uint8_t sel)
+int RevelesIO::readPIR(bool rear)
 {
-    // Check this, I don't believe it
-    // works the way I think it does. -Alex 1/21/18
-    digitalWrite(SEL_A,  0b1 & sel);        // Get the A select bit. This should already by in index 0
-    digitalWrite(SEL_B, (0b10 & sel) >> 1); // Get the B select bit and shift into index 0
-    digitalWrite(SEL_C, (0b100 & sel) >> 2);// Get the C select bit and shift into index 0
-
-    return digitalRead(SIG);
+    if(rear)
+        return digitalRead(SIG_2);
+    else
+        return digitalRead(SIG_1);
 }
 
 MagDirection RevelesIO::ReadMagnetometer()

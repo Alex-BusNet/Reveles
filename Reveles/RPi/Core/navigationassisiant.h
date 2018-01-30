@@ -20,6 +20,7 @@ public:
 
     void Init();
     void Start(GPSCoord dest);
+    void Orient();
 
 public slots:
     void updateLocation(GPSCoord loc);
@@ -30,7 +31,6 @@ private:
     QList<GPSCoord> GetNeighbors(GPSCoord node);
     double GetDistance(GPSCoord pt1, GPSCoord pt2);
 
-    void Orient();
     void Navigate();
 
     void DeadReckon();

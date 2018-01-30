@@ -116,15 +116,15 @@ INSTALLS = target
 target.files = revelescore
 target.path = /home/pi/Desktop/Reveles
 
-unix:!macx: LIBS += -L$$PWD/../../../../../../usr/local/lib/ -lopencv_core \
- -lopencv_highgui \
- -lopencv_tracking \
- -lopencv_imgcodecs \
- -lopencv_videoio \
- -lopencv_imgproc \
- -lopencv_ml \
- -lopencv_objdetect \
- -lopencv_video \
+#unix:!macx: LIBS += -L$$PWD/../../../../../../usr/local/lib/ -lopencv_core \
+# -lopencv_highgui \
+# -lopencv_tracking \
+# -lopencv_imgcodecs \
+# -lopencv_videoio \
+# -lopencv_imgproc \
+# -lopencv_ml \
+# -lopencv_objdetect \
+# -lopencv_video \
 
-INCLUDEPATH += $$PWD/../../../../../../usr/local/include
-DEPENDPATH += $$PWD/../../../../../../usr/local/include
+#INCLUDEPATH += $$PWD/../../../../../../usr/local/include
+#DEPENDPATH += $$PWD/../../../../../../usr/local/include
