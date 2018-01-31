@@ -84,6 +84,8 @@ struct Accel { float x, y, z; };
 struct Gyro  { float x, y, z; };
 struct Mag   { float x, y, z; };
 
+
+
 enum Direction {
     N, NE, NW,
     S, SE, SW,
@@ -101,6 +103,26 @@ enum TravelMode { BLIND, WANDER };
 
 enum SensorType {US, PIR, TOF};
 
+// ActionState represents the detected
+// and predicted actions an moving object
+// would take.
+enum ActionState
+{
+    L2R      = 0,// State 1
+    R2L      = 1,// State 2
+    TOWARDS  = 2,// State 3
+    AWAY     = 3,// State 4
+    DIAG_L2R = 4,// State 5
+    DIAG_R2L = 5,// State 6
+    STOP     = 6,// State 7
+    NO_STATE = 7 // Initialization State.
+};
 
+struct ObjectTracking
+{
+    int index;
+    ActionState dir;
+    int zone;
+};
 
 #endif // DATATYPES_H

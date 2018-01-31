@@ -66,11 +66,11 @@ double NavigationAssisiant::GetDistance(GPSCoord pt1, GPSCoord pt2)
     // Formula requires Lat/Long be given in decimal form.
     // Note: negative numbers indicate south/west
 
-    double lat1 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt1.latitude
-    double lon1 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt1.longitude
+    double lat1 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt1.latitude;
+    double lon1 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt1.longitude;
 
-    double lat2 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt2.latitude
-    double lon2 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt2.longitude
+    double lat2 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt2.latitude;
+    double lon2 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt2.longitude;
 
     // Calculate distance from Lat/Long using Haversine formula
     int R = 6371e3; // Earth's radius (in meters)

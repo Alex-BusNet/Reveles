@@ -39,6 +39,7 @@ public:
 public Q_SLOTS: // METHODS
 Q_SIGNALS: // SIGNALS
     void AutoMapUpdate(GPSCoord gpsc);
+    void aboutToQuit();
     void commQuery();
     void commResponse(bool good);
     void locationUpdate(GPSCoord loc);

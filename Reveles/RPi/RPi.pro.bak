@@ -120,8 +120,7 @@ target.files = revelescore
 target.path = /home/pi/Desktop/Reveles
 
 # These need to point to the OpenCV libraries built for ARM
-unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/local/lib  \
-    -lopencv_core \
+unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/local/lib/ -lopencv_core \
     -lopencv_highgui \
     -lopencv_tracking \
     -lopencv_imgcodecs \
@@ -134,3 +133,5 @@ unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/local/lib  \
 INCLUDEPATH += $$PWD/../../../../raspi/sysroot/usr/local/include
 DEPENDPATH += $$PWD/../../../../raspi/sysroot/usr/local/include
 
+#DISTFILES += \
+#    CMakeLists.txt

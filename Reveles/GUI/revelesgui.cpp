@@ -160,6 +160,7 @@ void RevelesGui::commCheck(bool good)
 
 void RevelesGui::on_exitBtn_clicked()
 {
+    rci->aboutToQuit();
     this->close();
 }
 

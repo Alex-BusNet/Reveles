@@ -5,8 +5,8 @@
 #include <QString>
 #include <QStringList>
 #include <vector>
+#include "Common/detectionqueue.h"
 
-#define SSTR( x ) static_cast<std::ostringstream &>((std::ostringstream() << std::dec << x )).str()
 
 using namespace  std;
 
@@ -121,9 +121,15 @@ void AnalyticalEngine::ProcessEnv()
 
     // Determine if object exists
 
-    // Determine if object is moving
-
-    // Determine which direction the object is moving
+    // Check the ObjectDetector for any objects.
+    if(!DetectionQueue::isEmpty())
+    {
+        ObjectTracking ot = DetectionQueue::dequeue();
+        if(ot.dir != NO_STATE)
+            zoneCount[ot.zone]++;
+        else
+            zoneCount[ot.zone]--;
+    }
 
     /// TODO: Multi obstacle avoidance handling.
     ///     Note: Some of this handling will
@@ -145,138 +151,139 @@ void AnalyticalEngine::AdjustPath_Animate()
 
 }
 
-//void AnalyticalEngine::PeopleDetect()
-//{
-//    /// This needs to be altered to allow concurrent
-//    /// running while the rest of the engine runs.
-//    HOGDescriptor hog;
-//    hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
-//    namedWindow("People Detect", 1);
+<<<<<<< Updated upstream
+void AnalyticalEngine::PeopleDetect()
+{
+    /// This needs to be altered to allow concurrent
+    /// running while the rest of the engine runs.
+    HOGDescriptor hog;
+    hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
+    namedWindow("People Detect", 1);
 
-//    VideoCapture vc(0);
-//    Mat frame;
+    VideoCapture vc(0);
+    Mat frame;
 
-//    if(!vc.isOpened())
-//    {
-//        cout << "Error opening camera." << endl;
-//        return;
-//    }
+    if(!vc.isOpened())
+    {
+        cout << "Error opening camera." << endl;
+        return;
+    }
 
-//    while(vc.read(frame))
-//    {
-//        DetectAndDraw(hog, frame);
+    while(vc.read(frame))
+    {
+        DetectAndDraw(hog, frame);
 
-//        imshow("People Detect", frame);
+        imshow("People Detect", frame);
 
-//        // Wait breifly for ESC to be pressed.
-//        int k = waitKey(1);
-//        if (k == 27)
-//        {
-//            break;
-//        }
-//    }
-//}
+        // Wait breifly for ESC to be pressed.
+        int k = waitKey(1);
+        if (k == 27)
+        {
+            break;
+        }
+    }
+}
 
-//void AnalyticalEngine::DetectAndDraw(const HOGDescriptor &hog, Mat &img)
-//{
-//    vector<Rect>found, found_filtered;
-//    double t = (double)getTickCount();
+void AnalyticalEngine::DetectAndDraw(const HOGDescriptor &hog, Mat &img)
+{
+    vector<Rect>found, found_filtered;
+    double t = (double)getTickCount();
 
-//    hog.detectMultiScale(img, found, 0.0005, Size(4, 4), Size(8, 8), 1.05, 2);
+    hog.detectMultiScale(img, found, 0.0005, Size(4, 4), Size(8, 8), 1.05, 2);
 
-//    t = (double) getTickCount() - t;
+    t = (double) getTickCount() - t;
 
-//    for(size_t i = 0; i < found.size(); i++)
-//    {
-//        Rect r = found[i];
-//        size_t j;
-//        for (j = 0; j < found.size(); j++)
-//        {
-//            if( j != i && (r & found[j]) == r)
-//                break;
-//        }
+    for(size_t i = 0; i < found.size(); i++)
+    {
+        Rect r = found[i];
+        size_t j;
+        for (j = 0; j < found.size(); j++)
+        {
+            if( j != i && (r & found[j]) == r)
+                break;
+        }
 
-//        if(j == found.size())
-//            found_filtered.push_back(r);
-//    }
+        if(j == found.size())
+            found_filtered.push_back(r);
+    }
 
-//    for(int i = 0; i < found_filtered.size(); i++)
-//    {
-//        Rect r = found_filtered[i];
+    for(int i = 0; i < found_filtered.size(); i++)
+    {
+        Rect r = found_filtered[i];
 
-//        r.x += cvRound(r.width * 0.1);
-//        r.width = cvRound(r.width * 0.8);
-//        r.y += cvRound(r.height * 0.07);
-//        r.height += cvRound(r.height * 0.8);
-//        rectangle(img, r.tl(), r.br(), cv::Scalar(0, 255, 0), 3);
+        r.x += cvRound(r.width * 0.1);
+        r.width = cvRound(r.width * 0.8);
+        r.y += cvRound(r.height * 0.07);
+        r.height += cvRound(r.height * 0.8);
+        rectangle(img, r.tl(), r.br(), cv::Scalar(0, 255, 0), 3);
 
-//        // object tracking
-//        int centerX = r.tl().x + (r.width / 2);
-//        int centerY = r.tl().y + (r.height / 2);
-//        Point center = Point(centerX, centerY);
-//        Point trackedCenter = objects[i];
+        // object tracking
+        int centerX = r.tl().x + (r.width / 2);
+        int centerY = r.tl().y + (r.height / 2);
+        Point center = Point(centerX, centerY);
+        Point trackedCenter = objects[i];
 
-//        if(trackedCenter != Point(0,0))
-//        {
-//            int dx = center.x - trackedCenter.x;
-//            int dy = center.y - trackedCenter.y;
+        if(trackedCenter != Point(0,0))
+        {
+            int dx = center.x - trackedCenter.x;
+            int dy = center.y - trackedCenter.y;
 
-//            // The deltas here will need to be adjusted
-//            // to compensate for the moving robot.
-//            // Larger deltas *should* indicate people, while
-//            // smalled deltas *should* indicate static objects
-//            if(dx > 0 && dy == 0)
-//            {
-//                objectDirection[i] = L2R;
-//            }
-//            else if(dx > 0 && dy < 0)
-//            {
-//                objectDirection[i] = DIAG_L2R;
-//            }
-//            else if(dx < 0 && dy == 0)
-//            {
-//                objectDirection[i] == R2L;
-//            }
-//            else if(dx < 0 && dy < 0)
-//            {
-//                objectDirection[i] == DIAG_R2L;
-//            }
-//            else if(dx < 0 && dy > 0)
-//            {
-//                objectDirection[i] = DIAG_R2L;
-//            }
-//            else if(dx > 0 && dy > 0)
-//            {
-//                objectDirection[i] = DIAG_L2R;
-//            }
-//            // TOWARDS direction detection
-//            //
-//            // AWAY direction detection
-//        }
-//        else
-//        {
-//            if(trackedCenter != center)
-//                objects[i] = center;
-//        }
+            // The deltas here will need to be adjusted
+            // to compensate for the moving robot.
+            // Larger deltas *should* indicate people, while
+            // smalled deltas *should* indicate static objects
+            if(dx > 0 && dy == 0)
+            {
+                objectDirection[i] = L2R;
+            }
+            else if(dx > 0 && dy < 0)
+            {
+                objectDirection[i] = DIAG_L2R;
+            }
+            else if(dx < 0 && dy == 0)
+            {
+                objectDirection[i] == R2L;
+            }
+            else if(dx < 0 && dy < 0)
+            {
+                objectDirection[i] == DIAG_R2L;
+            }
+            else if(dx < 0 && dy > 0)
+            {
+                objectDirection[i] = DIAG_R2L;
+            }
+            else if(dx > 0 && dy > 0)
+            {
+                objectDirection[i] = DIAG_L2R;
+            }
+            // TOWARDS direction detection
+            //
+            // AWAY direction detection
+        }
+        else
+        {
+           if(trackedCenter != center)
+                objects[i] = center;
+        }
 
-//        frameUpdated[i] = true;
+        frameUpdated[i] = true;
 
-//        circle(img, center, 2, Scalar(0,0,255), 2);
-//        putText(img, SSTR(i), Point(r.tl().x + 5, r.tl().y + 10), FONT_HERSHEY_SIMPLEX, 0.25, Scalar(50, 170, 50), 1);
-//    }
+        circle(img, center, 2, Scalar(0,0,255), 2);
+        putText(img, SSTR(i), Point(r.tl().x + 5, r.tl().y + 10), FONT_HERSHEY_SIMPLEX, 0.25, Scalar(50, 170, 50), 1);
+    }
 
-//    for(int i = 0; i < 16; i++)
-//    {
-//        if(!frameUpdated[i])
-//        {
-//            objects[i] = Point(0,0);
-//            objectDirection[i] = NO_STATE;
-//        }
-//        else
-//            frameUpdated[i] = false;
+    for(int i = 0; i < 16; i++)
+    {
+        if(!frameUpdated[i])
+        {
+            objects[i] = Point(0,0);
+            objectDirection[i] = NO_STATE;
+        }
+        else
+            frameUpdated[i] = false;
 
-//    }
-//}
+    }
+}
 
 void AnalyticalEngine::updateProbabilities()
 {
@@ -294,7 +301,7 @@ void AnalyticalEngine::updateProbabilities()
     }
 }
 
-AnalyticalEngine::ActionState AnalyticalEngine::GetMostProbableAction()
+ActionState AnalyticalEngine::GetMostProbableAction()
 {
     uint8_t hiProbIdx = -1, hi = -1, p = 0;
     vector<int> ties;
@@ -348,6 +355,11 @@ AnalyticalEngine::ActionState AnalyticalEngine::GetMostProbableAction()
     return as;
 }
 
+/*!
+ * \brief Save the Markov Chain to file
+ * Saves the transition matrix and decision
+ * matrix to file.
+ */
 void AnalyticalEngine::Save()
 {
     if(!QDir("Assets/Data").exists())
@@ -364,6 +376,7 @@ void AnalyticalEngine::Save()
     }
     else
     {
+        cout << "Saving Transition Matix" << endl;
         QByteArray bArr;
         for(int i = 0; i < 7; i++)
         {
@@ -386,6 +399,7 @@ void AnalyticalEngine::Save()
     }
     else
     {
+        cout << "Saving Decision Matrix" << endl;
         QByteArray bArr;
         for(int i = 0; i < 7; i++)
         {

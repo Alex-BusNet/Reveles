@@ -36,6 +36,7 @@ class RevelesDBusAdaptor: public QDBusAbstractAdaptor
 "    <signal name=\"commQuery\"/>\n"
 "    <signal name=\"requestCurrentLocation\"/>\n"
 "    <signal name=\"requestMapUpdate\"/>\n"
+"    <signal name=\"aboutToQuit\"/>\n"
 "    <signal name=\"setDestination\">\n"
 "      <annotation value=\"GPSCoord\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
 "      <arg direction=\"out\" type=\"(dd)\" name=\"gpsc\"/>\n"
@@ -64,6 +65,7 @@ public: // PROPERTIES
 public Q_SLOTS: // METHODS
 Q_SIGNALS: // SIGNALS
     void AutoMapUpdate(GPSCoord gpsc);
+    void aboutToQuit();
     void commQuery();
     void commResponse(bool good);
     void locationUpdate(GPSCoord loc);

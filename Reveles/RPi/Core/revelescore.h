@@ -8,6 +8,7 @@
 #include "IO/revelesio.h"
 #include "analyticalengine.h"
 #include "navigationassisiant.h"
+#include "objectdetector.h"
 
 class AnalyticalEngine;
 

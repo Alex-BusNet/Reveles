@@ -5,6 +5,7 @@
 		<signal name="commQuery"></signal>
 		<signal name="requestCurrentLocation"></signal>
 		<signal name="requestMapUpdate"></signal>
+		<signal name="aboutToQuit"></signal>
 		<signal name="setDestination">
 			<annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="GPSCoord"/>
 			<arg name="gpsc" type="(dd)" direction="out"/>		

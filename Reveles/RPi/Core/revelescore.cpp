@@ -11,6 +11,8 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     connect(rdba, SIGNAL(requestCurrentLocation()), this, SLOT(updateMapData()));
     connect(rdba, SIGNAL(setMapUpdateInterval(int)), this, SLOT(setMapUpdateInterval(int)));
     connect(rdba, SIGNAL(requestMapUpdate()), this, SLOT(updateMapData()));
+    connect(rdba, SIGNAL(aboutToQuit()), AnalyticalEngine::instance(), SLOT(aboutToQuit()));
+    connect(rdba, SIGNAL(aboutToQuit()), ObjectDetector::instance(), SLOT(aboutToQuit()));
 
     // Outbound comms (CORE -> GUI)
     connect(this, SIGNAL(commResponse(bool)), rdba, SIGNAL(commResponse(bool)));
@@ -22,6 +24,8 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     // Variable Init
     AnalyticalEngine::instance()->Init();
     RevelesIO::instance()->initIO();
+    ObjectDetector::instance()->Init();
+
     commsGood = false;
     updateInterval = 1000;
 
@@ -33,6 +37,8 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     coreTimer->setInterval(updateInterval);
     connect(coreTimer, SIGNAL(timeout()), this, SLOT(coreLoop()));
     coreTimer->start();
+
+    ObjectDetector::instance()->PeopleDetect();
 
     cout << "RevelesCore init complete." << endl;
 }

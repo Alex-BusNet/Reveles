@@ -6,12 +6,12 @@
 #include "Common/datatypes.h"
 #include "revelescore.h"
 
-//#include <opencv2/core.hpp>
-//#include <opencv2/tracking.hpp>
-//#include <opencv2/core/ocl.hpp>
-//#include <opencv2/videoio.hpp>
-//#include <opencv2/objdetect.hpp>
-//#include <opencv2/highgui.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/tracking.hpp>
+#include <opencv2/core/ocl.hpp>
+#include <opencv2/videoio.hpp>
+#include <opencv2/objdetect.hpp>
+#include <opencv2/highgui.hpp>
 
 // Passive Infrared Select bits
 #define PIR_FL 0b000 // Front-left
@@ -100,26 +100,13 @@ private:
         {0, 0, 0, 0, 0, 0, 0}  // 7
     };
 
-    // ActionState represents the detected
-    // and predicted actions an moving object
-    // would take.
-    enum ActionState
-    {
-        L2R      = 0,// State 1
-        R2L      = 1,// State 2
-        TOWARDS  = 2,// State 3
-        AWAY     = 3,// State 4
-        DIAG_L2R = 4,// State 5
-        DIAG_R2L = 5,// State 6
-        STOP     = 6,// State 7
-        NO_STATE = 7 // Initialization State.
-    };
+    int zoneCount[4] = {0, 0, 0, 0};
 
     ActionState lastState, presentState, predictedState, actualState;
 
 //    Point objects[16];
-    bool frameUpdated[16];
-    ActionState objectDirection[16];
+//    bool frameUpdated[16];
+//    ActionState objectDirection[16];
 
     // Functions
     void CheckEnv();
@@ -128,8 +115,9 @@ private:
     void AdjustPath_Inanimate();
     void AdjustPath_Animate();
 
-//    void PeopleDetect();
-//    void DetectAndDraw(const HOGDescriptor &hog, Mat &img);
+    void PeopleDetect();
+    void DetectAndDraw(const HOGDescriptor &hog, Mat &img);
+
 
     void updateProbabilities();
 
