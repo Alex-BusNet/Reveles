@@ -9,6 +9,13 @@
 			<li><a href="#installing-git">Installing Git</a></li>
 			<li><a href="#installing-qt-host-pc">Installing Qt</a></li>
 			<li><a href="#setting-up-the-cross-compiler-tools">Setting Up the Cross Compiler Tools</a></li>
+			<li><a href="#building-and-configuring-opencv">Building and Configuring OpenCV</a>
+				<ul>
+					<li><a href="#setup">Setup</a></li>
+					<li><a href="#build">Build</a></li>
+					<li><a href="#updating-the-cross-compile-environment">Updating the Cross-Compile Environment</a></li>
+				</ul>			
+			</li>
 		</ul>
 	</li>
 	<li><a href="#building-reveles">Building Reveles</a>
@@ -22,6 +29,7 @@
 			<li><a href="#eglfs-not-found">EGLFS not found</a></li>
 			<li><a href="#0x300b">Error = 0x300b</a></li>
 			<li><a href="#fonts-not-found">Fonts not found</a></li>
+			<li><a href="#GLIBCXX_3.4.21">Undefined Reference GLIBCXX_3.4.21</a></li>
 		</ul>
 	</li>
 	<li><a href="#updating-the-reveles-repository-with-git">Updating the Reveles Repository with Git</a>
@@ -222,6 +230,181 @@ $ ./qopenglwidget
 
 >NOTE: If the example does not run, see [Troubleshooting](#troubleshooting) for more help
 
+### Building And Configuring OpenCV
+#### Setup
+Revles' object detection system uses the OpenCV framework. These steps will guide you through setting up OpenCV on the RPi and cross compile environment
+
+1. **[RPi]** First we need to set up our directory to work in.<br>
+```ShellSession
+$ cd
+$ mkdir opencv opencv/sources opencv/build opencv/contrib opencv/python
+```
+
+2. **[RPi]** Download OpenCV and OpenCV contrib modules<br>
+```ShellSession
+$ cd opencv/sources
+$ wget https://github.com/opencv/opencv/3.4.0.zip
+$ unzip 3.4.0.zip
+$ cd ../contrib
+$ wget https://github.com/opencv/opencv-contrib/master.zip
+$ unzip master.zip
+```
+> At this point, our folder structure should looks like so:
+> ```
+> ~/opencv
+>  |->build
+>  |->contrib
+>  |  |->opencv_contrib-master
+>  |     |->doc
+>  |     |->modules
+>  |     |->samples
+>  |->python
+>  |->sources
+>     |->3.4.0
+>        |->3rdparty
+>        |->apps
+>        |->cmake
+>        |->CMakeFiles
+>        |->data
+>        |->doc
+>        |->include
+>        |->modules
+>        |->platforms
+>        |->samples
+> ```
+
+3. **[RPi]** (optional) We can make the paths easier to work with by copying the subfolders in **contrib** and **sources** up one level. You should end up with something like so:
+> ```
+> ~/opencv
+>  |->build
+>  |->contrib
+>  |  |->doc
+>  |  |->modules
+>  |  |->samples
+>  |->python
+>  |->sources
+>     |->3rdparty
+>     |->apps
+>     |->cmake
+>     |->CMakeFiles
+>     |->data
+>     |->doc
+>     |->include
+>     |->modules
+>     |->platforms
+>     |->samples
+> ```
+
+4. **[RPi]** Before we can build OpenCV, we need to make sure we have the proper dependencies.
+```ShellSession
+$ cd ../build
+$ sudo apt-get install cmake build-essential pkg-config
+$ sudo apt-get install libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev
+$ sudo apt-get install libavcodec-dev libavformat-dev libswscal-dev libv4l-dev
+$ sudo apt-get install libxvidcore-dev libx264-dev
+$ sudo apt-get install libgtk2.0-dev libgtk-3-dev
+$ sudo apt-get install libatlas-base-dev gfortran
+$ cd ../python
+$ wget https://bootstrap.pypa.io/get-pip.py
+$ sudo python get-pip.py
+$ sudo python3 get-pip.py
+$ pip install numpy
+$ cd ../build
+```
+> NOTE (1): While Reveles does not use Python for it's image processing, it is a good idea to install numpy because OpenCV will look for it during configuration.<br>
+> NOTE (2): `python` will run the script for python 2.7, and `python3` will run the script for python 3.6 (or what ever verion of python 3 is installed). I recommend doing both since OpenCV will configure itself for both Python 2 and Python 3.
+
+If you are using Raspbian Stretch, then the native GCC version is 6.3 (as of 1/30/2018). In order to get OpenCV to work with our cross development environment, we need GCC 4.8.
+
+5. **[RPi]** Check the current version of GCC with `$ gcc -v`.<br>
+There should be a line similar to this at the bottom of the output: `gcc version 4.8.5 (Raspbian 4.8.5-4)`<br>
+> NOTE: Your output will most likely show GCC version 6. My RPi already has been adjusted to use 4.8, which is the output shown above.
+
+If your GCC is not 4.8, we need to get it and set it as the default.
+```ShellSession
+$ sudo apt-get install -t stretch gcc-4.8* cpp-4.8* g++-4.8* c++-4.8* -y
+$ sudo update-alternatives --config gcc
+$ sudo update-alternatives --config g++
+$ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 10
+$ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 20
+$ sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 30
+$ sudo update-alternatives --set cc /usr/bin/gcc
+$ sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30
+$ sudo update-alternatives --set c++ /usr/bin/g++
+$ sudo update-alternatives --config gcc
+$ sudo update-alternatives --config g++
+```
+
+Once again, check your GCC version with `gcc -v`. You should now see the same output as above.
+
+#### Build
+We should now be ready to build OpenCV.
+
+1. **[RPi]** Make sure we are in the **build** directory (~/opencv/build). You can check this with `$ pwd`. 
+
+2. **[RPi]** First we need to configure OpenCV with CMake. There are a few variables we need to pass to CMake in order to get proper configuration. If you setup the directory the same as this tutorial, then you can copy the command exactly as writen. If you did not, match the folder structure, or you are using a user other than "pi", then make sure you change the directories to match your system.
+```ShellSession
+$ cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D OPENCV_EXTRA_MODULES_PATH=/home/pi/opencv/contrib/modules -D INSTALL_PYTHON_EXAMPLES=OFF -D INSTALL_C_EXAMPLES=OFF -D BUILD_EXAMPLES=OFF -D _GLIBCXX_USE_CXX11_ABI=0 -D CMAKE_C_COMPILER=/usr/bin/gcc-D CMAKE_CXX_COMPILER=/usr/bin/g++ ../sources
+```
+> NOTE (1): The _GLIBCXX_USE_CXX11_ABI flag is for some compatibility fixes. Newer versions of GCC work with the newer standards of C++ (C++14 for GCC 6+) which has brought changes to how some functions are defined in the C++ Standard Library (found in libstdc++11.so on Linux systems). Since we are using GCC 4.8, this flag may be unneeded, but I have included it anyways.<br>
+
+> NOTE (2): The CMAKE_C_COMPILER and CMAKE_CXX_COMPILER flags are also unneeded if you followed all the steps when installing and configuring GCC 4.8, but once again I choose to include it anyway to make sure CMake grabbed to correct GCC version (since GCC 6 is still installed). You could also set the paths to `/usr/bin/gcc-4.8` and `/usr/bin/g++4.8` respectively if you want to be super cautious.<br>
+
+> NOTE (3): If you wish to play with OpenCV in your free time, you can set the `INSTALL_C_EXAMPLES`, `INSTALL_PYTHON_EXAMPLES` and `BUILD_EXAMPLES` flags to `ON`, I have them off to save space.<br>
+
+> NOTE (4): If your are running your Pi in CLI mode, then you may wish to save the CMake output to file so you can review it before building. Simply append `|& tee <filename>` to the CMake command. 
+
+3. **[RPi]** Let CMake run, it will take a couple of minutes. Once it finishes, check the output to make sure everything was found. The output should look like this [file](https://githug.com/Alex-BusNet/Reveles/CMake_Config_output.txt) if done correctly (it's long so I'm not going to put it in the README).
+
+4. **[RPi]** Once the output is correct we need to configure the swap file before compiling. By default, the RPi allocates 100 MB by default. This is not enough to compile OpenCV and it will freeze near the end if you forget to change the swap size.
+```ShellSession
+$ sudo nano /etc/dphys-swapfile
+
+// Comment out the line that says CONF_SWAPSIZE=100 and add CONF_SWAPSIZE=1024 to a line beneath it
+// CTRL+X to exit nano. Press Y if it asks to save changes.
+
+$ sudo /etc/init.d/dphys-swapfile stop
+$ sudo /etc/init.d/dphys-swapfile start
+```
+
+5. **[RPi]** Now we can build OpenCV. Use the command `make -j4` to start building OpenCV. This can take about an hour, be sure to keep an eye on the RPi's temp. If you don't have a fan attached to your Pi, find a fan to blow air over it (or blow on it a couple of times when the thermometer appears; it worked for me)
+
+6. **[RPi]** Once it has completed successfully, install OpenCV with `sudo make install`.
+
+7. **[RPi]** After installing it, run `sudo ldconfig` to make sure all the libraries are linked properly.
+
+8. **[RPi]** **RESET THE SIZE OF YOUR SWAP FILE!** It is highly recommended that you DO NOT leave the swap file at 1024MB. Follow step 4 above to set your swap file back to 100MB.
+
+9. **[RPi]** (Optional) We can check OpenCV works by executing a simple python script:<br>
+`$ python`
+```python
+>>> import cv2
+>>> cv2.__version__
+>>> exit
+```
+You should get `3.4.0` as the output.
+
+
+#### Updating the Cross-Compile Environment
+We should now be done working directly with the Pi and will not be working on the host machine.
+
+1. **[Host PC]** Open a terminal and navigate to the sysroot folder we made in [Setting up the Cross-Compiler tools](#setting-up-the-cross-compiler-tools).<br>
+`$ cd ~/raspi/sysroot`
+
+2. **[Host PC]** We will want to make a `local` directory in our `usr` directory.
+```ShellSession
+// From ~/raspi/sysroot
+$ cd usr
+$ mkdir local local/include local/lib
+cd local
+```
+
+3. **[Host PC]** Now we need to get the OpenCV files we installed on our RPi. We can grab with:
+```ShellSession
+$ scp -r pi@<IP address of RPi>:/usr/local/inlcude ./
+$ scp -r pi@<IP address of RPi>:/usr/local/lib ./
+```
+
 <hr>
 
 ## Building Reveles
@@ -245,38 +428,38 @@ $ ./build
 Now just open _Reveles.pro_ in QtCreator.
 
 ### Bringing it all Together
-1.Open _Reveles.pro_ in QtCreator and click on the "Projects" icon on the left.
+1. Open _Reveles.pro_ in QtCreator and click on the "Projects" icon on the left.
 
-2.Click on "Manage Kits"
+2. Click on "Manage Kits"
 
-3.Select "Qt Versions" from the tabs across the top of the window.
+3. Select "Qt Versions" from the tabs across the top of the window.
 
-4.Chances are, Qt did not find the version we just built. So we will have to add it manually. Click on "Add" and then navigate to `~/raspi/qt5/bin/`.
+4. Chances are, Qt did not find the version we just built. So we will have to add it manually. Click on "Add" and then navigate to `~/raspi/qt5/bin/`.
 
-5.Click on _qmake_ and press "Open".
+5. Click on _qmake_ and press "Open".
 
-6.Next, go to the "Compilers" tab and click "Add" -> "GCC" -> "C++". Name this compiler Something easy to find like "G++-ARM".
+6. Next, go to the "Compilers" tab and click "Add" -> "GCC" -> "C++". Name this compiler Something easy to find like "G++-ARM".
 
-7.Navigate to `~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/`
+7. Navigate to `~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/`
 
-8.Select _arm-linux-gnueabihf-g++_ and press "Open"
+8. Select _arm-linux-gnueabihf-g++_ and press "Open"
 
-9.Check the ABI says arm-linux-generic-elf-32bit. If it says <custom> then click the drop down and select the correct ABI.
+9. Check the ABI says arm-linux-generic-elf-32bit. If it says <custom> then click the drop down and select the correct ABI.
 
-10.Go to the "Debuggers" tab and add a new debugger. Name this something like "RPi-Debugger".
+10. Go to the "Debuggers" tab and add a new debugger. Name this something like "RPi-Debugger".
 
-11.Go the same folder as the compiler. Select _arm-linux-gnueabihf-gdb_ and press "Open".
+11. Go the same folder as the compiler. Select _arm-linux-gnueabihf-gdb_ and press "Open".
 
-12.Click on "Devices" from the options menu and add a new "Generic Linux Device"
+12. Click on "Devices" from the options menu and add a new "Generic Linux Device"
 
-13.Give the device a name and configure the IP, username, and password for the device.
+13. Give the device a name and configure the IP, username, and password for the device.
 >NOTE: The remote device will need SSH enabled on the RPi, and the user being used access the pi will need ownership of the target folder for deploying the application.
 
 14. Once the device is configured, Qt will test the connection. If the test fails, check your IP, username, password, as well as permissions on the RPi. 
 >If you are using the user "pi" and are getting an "access denied" check that "pi" is not listed as "Do not allow" in the SSH config.
 >Access the SSH config with `sudo nano /etc/ssh/sshd_config`.
 
-15.Go back to "Build & Run" and select the "Kits" tab. Add a new kit and configure it like so:
+15. Go back to "Build & Run" and select the "Kits" tab. Add a new kit and configure it like so:
 ```
 Name		 		= Raspberry Pi
 File system name 		= (leave blank)
@@ -293,9 +476,9 @@ CMake generator  		= (Do not change)
 Additional Qbs Profile Settings = (Do not change)
 ```
 
-16.Press "Apply" then "OK" the confirm all your changes.
+16. Press "Apply" then "OK" the confirm all your changes.
 
-17.On the "Projects" screen, select the Raspberry Pi Kit and select the "Run" option. Check that the "Local File Path" field is not blank.
+17. On the "Projects" screen, select the Raspberry Pi Kit and select the "Run" option. Check that the "Local File Path" field is not blank.
 
 18. Ensure that the RPi is running and then build and run Reveles.
 
@@ -334,6 +517,40 @@ __Solution:__<br>
 $ sudo mkdir -p <directory>/lib/fonts>
 $ sudo cp /usr/share/fonts/truetype/dejavu/* <directory>/lib/fonts>
 ```
+
+#### GLIBCXX_3.4.21
+__Error message:__ `undefined reference to 'std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_create(unsigned int&, unsigned int)@GLIBCXX_3.4.21'*
+> *Exact function may differ
+
+__Solution:__<br>
+This error means one of a few things:<br>
+1) The version of GCC used to compile OpenCV on the RPi and the version of GCC used to compile Reveles on the Host machine are not the same.<br>
+2) Your libstdc++.so the host machine is using is not the same as the one used by the RPi when compiling OpenCV.<br>
+This solution addresses the second option:
+**[Host PC]**
+```ShellSession
+$ cd ~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/arm-linux-gnueabihf/lib
+$ ls -l | grep libstdc++.so
+```
+> One of the files that are returned should be a symbolic link: `libstdc++.so.6 -> libstdc++.so.6.0.19` (The .0.19 is the version that comes with the cross compile tools). Make note of the numbers listed after the .so.6 in the file name.
+
+**[RPi]**: Now we need to find the `libstdc++.so` file on the pi
+```ShellSession
+$ cd /usr/lib/arm-linux-gnueabihf
+$ ls -l | grep libstdc++.so
+```
+> Once again, we should see a file that is listed as symbolic link pointing to another file. On the original RPi for Reveles this looks like: `libstdc++.so.6 -> libstdc++.so.6.0.22`. Notice how the last number on the file is different from the one on our host machine. We need this version on our host to elimanate the error.
+
+**[Host PC]**
+We can fix the linked files like so:
+```ShellSession
+$ cd ~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/arm-linux-gnueabihf/lib
+$ mv libstdc++.so.6 libstdc++.so.6.bak
+$ scp pi@<IP address of RPi>:/usr/lib/arm-linux-gnueabihf/libstdc++.so.6.0.22 ./
+$ ln -s libstdc++.so.6.0.22 libstdc++.so.6
+```
+Reveles should now be able to compile.
+
 	
 ## Updating the Reveles Repository with Git
 The following command assume you are in the top level folder of where the repository is located on your hard drive. (For me this is /home/USER_NAME/Reveles/Reveles)
@@ -544,3 +761,5 @@ All rights reserved. &copy; 2017
 Walkthrough written against the following resources:
 * [RaspberryPi2EGLFS](https://wiki.qt.io/RaspberryPi2EGLFS)
 * [Using Custom Types with D-Bus](https://techbase.kde.org/Development/Tutorials/D-Bus/CustomTypes)
+* [Raspbian Stretch: Install OpoenCV 3 + Python on your Raspberry Pi](https://www.pyimagesearch/com/2017/09/04/raspbian-stretch-install-opencv-3-python-on-your-raspberry-pi)
+* [GCC 4.8 on Raspberry Pi Wheezy](https://somewideopenspace.wordpress.com/2014/02/28/gcc-4-8-on-raspberry-pi)

@@ -1,4 +1,4 @@
-QT -= gui
+QT += gui
 QT += core dbus concurrent
 
 CONFIG += c++11 console
@@ -130,6 +130,8 @@ unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/local/lib  \
     -lopencv_ml \
     -lopencv_objdetect \
     -lopencv_video \
+
+unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/lib/arm-linux-gnueabihf -lX11
 
 INCLUDEPATH += $$PWD/../../../../raspi/sysroot/usr/local/include
 DEPENDPATH += $$PWD/../../../../raspi/sysroot/usr/local/include

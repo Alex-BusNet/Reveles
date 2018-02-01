@@ -38,6 +38,7 @@ private slots:
     void readSensor();
     void updateMapData();
     void coreLoop();
+    void close();
 
 signals:
     void usTriggered();

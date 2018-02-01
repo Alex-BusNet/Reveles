@@ -52,7 +52,6 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, QWidget *paren
     this->ui->exitBtn->setShortcut(QKeySequence(Qt::Key_Escape));
 
     this->ui->distLabel->setText(QChar(0x221E));
-
 }
 
 RevelesGui::~RevelesGui()
@@ -161,7 +160,7 @@ void RevelesGui::commCheck(bool good)
 void RevelesGui::on_exitBtn_clicked()
 {
     rci->aboutToQuit();
-    this->close();
+//    this->close();
 }
 
 //=====================================================================

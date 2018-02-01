@@ -1,6 +1,5 @@
 #include "revelesmap.h"
 
-
 RevelesMap::RevelesMap()
 {
 
@@ -8,6 +7,7 @@ RevelesMap::RevelesMap()
 
 void RevelesMap::AddPoint(GPSCoord gpsc)
 {
+    // One grid square corresponds to a 2ft x 2ft area.
     if(gpsc.latitude < offsetLat)
     {
 

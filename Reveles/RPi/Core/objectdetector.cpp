@@ -1,6 +1,5 @@
 #include "objectdetector.h"
 
-
 // Convert to string
 #define SSTR( x ) static_cast<std::ostringstream &>((std::ostringstream() << std::dec << x )).str()
 
@@ -60,7 +59,7 @@ void ObjectDetector::PeopleDetect()
     {
         HOGDescriptor hog;
         hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
-        namedWindow("People Detect", 1);
+//        namedWindow("People Detect", WINDOW_AUTOSIZE);
 
         VideoCapture vc(0);
         Mat frame;
@@ -73,9 +72,12 @@ void ObjectDetector::PeopleDetect()
 
         while(vc.read(frame))
         {
+            frame.resize(Size(400, 300));
             DetectAndDraw(hog, frame);
 
-            imshow("People Detect", frame);
+            cout << ".";
+
+//            imshow("People Detect", frame);
 
             // Wait breifly for ESC to be pressed.
             int k = waitKey(1);
@@ -85,7 +87,13 @@ void ObjectDetector::PeopleDetect()
                 break;
             }
         }
+
+        cout << "[ObjectDetector] No frame to read." << endl;
+
+        destroyWindow("People Detect");
     });
+
+    cout << "--" << endl;
 }
 
 void ObjectDetector::DetectAndDraw(const HOGDescriptor &hog, Mat &img)
@@ -124,7 +132,7 @@ void ObjectDetector::DetectAndDraw(const HOGDescriptor &hog, Mat &img)
         r.width = cvRound(r.width * 0.8);
         r.y += cvRound(r.height * 0.07);
         r.height += cvRound(r.height * 0.8);
-        rectangle(img, r.tl(), r.br(), cv::Scalar(0, 255, 0), 3);
+//        rectangle(img, r.tl(), r.br(), cv::Scalar(0, 255, 0), 3);
 
         // object tracking
         int centerX = r.tl().x + (r.width / 2);
@@ -189,8 +197,8 @@ void ObjectDetector::DetectAndDraw(const HOGDescriptor &hog, Mat &img)
         objects[i].updated = true;
 //        frameUpdated[i] = true;
 
-        circle(img, center, 2, Scalar(0,0,255), 2);
-        putText(img, SSTR(i), Point(r.tl().x + 5, r.tl().y + 10), FONT_HERSHEY_SIMPLEX, 0.25, Scalar(50, 170, 50), 1);
+//        circle(img, center, 2, Scalar(0,0,255), 2);
+//        putText(img, SSTR(i), Point(r.tl().x + 5, r.tl().y + 10), FONT_HERSHEY_SIMPLEX, 0.25, Scalar(50, 170, 50), 1);
     }
 
     for(int i = 0; i < 16; i++)

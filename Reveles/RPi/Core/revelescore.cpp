@@ -1,6 +1,12 @@
 #include "revelescore.h"
 #include <iostream>
 
+//#define USE_OBJ_DETECT
+
+#if defined __linux__ && defined USE_OBJ_DETECT
+#include <X11/Xlib.h>
+#endif
+
 using namespace  std;
 
 RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
@@ -13,18 +19,23 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     connect(rdba, SIGNAL(requestMapUpdate()), this, SLOT(updateMapData()));
     connect(rdba, SIGNAL(aboutToQuit()), AnalyticalEngine::instance(), SLOT(aboutToQuit()));
     connect(rdba, SIGNAL(aboutToQuit()), ObjectDetector::instance(), SLOT(aboutToQuit()));
+    connect(rdba, SIGNAL(aboutToQuit()), this, SLOT(close()));
 
     // Outbound comms (CORE -> GUI)
     connect(this, SIGNAL(commResponse(bool)), rdba, SIGNAL(commResponse(bool)));
     connect(this, SIGNAL(currentLocation(GPSCoord)), rdba, SIGNAL(locationUpdate(GPSCoord)));
 
     // Additional comms (CORE -> CORE)
-    connect(this, SIGNAL(currentLocation(GPSCoord)), AnalyticalEngine::instance(), SLOT(updateLocation(GPSCoord)));
+//    connect(this, SIGNAL(currentLocation(GPSCoord)), AnalyticalEngine::instance(), SLOT(updateLocation(GPSCoord)));
+
+#ifdef USE_OBJ_DETECT
+    XInitThreads();
+    ObjectDetector::instance()->Init();
+#endif
 
     // Variable Init
     AnalyticalEngine::instance()->Init();
     RevelesIO::instance()->initIO();
-    ObjectDetector::instance()->Init();
 
     commsGood = false;
     updateInterval = 1000;
@@ -38,7 +49,9 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     connect(coreTimer, SIGNAL(timeout()), this, SLOT(coreLoop()));
     coreTimer->start();
 
+#ifdef USE_OBJ_DETECT
     ObjectDetector::instance()->PeopleDetect();
+#endif
 
     cout << "RevelesCore init complete." << endl;
 }
@@ -93,8 +106,14 @@ void RevelesCore::updateMapData()
 
 void RevelesCore::coreLoop()
 {
-    readSensor();
+//    readSensor();
     NavigationAssisiant::instance()->Orient();
     updateMapData();
+}
+
+void RevelesCore::close()
+{
+    cout << "RevelesCore closing..." << endl;
+    this->close();
 }
 
