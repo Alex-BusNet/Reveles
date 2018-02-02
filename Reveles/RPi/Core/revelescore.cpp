@@ -2,9 +2,12 @@
 #include <iostream>
 
 //#define USE_OBJ_DETECT
+#define OJB_DETECT_DEBUG
 
 #if defined __linux__ && defined USE_OBJ_DETECT
 #include <X11/Xlib.h>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
 #endif
 
 using namespace  std;
@@ -31,6 +34,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
 #ifdef USE_OBJ_DETECT
     XInitThreads();
     ObjectDetector::instance()->Init();
+    RevelesCamera::instance()->Init();
 #endif
 
     // Variable Init
@@ -44,42 +48,54 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     dest = GPSCoord{0, 0};
     loc = dest;
 
+#ifdef USE_OBJ_DETECT
+#ifdef OJB_DETECT_DEBUG
+    namedWindow("Detector Output", WINDOW_AUTOSIZE);
+#endif
+    AnalyticalEngine::instance()->Start();
+    ObjectDetector::instance()->Run();
+#endif
+
     coreTimer = new QTimer();
     coreTimer->setInterval(updateInterval);
     connect(coreTimer, SIGNAL(timeout()), this, SLOT(coreLoop()));
     coreTimer->start();
 
-#ifdef USE_OBJ_DETECT
-    ObjectDetector::instance()->PeopleDetect();
-#endif
+    cout << "[ RevelesCore ] Init complete." << endl;
+}
 
-    cout << "RevelesCore init complete." << endl;
+RevelesCore::~RevelesCore()
+{
+    destroyAllWindows();
+    if(coreTimer != NULL && coreTimer->isActive())
+    {
+        coreTimer->stop();
+        delete coreTimer;
+    }
 }
 
 void RevelesCore::commCheck()
 {
-    cout << "Signal recieved from GUI" << endl;
+    cout << "[ RevelesCore ] Signal recieved from GUI" << endl;
     commsGood = true;
     emit commResponse(commsGood);
 }
 
 void RevelesCore::setDestination(GPSCoord gpsc)
 {
-    cout << "Setting Target Destination to " << gpsc.latitude << ", " << gpsc.longitude << endl;
+    cout << "[ RevelesCore ] Setting Target Destination to " << gpsc.latitude << ", " << gpsc.longitude << endl;
     dest = gpsc;
     NavigationAssisiant::instance()->Start(dest);
 }
 
 void RevelesCore::setMapUpdateInterval(int milliseconds)
 {
-    cout << "Changing Map Update Interval" << endl;
-
     updateInterval = milliseconds;
     coreTimer->stop();
     coreTimer->setInterval(updateInterval);
     coreTimer->start();
 
-    cout << "--Done" << endl;
+    cout << "[ RevelesCore ] Map Update Interval changed." << endl;
 }
 
 void RevelesCore::getCurrentLocation()
@@ -113,7 +129,7 @@ void RevelesCore::coreLoop()
 
 void RevelesCore::close()
 {
-    cout << "RevelesCore closing..." << endl;
+    cout << "[ RevelesCore ] Closing..." << endl;
     this->close();
 }
 

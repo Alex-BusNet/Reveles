@@ -1,4 +1,4 @@
-QT += gui
+QT -= gui
 QT += core dbus concurrent
 
 CONFIG += c++11 console
@@ -17,103 +17,42 @@ DEFINES += QT_DEPRECATED_WARNINGS _GLIBCXX_USE_CXX11_ABI=0
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-#DBUS_ADAPTORS += revelesdbus.xml
-
 SOURCES += main.cpp \
-    ../Libraries/wiringPi/ads1115.c \
-    ../Libraries/wiringPi/bmp180.c \
-    ../Libraries/wiringPi/ds18b20.c \
-    ../Libraries/wiringPi/htu21d.c \
-    ../Libraries/wiringPi/max31855.c \
-    ../Libraries/wiringPi/max5322.c \
-    ../Libraries/wiringPi/mcp23008.c \
-    ../Libraries/wiringPi/mcp23016.c \
-    ../Libraries/wiringPi/mcp23017.c \
-    ../Libraries/wiringPi/mcp23s08.c \
-    ../Libraries/wiringPi/mcp23s17.c \
-    ../Libraries/wiringPi/mcp3002.c \
-    ../Libraries/wiringPi/mcp3004.c \
-    ../Libraries/wiringPi/mcp3422.c \
-    ../Libraries/wiringPi/mcp4802.c \
-    ../Libraries/wiringPi/pcf8574.c \
-    ../Libraries/wiringPi/pcf8591.c \
-    ../Libraries/wiringPi/piHiPri.c \
-    ../Libraries/wiringPi/piThread.c \
-    ../Libraries/wiringPi/rht03.c \
-    ../Libraries/wiringPi/sn3218.c \
-    ../Libraries/wiringPi/softPwm.c \
-    ../Libraries/wiringPi/softServo.c \
-    ../Libraries/wiringPi/softTone.c \
-    ../Libraries/wiringPi/sr595.c \
-    ../Libraries/wiringPi/wiringPi.c \
-    ../Libraries/wiringPi/wiringPiI2C.c \
-    ../Libraries/wiringPi/wiringPiSPI.c \
-    ../Libraries/wiringPi/wiringSerial.c \
-    ../Libraries/wiringPi/wiringShift.c \
     Core/revelescore.cpp \
     Core/revelesmap.cpp \
-    IO/revelesio.cpp \
-    IO/gps.cpp \
-    reveles_dbus_adaptor.cpp \
-    Common/vector2i.cpp \
     Core/navigationassisiant.cpp \
     Core/analyticalengine.cpp \
+    Core/objectdetector.cpp \
+    IO/revelescamera.cpp \
+    IO/revelesio.cpp \
+    IO/gps.cpp \
     IO/lsm9ds1.cpp \
+    reveles_dbus_adaptor.cpp \
+    Common/vector2i.cpp \
     Common/vector2f.cpp \
-    Common/vectorpolar2f.cpp \
-    Core/objectdetector.cpp
+    Common/vectorpolar2f.cpp
 
 HEADERS += \
-    ../Libraries/wiringPi/wiringPi.h \
-    ../Libraries/wiringPi/wiringPiI2C.h \
-    ../Libraries/wiringPi/softPwm.h \
-    ../Libraries/wiringPi/softTone.h \
-    ../Libraries/wiringPi/ads1115.h \
-    ../Libraries/wiringPi/bmp180.h \
-    ../Libraries/wiringPi/ds18b20.h \
-    ../Libraries/wiringPi/htu21d.h \
-    ../Libraries/wiringPi/max31855.h \
-    ../Libraries/wiringPi/max5322.h \
-    ../Libraries/wiringPi/mcp23008.h \
-    ../Libraries/wiringPi/mcp23016.h \
-    ../Libraries/wiringPi/mcp23016reg.h \
-    ../Libraries/wiringPi/mcp23017.h \
-    ../Libraries/wiringPi/mcp23s08.h \
-    ../Libraries/wiringPi/mcp23s17.h \
-    ../Libraries/wiringPi/mcp23x08.h \
-    ../Libraries/wiringPi/mcp23x0817.h \
-    ../Libraries/wiringPi/mcp3002.h \
-    ../Libraries/wiringPi/mcp3004.h \
-    ../Libraries/wiringPi/mcp3422.h \
-    ../Libraries/wiringPi/mcp4802.h \
-    ../Libraries/wiringPi/pcf8574.h \
-    ../Libraries/wiringPi/pcf8591.h \
-    ../Libraries/wiringPi/rht03.h \
-    ../Libraries/wiringPi/sn3218.h \
-    ../Libraries/wiringPi/softPwm.h \
-    ../Libraries/wiringPi/softServo.h \
-    ../Libraries/wiringPi/softTone.h \
-    ../Libraries/wiringPi/sr595.h \
-    ../Libraries/wiringPi/wiringPi.h \
-    ../Libraries/wiringPi/wiringPiI2C.h \
-    ../Libraries/wiringPi/wiringPiSPI.h \
-    ../Libraries/wiringPi/wiringSerial.h \
-    ../Libraries/wiringPi/wiringShift.h \
-    ../Libraries/version.h \
     Common/datatypes.h \
-    Core/revelescore.h \
-    Core/revelesmap.h \
-    IO/revelesio.h \
-    IO/gps.h \
-    reveles_dbus_adaptor.h \
     Common/vector2i.h \
-    Core/navigationassisiant.h \
-    Core/analyticalengine.h \
-    IO/lsm9ds1.h \
     Common/vector2f.h \
     Common/vectorpolar2f.h \
+    Common/detectionqueue.h \
     Core/objectdetector.h \
-    Common/detectionqueue.h
+    Core/revelesmap.h \
+    Core/navigationassisiant.h \
+    Core/analyticalengine.h \
+    Core/revelescore.h \
+    IO/revelesio.h \
+    IO/gps.h \
+    IO/lsm9ds1.h \
+    IO/revelescamera.h \
+    reveles_dbus_adaptor.h
+
+DISTFILES += \
+    Data/haarcascade_fullbody.xml \
+    Data/haarcascade_lowerbody.xml \
+    Data/haarcascade_upperbody.xml
 
 INSTALLS = target
 target.files = revelescore
@@ -131,8 +70,23 @@ unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/local/lib  \
     -lopencv_objdetect \
     -lopencv_video \
 
+# This points to the install location of the libX11.so file
 unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/lib/arm-linux-gnueabihf -lX11
+
+# This points to various EGL libraries needed to use with the PiCamera.
+unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/opt/vc/lib \
+    -lEGL\
+    -lbcm_host \
+    -lmmal_core \
+    -lmmal_util \
+    -lmmal_vc_client \
+    -lvcos \
+    -lGLESv2
+
+# These point to libraries to use WiringPi and Raspicam (CV)
+unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/local/lib/ \
+    -lraspicam_cv \
+    -lwiringPi
 
 INCLUDEPATH += $$PWD/../../../../raspi/sysroot/usr/local/include
 DEPENDPATH += $$PWD/../../../../raspi/sysroot/usr/local/include
-

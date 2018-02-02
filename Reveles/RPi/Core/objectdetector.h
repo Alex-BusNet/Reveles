@@ -9,6 +9,7 @@
 
 #include "Common/datatypes.h"
 #include "Common/detectionqueue.h"
+#include <IO/revelescamera.h>
 
 #include <opencv2/core.hpp>
 #include <opencv2/tracking.hpp>
@@ -33,7 +34,7 @@ public:
     void Init();
     void TeachHOG();
     void Run();
-    void PeopleDetect();
+    FutureStatus GetFutureStatus();
 
 public slots:
     void aboutToQuit();
@@ -46,8 +47,14 @@ private:
     ObjContainer objects[16];
     bool exiting;
 
-    void DetectAndDraw(const HOGDescriptor &hog, Mat &img);
+    CascadeClassifier upperBody;
+    CascadeClassifier lowerBody;
+    CascadeClassifier fullBody;
 
+
+    void PeopleDetect();
+    void DetectAndDraw(const HOGDescriptor &hog, Mat &img);
+    void FaceFinder(Mat &img);
 };
 
 #endif // OBJECTDETECTOR_H

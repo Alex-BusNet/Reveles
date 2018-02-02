@@ -14,8 +14,8 @@
 #include "Common/datatypes.h"
 #include "lsm9ds1.h"
 
-#include "../Libraries/wiringPi/wiringPi.h"
-#include "../Libraries/wiringPi/wiringPiI2C.h"
+#include <wiringPi.h>
+#include <wiringPiI2C.h>
 
 //---------------------------
 //     Sensor GPIO pins

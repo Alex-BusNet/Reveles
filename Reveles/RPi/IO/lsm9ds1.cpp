@@ -1,5 +1,5 @@
 #include "lsm9ds1.h"
-#include "../Libraries/wiringPi/wiringPiI2C.h"
+#include <wiringPiI2C.h>
 
 LSM9DS1::LSM9DS1()
 {

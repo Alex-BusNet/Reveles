@@ -24,8 +24,22 @@ void ObjectDetector::Init()
     for (int i = 0; i < 16; i++)
     {
         objects[i] = ObjContainer{ Point(0,0), false, -1, NO_STATE };
-//        frameUpdated[i] = false;
-//        objectDirection[i] = NO_STATE;
+    }
+
+
+    if(!lowerBody.load("Data/haarcascade_lowerbody.xml"))
+    {
+        cout << "[ ObjectDetector ] lower body load failed!" << endl;
+    }
+
+    if(!fullBody.load("Data/haarcascade_fullbody.xml"))
+    {
+        cout << "[ ObjectDetector ] full body load failed!" << endl;
+    }
+
+    if(!upperBody.load("Data/haarcascade_upperbody.xml"))
+    {
+        cout << "[ ObjectDetector ] upper body load failed!" << endl;
     }
 
     exiting = false;
@@ -39,7 +53,9 @@ void ObjectDetector::TeachHOG()
 void ObjectDetector::Run()
 {
     // Start PeopleDetect() as concurrent process
-//    future = QtConcurrent::run(PeopleDetect);
+    // For some reason, Qt is ok with using QtConcurrent::Run
+    // as a lambda function, but not as a normal function call.
+    future = QtConcurrent::run([=]() { PeopleDetect(); });
 }
 
 void ObjectDetector::aboutToQuit()
@@ -49,61 +65,44 @@ void ObjectDetector::aboutToQuit()
 
 void ObjectDetector::PeopleDetect()
 {
-    /// This needs to be altered to allow concurrent
-    /// running while the rest of the engine runs.
+//    HOGDescriptor hog;
+//    hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
+    Mat frame;
 
-    // For some reason, Qt is ok with using QtConcurrent::Run
-    // as a lambda function, but not as a normal function call.
-
-    QtConcurrent::run([=]()
+    while(RevelesCamera::instance()->ReadFrame(frame))
     {
-        HOGDescriptor hog;
-        hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
-//        namedWindow("People Detect", WINDOW_AUTOSIZE);
+//        DetectAndDraw(hog, frame);
+        FaceFinder(frame);
+        imshow("Detector Output", frame);
 
-        VideoCapture vc(0);
-        Mat frame;
-
-        if(!vc.isOpened())
+        if (exiting)
         {
-            cout << "Error opening camera." << endl;
-            return;
+            cout << "[ ObjectDetector ] Stopping Object Detection." << endl;
+            break;
         }
+    }
 
-        while(vc.read(frame))
-        {
-            frame.resize(Size(400, 300));
-            DetectAndDraw(hog, frame);
+    cout << "[ ObjectDetector ] No frame to read." << endl;
+}
 
-            cout << ".";
+FutureStatus ObjectDetector::GetFutureStatus()
+{
+    if(future.isRunning()) { return RUNNING; }
+    if(future.isPaused()) {return PAUSED; }
+    if(future.isFinished()) { return FINISHED; }
+    if(future.isCanceled()) { return STOPPED; }
 
-//            imshow("People Detect", frame);
-
-            // Wait breifly for ESC to be pressed.
-            int k = waitKey(1);
-            if (exiting || k == 27)
-            {
-                cout << "Stopping Object Detection." << endl;
-                break;
-            }
-        }
-
-        cout << "[ObjectDetector] No frame to read." << endl;
-
-        destroyWindow("People Detect");
-    });
-
-    cout << "--" << endl;
+    return NON_EXISTENT;
 }
 
 void ObjectDetector::DetectAndDraw(const HOGDescriptor &hog, Mat &img)
 {
     vector<Rect>found, found_filtered;
-    double t = (double)getTickCount();
+//    double t = (double)getTickCount();
 
     hog.detectMultiScale(img, found, 0.0005, Size(4, 4), Size(8, 8), 1.05, 2);
 
-    t = (double) getTickCount() - t;
+//    t = (double) getTickCount() - t;
 
     for(size_t i = 0; i < found.size(); i++)
     {
@@ -128,10 +127,10 @@ void ObjectDetector::DetectAndDraw(const HOGDescriptor &hog, Mat &img)
         // larger than the object, so we are going to shrink
         // them a bit for neatness. NOTE: this may be removed
         // in later versions. It is mostly for debugging purposes.
-        r.x += cvRound(r.width * 0.1);
-        r.width = cvRound(r.width * 0.8);
-        r.y += cvRound(r.height * 0.07);
-        r.height += cvRound(r.height * 0.8);
+//        r.x += cvRound(r.width * 0.1);
+//        r.width = cvRound(r.width * 0.8);
+//        r.y += cvRound(r.height * 0.07);
+//        r.height += cvRound(r.height * 0.8);
 //        rectangle(img, r.tl(), r.br(), cv::Scalar(0, 255, 0), 3);
 
         // object tracking
@@ -143,59 +142,55 @@ void ObjectDetector::DetectAndDraw(const HOGDescriptor &hog, Mat &img)
         /// TODO: Determine what zone the object is in.
         /// Note: Zones are regions of the frame.
 
-        if(trackedCenter != Point(0,0))
-        {
+        cout << "[ ObjectDetector ] Tracked: " << trackedCenter << " Found: " << center << " idx: " << i << endl;
+
+//        if(trackedCenter != Point(0,0))
+//        {
             int dx = center.x - trackedCenter.x;
             int dy = center.y - trackedCenter.y;
 
             // The deltas here will need to be adjusted
             // to compensate for the moving robot.
             // Larger deltas *should* indicate people, while
-            // smalled deltas *should* indicate static objects
+            // smaller deltas *should* indicate static objects
             if(dx > 0 && dy == 0)
             {
                 objects[i].dir = L2R;
-//                objectDirection[i] = L2R;
             }
             else if(dx > 0 && dy < 0)
             {
                 objects[i].dir = DIAG_L2R;
-//                objectDirection[i] = DIAG_L2R;
             }
             else if(dx < 0 && dy == 0)
             {
                 objects[i].dir = R2L;
-//                objectDirection[i] == R2L;
             }
             else if(dx < 0 && dy < 0)
             {
                 objects[i].dir = DIAG_R2L;
-//                objectDirection[i] == DIAG_R2L;
             }
             else if(dx < 0 && dy > 0)
             {
                 objects[i].dir = DIAG_R2L;
-//                objectDirection[i] = DIAG_R2L;
             }
             else if(dx > 0 && dy > 0)
             {
                 objects[i].dir = DIAG_L2R;
-//                objectDirection[i] = DIAG_L2R;
             }
             // TOWARDS direction detection
             //
             // AWAY direction detection
 
+            cout << "[ ObjectDetector ] DeterminedDirection: " << objects[i].dir << endl;
             DetectionQueue::enqueue(ObjectTracking{ i, objects[i].dir, objects[i].zone });
-        }
-        else
-        {
+//        }
+//        else
+//        {
             if(trackedCenter != center)
                 objects[i].screenLoc = center;
-        }
+//        }
 
         objects[i].updated = true;
-//        frameUpdated[i] = true;
 
 //        circle(img, center, 2, Scalar(0,0,255), 2);
 //        putText(img, SSTR(i), Point(r.tl().x + 5, r.tl().y + 10), FONT_HERSHEY_SIMPLEX, 0.25, Scalar(50, 170, 50), 1);
@@ -203,16 +198,32 @@ void ObjectDetector::DetectAndDraw(const HOGDescriptor &hog, Mat &img)
 
     for(int i = 0; i < 16; i++)
     {
-//        if(!frameUpdated[i])
         if(!objects[i].updated)
         {
             objects[i] = ObjContainer{ Point(0,0), false, objects[i].zone, NO_STATE };
-//            objectDirection[i] = NO_STATE;
             DetectionQueue::enqueue(ObjectTracking{i, NO_STATE, objects[i].zone});
         }
         else
             objects[i].updated = false;
-//            frameUpdated[i] = false;
 
+    }
+}
+
+void ObjectDetector::FaceFinder(Mat &img)
+{
+    Mat frame_gray;
+    vector<Rect> bodies;
+
+    cvtColor(img, frame_gray, COLOR_BGR2GRAY);
+    equalizeHist(frame_gray, frame_gray);
+
+    // May change this to lowerBody or fullBody.
+    upperBody.detectMultiScale(frame_gray, bodies, 1.1, 2, 0 | CASCADE_SCALE_IMAGE, Size(60,60) );
+
+    for(size_t i = 0; i < bodies.size(); i++)
+    {
+        Point center (bodies[i].x + bodies[i].width / 2, bodies[i].y + bodies[i].height / 2);
+        rectangle(img, bodies[i].tl(), bodies[i].br(), Scalar(0, 255, 0), 2);
+        circle(img, center, 2, Scalar(0,0,255), 2);
     }
 }

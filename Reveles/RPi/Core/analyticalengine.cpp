@@ -31,7 +31,7 @@ void AnalyticalEngine::Init()
     QFile tmSaveData("Assets/Data/transitionMatrix.csv");
     if(!tmSaveData.open(QIODevice::ReadOnly))
     {
-        cout << "Transition Matrix data not found. Using default." << endl;
+        cout << "[ AnalyticalEngine ] Transition Matrix data not found. Using default." << endl;
     }
     else
     {
@@ -54,7 +54,7 @@ void AnalyticalEngine::Init()
     QFile dmSaveData("Assets/Data/decisionMatrix.csv");
     if(!dmSaveData.open(QIODevice::ReadOnly))
     {
-        cout << "Decision Matrix data not found." << endl;
+        cout << "[ AnalyticalEngine ] Decision Matrix data not found." << endl;
     }
     else
     {
@@ -85,11 +85,13 @@ void AnalyticalEngine::Init()
 
 void AnalyticalEngine::Start()
 {
-    while(!endAnalyze)
-    {
-        CheckEnv();
-        ProcessEnv();
-    }
+    future = QtConcurrent::run([=]() {
+        while(!endAnalyze)
+        {
+//            CheckEnv();
+            ProcessEnv();
+        }
+    });
 }
 
 void AnalyticalEngine::aboutToQuit()
@@ -146,7 +148,7 @@ void AnalyticalEngine::ProcessEnv()
         else
             zoneCount[ot.zone]--;
 
-        cout << ot.dir << " " << ot.index << " " << ot.zone << endl;
+        cout << "[ AnalyticalEngine ] Dir: " << ot.dir << " Index: " << ot.index << " Zone: " << ot.zone << endl;
     }
 
     /// TODO: Multi obstacle avoidance handling.
@@ -256,11 +258,11 @@ void AnalyticalEngine::Save()
     QFile tmSaveData("transitionMatrix.csv");
     if(!tmSaveData.open(QIODevice::WriteOnly))
     {
-        cout << "Could not open Transition Matrix save file for writing." << endl;
+        cout << "[ AnalyticalEngine ] Could not open Transition Matrix save file for writing." << endl;
     }
     else
     {
-        cout << "Saving Transition Matix" << endl;
+        cout << "[ AnalyticalEngine ] Saving Transition Matix" << endl;
         QByteArray bArr;
         for(int i = 0; i < 7; i++)
         {
@@ -279,11 +281,11 @@ void AnalyticalEngine::Save()
     QFile dmSaveData("decisionMatrix.csv");
     if(!dmSaveData.open(QIODevice::WriteOnly))
     {
-        cout << "Could not open Decision Matrix save file for writing" << endl;
+        cout << "[ AnalyticalEngine ] Could not open Decision Matrix save file for writing" << endl;
     }
     else
     {
-        cout << "Saving Decision Matrix" << endl;
+        cout << "[ AnalyticalEngine ] Saving Decision Matrix" << endl;
         QByteArray bArr;
         for(int i = 0; i < 7; i++)
         {

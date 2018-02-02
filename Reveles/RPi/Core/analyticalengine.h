@@ -2,6 +2,8 @@
 #define REVELES_ANALYTICALENGINE_H
 #include <QObject>
 #include <QList>
+#include <QFuture>
+#include <QtConcurrent>
 
 #include "Common/datatypes.h"
 #include "revelescore.h"
@@ -98,9 +100,7 @@ private:
     ActionState lastState, presentState, predictedState, actualState;
     bool endAnalyze;
 
-//    Point objects[16];
-//    bool frameUpdated[16];
-//    ActionState objectDirection[16];
+    QFuture<void> future;
 
     // Functions
     void CheckEnv();

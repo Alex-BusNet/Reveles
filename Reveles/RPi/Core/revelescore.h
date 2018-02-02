@@ -6,9 +6,9 @@
 #include "reveles_dbus_adaptor.h"
 #include "../Common/datatypes.h"
 #include "IO/revelesio.h"
-#include "analyticalengine.h"
-#include "navigationassisiant.h"
-#include "objectdetector.h"
+#include "Core/analyticalengine.h"
+#include "Core/navigationassisiant.h"
+#include "Core/objectdetector.h"
 
 class AnalyticalEngine;
 
@@ -17,6 +17,7 @@ class RevelesCore : public QObject
     Q_OBJECT
 public:
     RevelesCore(RevelesDBusAdaptor *dbusAdaptor = 0);
+    ~RevelesCore();
 
 private:
     QTimer *coreTimer;
