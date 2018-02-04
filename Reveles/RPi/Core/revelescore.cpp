@@ -5,6 +5,11 @@
 //#define USE_OBJ_DETECT
 #define OJB_DETECT_DEBUG
 
+#define FA_SW_CORNER GPSCoord{41.631906, -85.006082}
+#define FA_SE_CORNER GPSCoord{41.631910, -85.005670}
+#define FA_NE_CORNER GPSCoord{41.632562, -85.005680}
+#define FA_NW_CORNER GPSCoord{41.632559, -85.005982}
+
 #if defined __linux__ && defined USE_OBJ_DETECT
 #include <X11/Xlib.h>
 #include <opencv2/core.hpp>
@@ -30,7 +35,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     connect(this, SIGNAL(currentLocation(GPSCoord)), rdba, SIGNAL(locationUpdate(GPSCoord)));
 
     // Additional comms (CORE -> CORE)
-//    connect(this, SIGNAL(currentLocation(GPSCoord)), AnalyticalEngine::instance(), SLOT(updateLocation(GPSCoord)));
+    connect(this, &RevelesCore::currentLocation, NavigationAssisiant::instance(), &NavigationAssisiant::updateLocation);
 
 #ifdef USE_OBJ_DETECT
     XInitThreads();
@@ -41,6 +46,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     // Variable Init
     AnalyticalEngine::instance()->Init();
     RevelesIO::instance()->initIO();
+    RevelesMap::instance()->Init();
 
     cout << boolalpha;
     cout << "[ RevelesCore ] Accelerometer/Gyroscope found: " << RevelesIO::instance()->hasXG() << endl;
@@ -62,10 +68,14 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     ObjectDetector::instance()->Run();
 #endif
 
+    // Test the GetDistance() function
+    NavigationAssisiant::instance()->updateLocation(RevelesMap::instance()->GetOffset());
+    NavigationAssisiant::instance()->Start(FA_SE_CORNER);
+
     coreTimer = new QTimer();
     coreTimer->setInterval(updateInterval);
     connect(coreTimer, SIGNAL(timeout()), this, SLOT(coreLoop()));
-    coreTimer->start();
+//    coreTimer->start();
 
     cout << "[ RevelesCore ] Init complete." << endl;
 }
@@ -118,10 +128,10 @@ void RevelesCore::readAGM()
     cout << setprecision(3) << showpoint << fixed << showpos;
     MagDirection md = RevelesIO::instance()->ReadMagnetometer();
     cout << "[ RevelesCore ] Mag Data:   X: " << md.x << " Y: " << md.y << " Z: " << md.z << " uT" << endl;
-    AccelDirection ad = RevelesIO::instance()->ReadAccelerometer();
-    cout << "[ RevelesCore ] Accel Data: X: " << ad.x << " Y: " << ad.y << " Z: " << ad.z << " m/s/s" << endl;
-    GyroDirection gd = RevelesIO::instance()->ReadGyroscope();
-    cout << "[ RevelesCore ] Gyro Data:  X: " << gd.x << " Y: " << gd.y << " Z: " << gd.z << " rad/s" << endl;
+//    AccelDirection ad = RevelesIO::instance()->ReadAccelerometer();
+//    cout << "[ RevelesCore ] Accel Data: X: " << ad.x << " Y: " << ad.y << " Z: " << ad.z << " m/s/s" << endl;
+//    GyroDirection gd = RevelesIO::instance()->ReadGyroscope();
+//    cout << "[ RevelesCore ] Gyro Data:  X: " << gd.x << " Y: " << gd.y << " Z: " << gd.z << " rad/s" << endl;
     cout << setprecision(6) << noshowpoint << noshowpos << endl;
     cout.unsetf(ios::fixed);
 }
@@ -144,7 +154,7 @@ void RevelesCore::coreLoop()
 //    readSensor();
     NavigationAssisiant::instance()->Orient();
     updateMapData();
-    readAGM();
+//    readAGM();
 }
 
 void RevelesCore::close()

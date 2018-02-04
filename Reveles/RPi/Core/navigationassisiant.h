@@ -5,6 +5,7 @@
 #include <QList>
 #include <Common/datatypes.h>
 #include <Common/vector2f.h>
+#include <Common/vectorpolar2f.h>
 #include "revelescore.h"
 
 /*
@@ -12,8 +13,10 @@
  * handle the more traditional traversal tasks
  * such as pathfinding and updating map nodes.
  */
-class NavigationAssisiant
+class NavigationAssisiant : public QObject
 {
+    Q_OBJECT
+
 public:
     NavigationAssisiant();
     static NavigationAssisiant *instance();
@@ -21,6 +24,9 @@ public:
     void Init();
     void Start(GPSCoord dest);
     void Orient();
+    void FindBearing();
+
+    double GetDistance(GPSCoord pt1, GPSCoord pt2);
 
 public slots:
     void updateLocation(GPSCoord loc);
@@ -29,7 +35,6 @@ private:
     // Functions
     void FindPath();
     QList<GPSCoord> GetNeighbors(GPSCoord node);
-    double GetDistance(GPSCoord pt1, GPSCoord pt2);
 
     void Navigate();
 

@@ -2,12 +2,9 @@
 #define VECTOR2F_H
 
 #include <tuple>
-//#include "vectorpolar2f.h"
 #include <cmath>
 
 using namespace std;
-
-//class VectorPolar2f;
 
 class Vector2f
 {
@@ -40,12 +37,10 @@ public:
         return *(new Vector2f(get<0>(pt), get<1>(pt)));
     }
 
-//    VectorPolar2f& toPolar()
-//    {
-//        return *(new VectorPolar2f(
-//                     sqrt(pow(this->i, 2) + pow(this->j, 2)),
-//                     tan(j / i)));
-//    }
+    bool operator !=(const tuple<float, float> &pt)
+    {
+        return ((this->i != get<0>(pt)) && (this->j != get<1>(pt)));
+    }
 
     float x() { return i; }
     float y() { return j; }

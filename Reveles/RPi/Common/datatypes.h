@@ -13,6 +13,16 @@ struct GPSCoord {
         return ((this->latitude == other.latitude)
                && (this->longitude == other.longitude));
     }
+
+    GPSCoord operator+(std::tuple<double, double> &td)
+    {
+        return GPSCoord{this->latitude + std::get<0>(td), this->longitude + std::get<1>(td)};
+    }
+
+    GPSCoord operator-(std::tuple<double, double> &td)
+    {
+        return GPSCoord{this->latitude - std::get<0>(td), this->longitude - std::get<1>(td)};
+    }
 };
 
 Q_DECLARE_METATYPE(GPSCoord)

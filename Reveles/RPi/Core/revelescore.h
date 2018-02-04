@@ -9,6 +9,7 @@
 #include "Core/analyticalengine.h"
 #include "Core/navigationassisiant.h"
 #include "Core/objectdetector.h"
+#include "revelesmap.h"
 
 class AnalyticalEngine;
 

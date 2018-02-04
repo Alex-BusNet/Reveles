@@ -1,10 +1,14 @@
 #include "navigationassisiant.h"
 #include <QtConcurrent>
 #include <tuple>
+#include "Common/vectorutils.h"
 
 #define TUPI(a,b) (std::tuple<int, int>(a, b))
 #define TUPD(a,b) (std::tuple<double, double>(a,b))
 #define TUPF(a,b) (std::tuple<float, float>(a,b))
+
+#define METERS_TO_FEET 3.280839895013
+#define FEET_TO_METERS 1/3.280839895013
 
 Q_GLOBAL_STATIC(NavigationAssisiant, navi)
 
@@ -35,8 +39,10 @@ void NavigationAssisiant::Init()
 void NavigationAssisiant::Start(GPSCoord dest)
 {
     destination = dest;
-
-    FindPath();
+    Orient();
+    cout << "[ NavigationAssistant ] " << GetDistance(currentLocation, destination) << " ft" << endl;
+    FindBearing();
+//    FindPath();
 }
 
 void NavigationAssisiant::updateLocation(GPSCoord loc)
@@ -60,17 +66,30 @@ QList<GPSCoord> NavigationAssisiant::GetNeighbors(GPSCoord node)
 
 }
 
+/**
+ * @brief Calculates the distance between two GPSCoord objects
+ * @param pt1
+ * @param pt2
+ * @return The distance between two points in feet.
+ */
 double NavigationAssisiant::GetDistance(GPSCoord pt1, GPSCoord pt2)
 {
     // Calculation from https://www.movable-type.com.uk/scripts/lotlong.html
     // Formula requires Lat/Long be given in decimal form.
     // Note: negative numbers indicate south/west
 
+#ifdef DEBUG_NAV
     double lat1 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt1.latitude;
     double lon1 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt1.longitude;
 
     double lat2 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt2.latitude;
     double lon2 = ((static_cast<double>(rand()) / RAND_MAX) * 180.0); // pt2.longitude;
+#else
+    double lat1 = pt1.latitude;
+    double lat2 = pt2.latitude;
+    double lon1 = pt1.longitude;
+    double lon2 = pt2.longitude;
+#endif
 
     // Calculate distance from Lat/Long using Haversine formula
     int R = 6371e3; // Earth's radius (in meters)
@@ -78,8 +97,8 @@ double NavigationAssisiant::GetDistance(GPSCoord pt1, GPSCoord pt2)
     double lat1_angle = lat1 * (M_PI / 180.0);
     double lat2_angle = lat2 * (M_PI / 180.0);
 
-    double latDelta = (lat2 - lat1) * (M_PI - 180.0);
-    double lonDelta = (lon2 - lon1) * (M_PI - 180.0);
+    double latDelta = (lat2 - lat1) * (M_PI / 180.0);
+    double lonDelta = (lon2 - lon1) * (M_PI / 180.0);
 
     double a = sin(latDelta / 2) * sin(latDelta / 2) +
             cos(lat1_angle) * cos(lat2_angle) *
@@ -87,51 +106,82 @@ double NavigationAssisiant::GetDistance(GPSCoord pt1, GPSCoord pt2)
 
     double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
-    return R * c; // Distance travelled between two points.
+    // Distance travelled between two points (in feet)
+    return ((R * c) / METERS_TO_FEET);
 }
 
 void NavigationAssisiant::Orient()
 {
     MagDirection md = RevelesIO::instance()->ReadMagnetometer();
-    Vector2f locVec(currentLocation.latitude, currentLocation.longitude);
-    Vector2f destVec(destination.latitude, destination.longitude);
+    double deg;
 
     // relate the gausian values (x, y) to the Direction enumeration.
     if(md.x != 0.0)
     {
-        // 1 uT = 0.01 gauss
-        md.x *= (0.01/1);
-        md.y *= (0.01/1);
-        md.z *= (0.01/1);
-
         // Convert Gaussian values to degrees:
-        double deg = std::atan(md.y / md.x) * (180.0 / M_PI);
-        if(deg > 360.0)
-            deg -= 360.0;
-        else if(deg < 0)
-            deg += 360.0;
+        deg = std::atan(md.y / md.x) * (180.0 / M_PI);
 
-        // determine heading
-        if((deg >= 345) || (deg < 15))       { heading = N; }
-        else if((deg >= 15) && (deg < 45))   { heading = EN; }
-        else if((deg >= 45) && (deg < 75))   { heading = NE; }
-        else if((deg >= 75) && (deg < 105))  { heading = E; }
-        else if((deg >= 105) && (deg <= 135)){ heading = SE; }
-        else if((deg > 135) && (deg < 165))  { heading = ES; }
-        else if((deg >= 165) && (deg < 195)) { heading = S; }
-        else if((deg >= 195) && (deg < 225)) { heading = WS; }
-        else if((deg >= 225) && (deg < 255)) { heading = SW; }
-        else if((deg >= 255) && (deg < 285)) { heading = W; }
-        else if((deg >= 285) && (deg <= 315)){ heading = NW; }
-        else if((deg > 315) && (deg < 345))  { heading = WN; }
-
-        headingAngle = deg;
-        cout << "[ NavigationAssistant ] Heading: " << DirString[heading] << endl;
+        // The values from atan() are fixes between -90 and 90,
+        // So we will multiply them by 2 to fix the angle between
+        // -180 and 180
+        deg *= 2.0;
+    }
+    else if(md.y < 0.0)
+    {
+        deg = 90.0;
+    }
+    else
+    {
+        deg = 0.0;
     }
 
-//    if(destVec != TUPD(0.0, 0.0))
+    // determine heading
+    if((deg >= -15) && (deg < 15))         { heading = N;  }
+    else if((deg >= 15) && (deg < 45))     { heading = EN; }
+    else if((deg >= 45) && (deg < 75))     { heading = NE; }
+    else if((deg >= 75) && (deg < 105))    { heading = E;  }
+    else if((deg >= 105) && (deg <= 135))  { heading = SE; }
+    else if((deg > 135) && (deg < 165))    { heading = ES; }
+    else if((deg >= 165) || (deg < -165))  { heading = S;  }
+    else if((deg >= -165) && (deg < -135)) { heading = WS; }
+    else if((deg >= -135) && (deg < -105)) { heading = SW; }
+    else if((deg >= -105) && (deg < -75))  { heading = W;  }
+    else if((deg >= -75) && (deg <= -45))  { heading = NW; }
+    else if((deg > -45) && (deg < -15))    { heading = WN; }
+
+    headingAngle = deg;
+    cout << "[ NavigationAssistant ] Heading: " << DirString[heading] << endl;
+}
+
+void NavigationAssisiant::FindBearing()
+{
+    Vector2f locVec(currentLocation.latitude, currentLocation.longitude);
+    Vector2f destVec(destination.latitude, destination.longitude);
+
+    double phi1 = locVec.x() * (M_PI / 180.0);
+    double phi2 = destVec.x() * (M_PI / 180.0);
+    double lambda1 = locVec.y() * (M_PI / 180.0);
+    double lambda2 = destVec.y() * (M_PI / 180.0);
+
+    double y = sin(lambda2 - lambda1) * cos(phi2);
+    double x = cos(phi1) * sin(phi2) - sin(phi1) * cos(phi2) * cos(lambda2 - lambda1);
+
+    // Bearing (in degrees)
+    double b = atan2(y, x) * (180.0 / M_PI);
+
+    // Convert bearing to compass bearing
+    double cb = fmod(b + 360.0,  360.0);
+
+    //Final bearing
+    double fb = fmod(b + 180.0, 360.0);
+
+    cout << "[ NavigationAssistant ]         Bearing: " << b << " deg." << endl;
+    cout << "[ NavigationAssistant ] Compass Bearing: " << cb << " deg." << endl;
+    cout << "[ NavigationAssistant ]   Final Bearing: " << fb << " deg." << endl;
+
+//    if(destVec != TUPF(0.0, 0.0))
 //    {
-//        VectorPolar2f resultant = (destVec - locVec).toPolar();
+//        VectorPolar2f resultant = toPolar(destVec - locVec);
 
 //        // Adjust vector angle to compass angle
 //        float rAng = resultant.degrees() + 90;

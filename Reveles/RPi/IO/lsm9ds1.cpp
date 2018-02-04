@@ -162,13 +162,13 @@ MagDirection LSM9DS1::ReadMag()
 
     MagDirection md;
     md.x  = xhi * magLSB;
-    md.x /= 1000;
+    md.x /= 10;
 
     md.y  = yhi * magLSB;
-    md.y /= 1000;
+    md.y /= 10;
 
     md.z  = zhi * magLSB;
-    md.z /= 1000;
+    md.z /= 10;
 
     return md;
 }

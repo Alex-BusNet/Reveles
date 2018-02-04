@@ -47,7 +47,8 @@ HEADERS += \
     IO/gps.h \
     IO/lsm9ds1.h \
     IO/revelescamera.h \
-    reveles_dbus_adaptor.h
+    reveles_dbus_adaptor.h \
+    Common/vectorutils.h
 
 DISTFILES += \
     Data/haarcascade_fullbody.xml \

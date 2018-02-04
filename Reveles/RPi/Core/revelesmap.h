@@ -1,7 +1,8 @@
 #ifndef REVELESMAP_H
 #define REVELESMAP_H
 
-#include "../Common/datatypes.h"
+#include <QObject>
+#include "Common/datatypes.h"
 #include <vector>
 #include <list>
 #include <string>
@@ -9,18 +10,25 @@
 
 using namespace std;
 
-class RevelesMap
+class RevelesMap : public QObject
 {
+    Q_OBJECT
+
 public:
     RevelesMap();
+    static RevelesMap* instance();
+
+    void Init();
+    GPSCoord GetOffset();
+
     void AddPoint(GPSCoord gpsc);
     list<GPSCoord> GetNearbyPoints(GPSCoord gpsc);
     void RegisterDestination(string name, GPSCoord gpsc);
-    list<Node*> FindPath(Node* end);
-    list<Node*> FindPath(string dest);
+//    list<Node*> FindPath(Node* end);
+//    list<Node*> FindPath(string dest);
 
 private:
-    map<string, Node> savedDestinations;
+//    map<string, Node> savedDestinations;
     vector<GPSCoord> grid;
     double offsetLat, offsetLong;
 

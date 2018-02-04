@@ -1,8 +1,26 @@
 #include "revelesmap.h"
 
+Q_GLOBAL_STATIC(RevelesMap, rm)
+
 RevelesMap::RevelesMap()
 {
 
+}
+
+RevelesMap *RevelesMap::instance()
+{
+    return rm;
+}
+
+void RevelesMap::Init()
+{
+    offsetLat = 41.631906;
+    offsetLong = -85.006118;
+}
+
+GPSCoord RevelesMap::GetOffset()
+{
+    return GPSCoord{offsetLat, offsetLong};
 }
 
 void RevelesMap::AddPoint(GPSCoord gpsc)
@@ -12,6 +30,7 @@ void RevelesMap::AddPoint(GPSCoord gpsc)
     {
 
     }
+
     if(!gridHasPoint(gpsc))
         grid.push_back(gpsc);
 }
@@ -39,30 +58,30 @@ void RevelesMap::RegisterDestination(string name, GPSCoord gpsc)
 
 }
 
-list<Node*> RevelesMap::FindPath(Node* end)
-{
-    list<Node*> path;
+//list<Node*> RevelesMap::FindPath(Node* end)
+//{
+//    list<Node*> path;
 
-    //-------------------
-    // Path Finding Algorithm goes here
-    //-------------------
+//    //-------------------
+//    // Path Finding Algorithm goes here
+//    //-------------------
 
-    //-------------------
-    /* Retrace Path */
+//    //-------------------
+//    /* Retrace Path */
 
-    //-------------------
+//    //-------------------
 
-    return path;
-}
+//    return path;
+//}
 
-/*
- * FindPaths(string) assumes that the destination
- * passed to it exists.
- */
-list<Node*> RevelesMap::FindPath(string dest)
-{
-    return FindPath(&savedDestinations[dest]);
-}
+///*
+// * FindPaths(string) assumes that the destination
+// * passed to it exists.
+// */
+//list<Node*> RevelesMap::FindPath(string dest)
+//{
+//    return FindPath(&savedDestinations[dest]);
+//}
 
 void RevelesMap::saveMapData()
 {
