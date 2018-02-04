@@ -21,7 +21,7 @@ void RevelesIO::initIO()
     pinMode(TRIG, OUTPUT);
     /// TODO: Add pins for ToF
 
-    wiringPiI2CSetup(ARDUINO);
+    fdArduino = wiringPiI2CSetup(ARDUINO);
 
     agm = new LSM9DS1();
     agm->setup();
@@ -40,7 +40,7 @@ RevelesIO::RevelesIO()
 void RevelesIO::SendMotorUpdate(float usDist, float tofDist)
 {
     /// TODO: Figure out I2C Comm format
-    wiringPiI2CWrite(ARDUINO, usDist);
+    wiringPiI2CWrite(fdArduino, usDist);
 }
 
 GPSCoord RevelesIO::ReadGPS()
@@ -122,14 +122,24 @@ MagDirection RevelesIO::ReadMagnetometer()
 
 AccelDirection RevelesIO::ReadAccelerometer()
 {
-    if(!XGAvailable) { return AccelDirection {0.0f, 0.0f, 0.0f}; }
+    if(!XGAvailable) { return AccelDirection{0.0f, 0.0f, 0.0f}; }
 
     return agm->ReadAccel();
 }
 
 GyroDirection RevelesIO::ReadGyroscope()
 {
-    if(!XGAvailable) { return GyroDirection {0.0f, 0.0f, 0.0f}; }
+    if(!XGAvailable) { return GyroDirection{0.0f, 0.0f, 0.0f}; }
 
     return agm->ReadGyro();
+}
+
+bool RevelesIO::hasXG()
+{
+    return this->XGAvailable;
+}
+
+bool RevelesIO::hasMag()
+{
+    return this->MagAvailable;
 }

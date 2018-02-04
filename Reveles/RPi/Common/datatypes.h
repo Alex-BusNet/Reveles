@@ -2,6 +2,7 @@
 #define DATATYPES_H
 #include <QMetaType>
 #include <QtDBus/QDBusArgument>
+#include <cstring>
 
 struct GPSCoord {
     double latitude;
@@ -41,24 +42,11 @@ inline const QDBusArgument &operator>>(const QDBusArgument &argument, GPSCoord &
 QT_END_NAMESPACE
 //====================================================
 
-struct AccelDirection
-{
-    float x;
-    float y;
-    float z;
-};
+struct AccelDirection { float x, y, z; };
 
-struct MagDirection {
-    float x;
-    float y;
-    float z;
-};
+struct MagDirection { float x, y, z; };
 
-struct GyroDirection {
-    float x;
-    float y;
-    float z;
-};
+struct GyroDirection { float x, y, z; };
 
 struct DecisionPoint {
     MagDirection face;
@@ -79,12 +67,6 @@ struct Path {
     Node *child;
     Node *parent;
 };
-
-struct Accel { float x, y, z; };
-struct Gyro  { float x, y, z; };
-struct Mag   { float x, y, z; };
-
-
 
 enum Direction {
     N, NE, NW,
@@ -116,6 +98,14 @@ enum ActionState
     DIAG_R2L = 5,// State 6
     STOP     = 6,// State 7
     NO_STATE = 7 // Initialization State.
+};
+
+static std::string DirString[] =
+{
+    "North", "North-East", "North-West",
+    "South", "South-East", "South-West",
+    "West", "West-North", "West-South",
+    "East", "East-North", "East-South"
 };
 
 struct ObjectTracking

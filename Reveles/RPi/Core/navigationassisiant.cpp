@@ -96,9 +96,14 @@ void NavigationAssisiant::Orient()
     Vector2f locVec(currentLocation.latitude, currentLocation.longitude);
     Vector2f destVec(destination.latitude, destination.longitude);
 
-    // relate the gausian values (x, z) to the Direction enumeration.
+    // relate the gausian values (x, y) to the Direction enumeration.
     if(md.x != 0.0)
     {
+        // 1 uT = 0.01 gauss
+        md.x *= (0.01/1);
+        md.y *= (0.01/1);
+        md.z *= (0.01/1);
+
         // Convert Gaussian values to degrees:
         double deg = std::atan(md.y / md.x) * (180.0 / M_PI);
         if(deg > 360.0)
@@ -121,6 +126,7 @@ void NavigationAssisiant::Orient()
         else if((deg > 315) && (deg < 345))  { heading = WN; }
 
         headingAngle = deg;
+        cout << "[ NavigationAssistant ] Heading: " << DirString[heading] << endl;
     }
 
 //    if(destVec != TUPD(0.0, 0.0))

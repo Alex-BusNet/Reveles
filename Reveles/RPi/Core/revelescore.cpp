@@ -1,5 +1,6 @@
 #include "revelescore.h"
 #include <iostream>
+#include <iomanip>
 
 //#define USE_OBJ_DETECT
 #define OJB_DETECT_DEBUG
@@ -40,6 +41,11 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     // Variable Init
     AnalyticalEngine::instance()->Init();
     RevelesIO::instance()->initIO();
+
+    cout << boolalpha;
+    cout << "[ RevelesCore ] Accelerometer/Gyroscope found: " << RevelesIO::instance()->hasXG() << endl;
+    cout << "[ RevelesCore ] Magnetometer found: " << RevelesIO::instance()->hasMag() << endl;
+    cout << noboolalpha;
 
     commsGood = false;
     updateInterval = 1000;
@@ -107,6 +113,19 @@ void RevelesCore::updateOrientation()
 {
 }
 
+void RevelesCore::readAGM()
+{
+    cout << setprecision(3) << showpoint << fixed << showpos;
+    MagDirection md = RevelesIO::instance()->ReadMagnetometer();
+    cout << "[ RevelesCore ] Mag Data:   X: " << md.x << " Y: " << md.y << " Z: " << md.z << " uT" << endl;
+    AccelDirection ad = RevelesIO::instance()->ReadAccelerometer();
+    cout << "[ RevelesCore ] Accel Data: X: " << ad.x << " Y: " << ad.y << " Z: " << ad.z << " m/s/s" << endl;
+    GyroDirection gd = RevelesIO::instance()->ReadGyroscope();
+    cout << "[ RevelesCore ] Gyro Data:  X: " << gd.x << " Y: " << gd.y << " Z: " << gd.z << " rad/s" << endl;
+    cout << setprecision(6) << noshowpoint << noshowpos << endl;
+    cout.unsetf(ios::fixed);
+}
+
 void RevelesCore::readSensor()
 {
     float us = RevelesIO::instance()->triggerUltrasonic(0b001);
@@ -125,6 +144,7 @@ void RevelesCore::coreLoop()
 //    readSensor();
     NavigationAssisiant::instance()->Orient();
     updateMapData();
+    readAGM();
 }
 
 void RevelesCore::close()

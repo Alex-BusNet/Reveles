@@ -1,5 +1,11 @@
 #include "lsm9ds1.h"
 #include <wiringPiI2C.h>
+#include <wiringPi.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/i2c-dev.h>
 
 LSM9DS1::LSM9DS1()
 {
@@ -19,30 +25,55 @@ bool LSM9DS1::MagFound()
 
 void LSM9DS1::setup()
 {
-    wiringPiI2CSetup(MAG_ADDR);
-    wiringPiI2CSetup(XG_ADDR);
+    // Setup the I2C line for the Accel/Gyro.
+    fdXG = wiringPiI2CSetup(XG_ADDR);
 
-    uint8_t id = wiringPiI2CReadReg8(XG_ADDR, WHO_AM_I);
+    // Setup the I2C line for the Magnetometer.
+    fdMag = wiringPiI2CSetup(MAG_ADDR);
 
-    if (id == XG_ID)
+    wiringPiI2CWriteReg8(fdXG, CTRL_REG_8, 0x05);
+    wiringPiI2CWriteReg8(fdMag, CTRL_REG2_M, 0x0C);
+
+    delayMicroseconds(10);
+
+    int id = wiringPiI2CReadReg8(fdXG, WHO_AM_I);
+    cout << "[ RevelesIO ] XG id: 0x" << hex << id << endl;
+
+    if(id == XG_ID)
         hasXG = true;
 
-    id = wiringPiI2CReadReg8(MAG_ADDR, WHO_AM_I);
+    id = wiringPiI2CReadReg8(fdMag, 0x0F);
+    cout << "[ RevelesIO ] Mag id: 0x" << hex << id << endl;
 
-    if( id == MAG_ID)
+    if(id == MAG_ID)
         hasMag = true;
 
-    setupMag(MAG_4GAUSS);
-    setupAccel(XL_8G);
-    setupGyro(GYRO_SCALE_245DPS);
+    // Gyro continuous
+    wiringPiI2CWriteReg8(fdXG, CTRL_REG1_G, 0xC0);
+    // Accel Continuous
+    wiringPiI2CWriteReg8(fdXG, CTRL_REG5_XL, 0x38);
+    // Accel 1KHz out data rate, BW set by ODR, 408Hz anti-aliasing
+    wiringPiI2CWriteReg8(fdXG, CTRL_REG6_XL, 0xC0);
+
+    // Mag continuous
+    wiringPiI2CWriteReg8(fdMag, CTRL_REG3_M, 0x00);
+
+    if(hasMag)
+        setupMag(MAG_4GAUSS);
+
+    if(hasXG)
+    {
+        setupAccel(XL_8G);
+        setupGyro(GYRO_SCALE_245DPS);
+    }
 }
 
 void LSM9DS1::setupMag(LSM9DS1::MagGain gain)
 {
-    uint8_t reg = wiringPiI2CReadReg8(MAG_ADDR, CTRL_REG2_M);
+    uint8_t reg = wiringPiI2CReadReg8(fdMag, CTRL_REG2_M);
     reg &= ~(0b01100000);
     reg |= gain;
-    wiringPiI2CWriteReg8(MAG_ADDR, CTRL_REG2_M, reg);
+    wiringPiI2CWriteReg8(fdMag, CTRL_REG2_M, reg);
 
     switch(gain)
     {
@@ -63,10 +94,10 @@ void LSM9DS1::setupMag(LSM9DS1::MagGain gain)
 
 void LSM9DS1::setupAccel(LSM9DS1::AccelRange range)
 {
-    uint8_t reg = wiringPiI2CReadReg8(XG_ADDR, CTRL_REG6_XL);
+    uint8_t reg = wiringPiI2CReadReg8(fdXG, CTRL_REG6_XL);
     reg &= ~(0b00011000);
     reg |= range;
-    wiringPiI2CWriteReg8(XG_ADDR, CTRL_REG6_XL, reg);
+    wiringPiI2CWriteReg8(fdXG, CTRL_REG6_XL, reg);
 
     switch(range)
     {
@@ -87,10 +118,10 @@ void LSM9DS1::setupAccel(LSM9DS1::AccelRange range)
 
 void LSM9DS1::setupGyro(LSM9DS1::GyroScale scale)
 {
-    uint8_t reg = wiringPiI2CReadReg8(XG_ADDR, CTRL_REG1_G);
+    uint8_t reg = wiringPiI2CReadReg8(fdXG, CTRL_REG1_G);
     reg &= ~(0b00110000);
     reg |= scale;
-    wiringPiI2CWriteReg8(XG_ADDR, CTRL_REG1_G, reg);
+    wiringPiI2CWriteReg8(fdXG, CTRL_REG1_G, reg);
 
     switch(scale)
     {
@@ -115,12 +146,12 @@ void LSM9DS1::setupGyro(LSM9DS1::GyroScale scale)
  */
 MagDirection LSM9DS1::ReadMag()
 {
-    uint8_t xlo = wiringPiI2CReadReg8(MAG_ADDR, M_OUT_X_L);
-    int16_t xhi = wiringPiI2CReadReg8(MAG_ADDR, M_OUT_X_H);
-    uint8_t ylo = wiringPiI2CReadReg8(MAG_ADDR, M_OUT_Y_L);
-    int16_t yhi = wiringPiI2CReadReg8(MAG_ADDR, M_OUT_Y_H);
-    uint8_t zlo = wiringPiI2CReadReg8(MAG_ADDR, M_OUT_Z_L);
-    int16_t zhi = wiringPiI2CReadReg8(MAG_ADDR, M_OUT_Z_H);
+    uint8_t xlo = wiringPiI2CReadReg8(fdMag, M_OUT_X_L);
+    int16_t xhi = wiringPiI2CReadReg8(fdMag, M_OUT_X_H);
+    uint8_t ylo = wiringPiI2CReadReg8(fdMag, M_OUT_Y_L);
+    int16_t yhi = wiringPiI2CReadReg8(fdMag, M_OUT_Y_H);
+    uint8_t zlo = wiringPiI2CReadReg8(fdMag, M_OUT_Z_L);
+    int16_t zhi = wiringPiI2CReadReg8(fdMag, M_OUT_Z_H);
 
     xhi <<= 8;
     xhi |= xlo;
@@ -129,26 +160,27 @@ MagDirection LSM9DS1::ReadMag()
     zhi <<= 8;
     zhi |= zlo;
 
-    xhi *= magLSB;
-    xhi /= 1000;
+    MagDirection md;
+    md.x  = xhi * magLSB;
+    md.x /= 1000;
 
-    yhi *= magLSB;
-    yhi /= 1000;
+    md.y  = yhi * magLSB;
+    md.y /= 1000;
 
-    zhi *= magLSB;
-    zhi /= 1000;
+    md.z  = zhi * magLSB;
+    md.z /= 1000;
 
-    return MagDirection{xhi, yhi, zhi};
+    return md;
 }
 
 AccelDirection LSM9DS1::ReadAccel()
 {
-    uint8_t xlo = wiringPiI2CReadReg8(XG_ADDR, XL_OUT_X_L);
-    int16_t xhi = wiringPiI2CReadReg8(XG_ADDR, XL_OUT_X_H);
-    uint8_t ylo = wiringPiI2CReadReg8(XG_ADDR, XL_OUT_Y_L);
-    int16_t yhi = wiringPiI2CReadReg8(XG_ADDR, XL_OUT_Y_H);
-    uint8_t zlo = wiringPiI2CReadReg8(XG_ADDR, XL_OUT_Z_L);
-    int16_t zhi = wiringPiI2CReadReg8(XG_ADDR, XL_OUT_Z_H);
+    uint8_t xlo = wiringPiI2CReadReg8(fdXG, XL_OUT_X_L);
+    int16_t xhi = wiringPiI2CReadReg8(fdXG, XL_OUT_X_H);
+    uint8_t ylo = wiringPiI2CReadReg8(fdXG, XL_OUT_Y_L);
+    int16_t yhi = wiringPiI2CReadReg8(fdXG, XL_OUT_Y_H);
+    uint8_t zlo = wiringPiI2CReadReg8(fdXG, XL_OUT_Z_L);
+    int16_t zhi = wiringPiI2CReadReg8(fdXG, XL_OUT_Z_H);
 
     xhi <<= 8;
     xhi |= xlo;
@@ -157,30 +189,32 @@ AccelDirection LSM9DS1::ReadAccel()
     zhi <<= 8;
     zhi |= zlo;
 
-    xhi *= accelLSB;
-    xhi /= 1000;
-    xhi *= GRAVITY_STANDARD;
+    AccelDirection ad;
 
-    yhi *= accelLSB;
-    yhi /= 1000;
-    yhi *= GRAVITY_STANDARD;
+    ad.x  = xhi * accelLSB;
+    ad.x /= 1000;
+    ad.x *= GRAVITY_STANDARD;
 
-    zhi += accelLSB;
-    zhi /= 1000;
-    zhi *= GRAVITY_STANDARD;
+    ad.y  = yhi * accelLSB;
+    ad.y /= 1000;
+    ad.y *= GRAVITY_STANDARD;
 
-    return AccelDirection{xhi, yhi, zhi};
+    ad.z  = zhi * accelLSB;
+    ad.z /= 1000;
+    ad.z *= GRAVITY_STANDARD;
+
+    return ad;
 }
 
 
 GyroDirection LSM9DS1::ReadGyro()
 {
-    uint8_t xlo = wiringPiI2CReadReg8(XG_ADDR, GYRO_OUT_X_L);
-    int16_t xhi = wiringPiI2CReadReg8(XG_ADDR, GYRO_OUT_X_H);
-    uint8_t ylo = wiringPiI2CReadReg8(XG_ADDR, GYRO_OUT_Y_L);
-    int16_t yhi = wiringPiI2CReadReg8(XG_ADDR, GYRO_OUT_Y_H);
-    uint8_t zlo = wiringPiI2CReadReg8(XG_ADDR, GYRO_OUT_Z_L);
-    int16_t zhi = wiringPiI2CReadReg8(XG_ADDR, GYRO_OUT_Z_H);
+    uint8_t xlo = wiringPiI2CReadReg8(fdXG, GYRO_OUT_X_L);
+    int16_t xhi = wiringPiI2CReadReg8(fdXG, GYRO_OUT_X_H);
+    uint8_t ylo = wiringPiI2CReadReg8(fdXG, GYRO_OUT_Y_L);
+    int16_t yhi = wiringPiI2CReadReg8(fdXG, GYRO_OUT_Y_H);
+    uint8_t zlo = wiringPiI2CReadReg8(fdXG, GYRO_OUT_Z_L);
+    int16_t zhi = wiringPiI2CReadReg8(fdXG, GYRO_OUT_Z_H);
 
     xhi <<= 8;
     xhi |= xlo;
@@ -189,11 +223,12 @@ GyroDirection LSM9DS1::ReadGyro()
     zhi <<= 8;
     zhi |= zlo;
 
-    xhi *= gyroDPSDigit;
+    GyroDirection gd;
+    gd.x = xhi * gyroDPSDigit;
 
-    yhi *= gyroDPSDigit;
+    gd.y = yhi * gyroDPSDigit;
 
-    zhi *= gyroDPSDigit;
+    gd.z = zhi * gyroDPSDigit;
 
-    return GyroDirection{xhi, yhi, zhi};
+    return gd;
 }

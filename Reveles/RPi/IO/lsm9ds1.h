@@ -9,9 +9,10 @@
 
 #include <stdint.h>
 #include "Common/datatypes.h"
+#include <iostream>
 
-#define  XG_ADDR  0x6B
-#define MAG_ADDR  0x1E
+#define  XG_ADDR  (0x6B)
+#define MAG_ADDR  (0x1E)
 
 #define    XG_ID  0b01101000
 #define   MAG_ID  0b00111101
@@ -32,6 +33,8 @@
 
 #define GRAVITY_STANDARD        9.80665f
 
+using namespace std;
+
 class LSM9DS1
 {
 public:
@@ -50,6 +53,9 @@ public:
 private:
     // Variables
     bool hasXG, hasMag;
+
+    int fdXG;  // File descriptor for Accelerometer/Gyro
+    int fdMag; // File descriptor for Magnetometer
 
     float magLSB;
     float accelLSB;
@@ -83,6 +89,7 @@ private:
         CTRL_REG5_XL    = 0x1F,
         CTRL_REG6_XL    = 0x20,
         CTRL_REG7_XL    = 0x21,
+        CTRL_REG_8      = 0x22,
 
         XL_OUT_X_L      = 0x28,
         XL_OUT_X_H      = 0x29,

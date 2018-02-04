@@ -53,16 +53,22 @@ public:
 
     float triggerUltrasonic(uint8_t sel);
     void TriggerTimeOfFlight();
-
     int readPIR(bool rear);
 
     MagDirection ReadMagnetometer();
     AccelDirection ReadAccelerometer();
     GyroDirection ReadGyroscope();
 
+    bool hasXG();
+    bool hasMag();
+
 private:
     bool isrWait;
     bool XGAvailable, MagAvailable;
+
+    int fdArduino; // File descriptor for Arduino
+    int fdToF[6];  // Array of file desriptors for Time of Flight sensors.
+
     float dist, inch;
     long durat;
 

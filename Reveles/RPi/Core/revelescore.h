@@ -34,6 +34,7 @@ public slots:
 
 private:
     void updateOrientation();
+    void readAGM();
 
 private slots:
     void readSensor();
