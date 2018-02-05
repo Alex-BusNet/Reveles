@@ -7,20 +7,22 @@
 		<ul>
 			<li><a href="#installing-linux">Installing Linux</a></li>
 			<li><a href="#installing-git">Installing Git</a></li>
+			<li><a href="#setting-up-your-working-directories">Setting Up Your Working Directories</a></li>
 			<li><a href="#installing-qt-host-pc">Installing Qt</a></li>
-			<li><a href="#setting-up-the-cross-compiler-tools">Setting Up the Cross Compiler Tools</a></li>
 			<li><a href="#building-and-configuring-opencv">Building and Configuring OpenCV</a>
 				<ul>
 					<li><a href="#setup">Setup</a></li>
 					<li><a href="#build">Build</a></li>
-					<li><a href="#updating-the-cross-compile-environment">Updating the Cross-Compile Environment</a></li>
-				</ul>			
+				</ul>
 			</li>
+			<li><a href="#installing-wiringpi">Installing WiringPi</a></li>
+			<li><a href="#installing-raspicam">Installing Raspicam</a></li>
+			<li><a href="#setting-up-the-cross-compiler-tools">Setting Up the Cross Compiler Tools</a></li>
 		</ul>
 	</li>
 	<li><a href="#building-reveles">Building Reveles</a>
 		<ul>
-			<li><a href="#obtaining-reveles-and-wiringpi">Obtaining Reveles and WiringPi</a></li>
+			<li><a href="#obtaining-reveles">Obtaining Reveles</a></li>
 			<li><a href="#bringing-it-all-together">Bringing it all Together</a></li>
 		</ul>
 	</li>
@@ -29,7 +31,7 @@
 			<li><a href="#eglfs-not-found">EGLFS not found</a></li>
 			<li><a href="#0x300b">Error = 0x300b</a></li>
 			<li><a href="#fonts-not-found">Fonts not found</a></li>
-			<li><a href="#GLIBCXX_3.4.21">Undefined Reference GLIBCXX_3.4.21</a></li>
+			<li><a href="#undefined-reference-glibcxx_3421">Undefined Reference GLIBCXX_3.4.21</a></li>
 		</ul>
 	</li>
 	<li><a href="#updating-the-reveles-repository-with-git">Updating the Reveles Repository with Git</a>
@@ -63,9 +65,14 @@ You can skip to [Bringing it all Together](#bringing-it-all-together "Bringing i
 Required space (Host machine): 10 GB (During setup and build. This can be reduced later.)
 
 ## Tools needed 
+> NOTE: We will download each of these when appropriate in the walkthrough. This is just a list of what we will be installing.
+
 + Any linux distro (I did this successfully on Ubuntu 16.04 LTS)
 + [Latest version of QtCreator](https://www.qt.io/download-qt-for-application-development "Qt Latest download")
++ WiringPi
++ Raspicam
 + Reveles project (obviously)
++ CMake
 + Git
 + A Raspberry Pi running Raspbian Stretch
 
@@ -109,126 +116,40 @@ Once the install completes, the VM will restart. You may be prompted to remove t
 3. (OPTIONAL) You can configure git for easier use with the following commands:<br>
 	`$ git config --global user.email "you@example.com"`<br>
 	`$ git config --global user.name "Your name"`
+	
+### Setting Up Your Working Directories
+**OPTIONAL** Since there are a lot of parts to this project, it is recommended that you make a dedicated folder for this on your host machine. 
+
+1. **[Host PC]** In your linux distro, you should set up a folder similar to this:
+```
+/ # root directory
+|-home
+  |-USER_NAME # the name of the account you are developing Reveles in
+    |-CrossDevelopment # Here we will store everything we need for Reveles.
+      |-Qt # We will install Qt creator here.
+```
+> NOTE: We will place other folders inside the `CrossDevelopment` directory later.
+
+2. **[RPi]** You may also choose to create a folder to store some needed files for the Pi.
+```
+\ # root directory
+|-home
+  |-pi
+    |-Reveles
+      |-build # We will place the Reveles executables here
+```
+> NOTE: We will place additional folders in `Reveles` later.
 
 ### Installing Qt (Host PC)
 All linux distros have a built-in package manager (aptitude on Debian/Ubuntu) which does include a Qt package. However this will install Qt version 5.3.2 which may not compile Reveles correctly.
 Reveles requires Qt version 5.9 or newer. The latest version can be acquired [here](https://www.qt.io/download-qt-for-application-development "Qt Latest download"). 
 
-1. The download from Qt's web site will download a .run file. To make this file run as an executable,<br>	right-click -> Properties -> Permissions -> 'Allow executing file as program'.
+1. **[Host PC]** The download from Qt's web site will download a .run file. To make this file run as an executable,<br>	right-click -> Properties -> Permissions -> 'Allow executing file as program'.
 
-2. Run the installation file the same as you would on Windows.
+2. **[Host PC]** Run the installation file the same as you would on Windows.
 
-> NOTE (1): Set the install location somewhere easily accessible such as **/home/USER_NAME/Qt**. This will
+> NOTE (1): Set the install location to the `~/CrossDevelopment/Qt` folder we made earlier.
 > NOTE (2): This is simply to give us the Qt creator. We will configure the IDE later for compiling to the Pi with the proper tools.
-
-### Setting Up the Cross Compiler Tools
-
-1.**[RPi]** Before we get started, there are a few settings that need to be configured. Open up the raspberry pi configuration and set the following:
-```
-Boot to	   = CLI
-GPU Memory = 256 MB
-SSH	   = enable
-```
->Note: You may get a warning saying that the password for user 'pi' has not been changed. You can change this if you wish but it is not critical for this project.
-
-Reboot when prompted to do so.
-
-2.**[RPi]**  If you are running Raspbian Stretch, then you will also need to update the RPi:  
-```ShellSession
-$ sudo rpi-update
-$ reboot
-```
-
-3.**[RPi]** Now we need to configure some dependencies for Qt.<br>
-  1. Open the sources list with `sudo nano /etc/apt/sources.list` and uncomment the deb-src line (this should be about the third line of the file).<br>
-  2. Save the file (CTRL+X -> y -> ENTER).<br>
-  3. Update the system and get some additional libraries.
-		```ShellSession
-		$ sudo apt-get update		
-		$ sudo apt-get build-dep qt4-x11		
-		$ sudo apt-get build-dep libqt5gui5		
-		$ sudo apt-get install libudev-dev libinput-dev libts-dev libxcb-xinerama0-dev libxcb-xinerama0
-		```
-		
-4.**[RPi]** Prepare the target directory
-```ShellSession
-$ sudo mkdir /usr/local/qt5pi
-$ sudo chown pi:pi /usr/local/qt5pi
-```
-
-5.**[Host PC]** Create the working directory
-```ShellSession
-$ mkdir ~/raspi
-$ cd ~/raspi
-$ git clone https://github.com/raspberrypi/tools`
-```
-
-6.**[Host PC]** Create a sysroot. This folder contains a copy of files on the pi that we need for compilation.
-```ShellSession
-$ mkdir sysroot sysroot/usr sysroot/opt
-$ rsync -avz pi@<IP address of RPi>:/lib sysroot
-$ rsync -avz pi@<IP address of RPi>:/usr/include sysroot/usr
-$ rsync -avz pi@<IP address of RPi>:/usr/lib sysroot/usr
-$ rsync -avz pi@<IP address of RPi>:/opt/vc sysroot/opt
-```
-
-7.**[Host PC]** Adjust symlinks by running the following script:
-```ShellSession
-$ wget https://raw.githubusercontent.com/riscv/riscv-poky/master/scripts/sysroot-relativelinks.py
-$ chmod +x sysroot-relativelinks.py
-$ ./sysroot-relativelinks.py sysroot
-```
-
-Now we are ready to set up Qt for Raspberry Pi
-8.**[Host PC]** Get the qtbase and configure Qt with the following:
-```ShellSession
-$ git clone git://code.qt.io/qt/qtbase.git -b 5.9.4
-$ cd qtbase
-$ ./configure -release -opengl es2 -device linux-rasp-pi3-g++ -device-option CROSS_COMPILE=~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- -sysroot ~/raspi/sysroot -opensource -confirm-license -make libs -prefix /usr/local/qt5pi -extprefix ~/raspi/qt5pi -hostprefix ~/raspi/qt5
-$ make -jN
-$ make install
-```
-> NOTE (1):  N is the number of parallel jobs to run (assume 1 per core) You can use this to speed up the build time. e.g. A computer with a quad-core processor would use the command `make -j3`
-> 
->NOTE (2): If you fail at any point, you can reset qtbase with `git clean -dfx` while in the qtbase folder. 
-
-9.**[Host PC]** Once `make install` completes, deploy Qt to the Pi:
-```ShellSession
-$ cd ~/raspi
-$ rsync -avz qt5pi pi@r<IP address of Pi>:/usr/local
-```
-
-10.**[Host PC]** We can test that everything works by building and running an example. First, build an example:
-```ShellSession
-$ cd ~/raspi/qtbase/examples/opengl/qopenglwidget
-$ ~/raspi/qt5/bin/qmake
-$ make
-$ scp qopenglwidget pi@<IP address of Pi>:/home/pi
-```
-
-11.**[RPi]** Before we can run the example, we need to configure a few things on the Pi.
-```ShellSession
-$ echo /usr/local/qt5pu/lib | sudo tee /etc/ld.so.conf/d/00-qt5pi.conf
-$ sudo ldconfig
-```
-
-12.**[RPi]** We now need to fix some of the EGL/GLES libraries for the Pi.
-```ShellSession
-$ sudo mv /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0 /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0_backup
-$ sudo mv /usr/lib/arm-linux-gnueabihf/libGLESv2.so.2.0.0 /usr/lib/arm-linux-gnueabihf/libGLESv2.so.2.0.0_backup
-$ sudo ln -s /opt/vc/lib/libEGL.so /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0
-$ sudo ln -s /opt/vc/lib/libGLESv2.so /usr/lib/arm-linux-gnueabihf/libGLES.so.2.0.0
-$ sudo ln -s /opt/vc/lib/libEGL.so /opt/vc/lib/libEGL.so.1
-$ sudo ln -s /opt/vc/lib/libGLESv2.so /opt/vc/lib/libGLESv2.so.2
-```
-
-13.**[RPI]** We should now be able to run the example we built before.
-```ShellSession
-$ cd ~/
-$ ./qopenglwidget
-```
-
->NOTE: If the example does not run, see [Troubleshooting](#troubleshooting) for more help
 
 ### Building And Configuring OpenCV
 #### Setup
@@ -251,53 +172,53 @@ $ unzip master.zip
 ```
 > At this point, our folder structure should looks like so:
 > ```
-> ~/opencv
->  |->build
->  |->contrib
->  |  |->opencv_contrib-master
->  |     |->doc
->  |     |->modules
->  |     |->samples
->  |->python
->  |->sources
->     |->3.4.0
->        |->3rdparty
->        |->apps
->        |->cmake
->        |->CMakeFiles
->        |->data
->        |->doc
->        |->include
->        |->modules
->        |->platforms
->        |->samples
+> ~/Reveles/opencv
+>  	    |->build
+>  	    |->contrib
+>  	    |  |->opencv_contrib-master
+>  	    |     |->doc
+>  	    |     |->modules
+>  	    |     |->samples
+>  	    |->python
+>  	    |->sources
+>     	       |->3.4.0
+>        	  |->3rdparty
+>        	  |->apps
+>        	  |->cmake
+>        	  |->CMakeFiles
+>        	  |->data
+>        	  |->doc
+>        	  |->include
+>        	  |->modules
+>        	  |->platforms
+>        	  |->samples
 > ```
 
 3. **[RPi]** (optional) We can make the paths easier to work with by copying the subfolders in **contrib** and **sources** up one level. You should end up with something like so:
 > ```
-> ~/opencv
->  |->build
->  |->contrib
->  |  |->doc
->  |  |->modules
->  |  |->samples
->  |->python
->  |->sources
->     |->3rdparty
->     |->apps
->     |->cmake
->     |->CMakeFiles
->     |->data
->     |->doc
->     |->include
->     |->modules
->     |->platforms
->     |->samples
+> ~/Reveles/opencv
+>  	    |->build
+>  	    |->contrib
+>  	    |  |->doc
+>  	    |  |->modules
+>  	    |  |->samples
+>  	    |->python
+>  	    |->sources
+>     	       |->3rdparty
+>     	       |->apps
+>     	       |->cmake
+>     	       |->CMakeFiles
+>     	       |->data
+>     	       |->doc
+>     	       |->include
+>     	       |->modules
+>     	       |->platforms
+>     	       |->samples
 > ```
 
 4. **[RPi]** Before we can build OpenCV, we need to make sure we have the proper dependencies.
 ```ShellSession
-$ cd ../build
+$ cd ~/Reveles/opencv/build
 $ sudo apt-get install cmake build-essential pkg-config
 $ sudo apt-get install libjpeg-dev libtiff5-dev libjasper-dev libpng12-dev
 $ sudo apt-get install libavcodec-dev libavformat-dev libswscal-dev libv4l-dev
@@ -340,7 +261,7 @@ Once again, check your GCC version with `gcc -v`. You should now see the same ou
 #### Build
 We should now be ready to build OpenCV.
 
-1. **[RPi]** Make sure we are in the **build** directory (~/opencv/build). You can check this with `$ pwd`. 
+1. **[RPi]** Make sure we are in the **build** directory (`~/Reveles/opencv/build`). You can check this with `$ pwd`. 
 
 2. **[RPi]** First we need to configure OpenCV with CMake. There are a few variables we need to pass to CMake in order to get proper configuration. If you setup the directory the same as this tutorial, then you can copy the command exactly as writen. If you did not, match the folder structure, or you are using a user other than "pi", then make sure you change the directories to match your system.
 ```ShellSession
@@ -354,7 +275,7 @@ $ cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D OPENCV
 
 > NOTE (4): If your are running your Pi in CLI mode, then you may wish to save the CMake output to file so you can review it before building. Simply append `|& tee <filename>` to the CMake command. 
 
-3. **[RPi]** Let CMake run, it will take a couple of minutes. Once it finishes, check the output to make sure everything was found. The output should look like this [file](https://githug.com/Alex-BusNet/Reveles/CMake_Config_output.txt) if done correctly (it's long so I'm not going to put it in the README).
+3. **[RPi]** Let CMake run, it will take a couple of minutes. Once it finishes, check the output to make sure everything was found. The output should look like this [file](https://github.com/Alex-BusNet/Reveles/CMake_Config_output.txt) if done correctly (it's long so I'm not going to put it in the README).
 
 4. **[RPi]** Once the output is correct we need to configure the swap file before compiling. By default, the RPi allocates 100 MB by default. This is not enough to compile OpenCV and it will freeze near the end if you forget to change the swap size.
 ```ShellSession
@@ -384,45 +305,167 @@ $ sudo /etc/init.d/dphys-swapfile start
 ```
 You should get `3.4.0` as the output.
 
+### Installing WiringPi
+In order to access the GPIO from C++, we need to download and build the WiringPi project.
 
-#### Updating the Cross-Compile Environment
-We should now be done working directly with the Pi and will not be working on the host machine.
-
-1. **[Host PC]** Open a terminal and navigate to the sysroot folder we made in [Setting up the Cross-Compiler tools](#setting-up-the-cross-compiler-tools).<br>
-`$ cd ~/raspi/sysroot`
-
-2. **[Host PC]** We will want to make a `local` directory in our `usr` directory.
+2. **[RPi]** Clone the wiringPi repository to the `Reveles` folder we made earlier.
 ```ShellSession
-// From ~/raspi/sysroot
-$ cd usr
-$ mkdir local local/include local/lib
-cd local
+$ cd ~/Reveles
+$ git clone git://git.drogon.net/wiringPi
+```
+3. **[RPi]** Build the wiringPi library:
+```ShellSession
+$ cd wiringPi
+$ ./build
+```
+> The `./build` command will automatically install the libraries and header files into your `/usr/local/` directory.
+
+### Installing Raspicam
+If you choose to use the Raspberry Pi Camera module with Reveles, then you will also need to download and build the Raspicam library.
+
+1. **[RPi]** Before we can build Raspicam, we need to install a few dependencies:
+```ShellSession
+$ sudo apt-get install cmake build-essential pkg-config
 ```
 
-3. **[Host PC]** Now we need to get the OpenCV files we installed on our RPi. We can grab with:
+2. **[RPI]** Clone the Raspicam library to the `Reveles` directory.
 ```ShellSession
-$ scp -r pi@<IP address of RPi>:/usr/local/inlcude ./
-$ scp -r pi@<IP address of RPi>:/usr/local/lib ./
+$ cd ~/Reveles
+$ git clone https://github.com/cedricve/raspicam
+$ cd raspicam
+$ mkdir build
+$ cd build
+$ cmake ..
 ```
+
+> NOTE: Make sure CMake found the OpenCV libraries. If CMake found the libraries, you should see `CREATE OPENCV_MODULE=1` in the output.
+
+3 **[RPi]** If everything is good with CMake, then you can go ahead and install Raspicam.
+```ShellSession
+$ make
+$ sudo make install
+$ sudo ldconfig
+```
+
+### Setting Up the Cross Compiler Tools
+
+1.**[RPi]** Before we get started, there are a few settings that need to be configured. Open up the raspberry pi configuration and set the following:
+```
+Boot to	   = CLI
+GPU Memory = 256 MB
+SSH	   = enable
+```
+>Note: You may get a warning saying that the password for user 'pi' has not been changed. You can change this if you wish but it is not critical for this project.
+
+Reboot when prompted to do so.
+
+2.**[RPi]**  If you are running Raspbian Stretch, then you will also need to update the RPi:  
+```ShellSession
+$ sudo rpi-update
+$ reboot
+```
+
+3.**[RPi]** Now we need to configure some dependencies for Qt.<br>
+  1. Open the sources list with `sudo nano /etc/apt/sources.list` and uncomment the deb-src line (this should be about the third line of the file).<br>
+  2. Save the file (CTRL+X -> y -> ENTER).<br>
+  3. Update the system and get some additional libraries.
+		```ShellSession
+		$ sudo apt-get update		
+		$ sudo apt-get build-dep qt4-x11		
+		$ sudo apt-get build-dep libqt5gui5		
+		$ sudo apt-get install libudev-dev libinput-dev libts-dev libxcb-xinerama0-dev libxcb-xinerama0
+		```
+		
+4.**[RPi]** Prepare the target directory
+```ShellSession
+$ sudo mkdir /usr/local/qt5pi
+$ sudo chown pi:pi /usr/local/qt5pi
+```
+
+5.**[Host PC]** Create the working directory
+```ShellSession
+$ mkdir ~/CrossDevelopment/raspi
+$ cd ~/CrossDevelopment/raspi
+$ git clone https://github.com/raspberrypi/tools`
+```
+
+6.**[Host PC]** Create a sysroot. This folder contains a copy of files on the pi that we need for compilation.
+```ShellSession
+$ mkdir sysroot sysroot/usr sysroot/opt sysroot/usr/local
+$ rsync -avz pi@<IP address of RPi>:/lib sysroot
+$ rsync -avz pi@<IP address of RPi>:/usr/include sysroot/usr
+$ rsync -avz pi@<IP address of RPi>:/usr/lib sysroot/usr
+$ rsync -avz pi@<IP address of RPi>:/opt/vc sysroot/opt
+$ rsync -avz pi@<IP address of RPi>:/usr/local/include sysroot/usr/local
+$ rsync -avz pi@<IP address of RPi>:/usr/local/lib sysroot/usr/local
+```
+
+7.**[Host PC]** Adjust symlinks by running the following script:
+```ShellSession
+$ wget https://raw.githubusercontent.com/riscv/riscv-poky/master/scripts/sysroot-relativelinks.py
+$ chmod +x sysroot-relativelinks.py
+$ ./sysroot-relativelinks.py sysroot
+```
+
+Now we are ready to set up Qt for Raspberry Pi
+8.**[Host PC]** Get the qtbase and configure Qt with the following:
+```ShellSession
+$ git clone git://code.qt.io/qt/qtbase.git -b 5.9.4
+$ cd qtbase
+$ ./configure -release -opengl es2 -device linux-rasp-pi3-g++ -device-option CROSS_COMPILE=/home/USER_NAME/CrossDevelopment/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- -sysroot /home/USER_NAME/CrossDevelopment/raspi/sysroot -opensource -confirm-license -make libs -prefix /usr/local/qt5pi -extprefix /home/USER_NAME/CrossDevelopment/raspi/qt5pi -hostprefix /home/USER_NAME/CrossDevelopment/raspi/qt5
+$ make -jN
+$ make install
+```
+> NOTE (1):  N is the number of parallel jobs to run (assume 1 per core) You can use this to speed up the build time. e.g. A computer with a quad-core processor would use the command `make -j3`
+> 
+> NOTE (2): If you fail at any point, you can reset qtbase with `git clean -dfx` while in the qtbase folder.
+
+9.**[Host PC]** Once `make install` completes, deploy Qt to the Pi:
+```ShellSession
+$ cd ~/CrossDevelopment/raspi
+$ rsync -avz qt5pi pi@r<IP address of Pi>:/usr/local
+```
+
+10.**[Host PC]** We can test that everything works by building and running an example. First, build an example:
+```ShellSession
+$ cd ~/CrossDevelopment/raspi/qtbase/examples/opengl/qopenglwidget
+$ ~/CrossDevelopment/raspi/qt5/bin/qmake
+$ make
+$ scp qopenglwidget pi@<IP address of Pi>:/home/pi
+```
+
+11.**[RPi]** Before we can run the example, we need to configure a few things on the Pi.
+```ShellSession
+$ echo /usr/local/qt5pu/lib | sudo tee /etc/ld.so.conf/d/00-qt5pi.conf
+$ sudo ldconfig
+```
+
+12.**[RPi]** We now need to fix some of the EGL/GLES libraries for the Pi.
+```ShellSession
+$ sudo mv /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0 /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0_backup
+$ sudo mv /usr/lib/arm-linux-gnueabihf/libGLESv2.so.2.0.0 /usr/lib/arm-linux-gnueabihf/libGLESv2.so.2.0.0_backup
+$ sudo ln -s /opt/vc/lib/libEGL.so /usr/lib/arm-linux-gnueabihf/libEGL.so.1.0.0
+$ sudo ln -s /opt/vc/lib/libGLESv2.so /usr/lib/arm-linux-gnueabihf/libGLES.so.2.0.0
+$ sudo ln -s /opt/vc/lib/libEGL.so /opt/vc/lib/libEGL.so.1
+$ sudo ln -s /opt/vc/lib/libGLESv2.so /opt/vc/lib/libGLESv2.so.2
+```
+
+13.**[RPI]** We should now be able to run the example we built before.
+```ShellSession
+$ cd ~/CrossDevelopment/raspi/qtbase/examples/opengl/qopenglwidget
+$ ./qopenglwidget
+```
+
+>NOTE: If the example does not run, see [Troubleshooting](#troubleshooting) for more help
 
 <hr>
 
 ## Building Reveles
-### Obtaining Reveles and WiringPi
+### Obtaining Reveles
 1. For obtaining Reveles, clone the repository to your VM.
 ```
+$ cd ~/CrossDevelopment
 $ git clone https://github.com/Alex-BusNet/Reveles.git
-```
-
-In order to use the GPIO on the Raspberry Pi, Reveles uses the wiringPi library.
-
-2. Clone the wiringPi repository to a folder (Not in the reveles directory)
-`$ git clone git://git.drogon.net/wiringPi`
-
-3. Build the wiringPi library:
-```
-$ cd wiringPi
-$ ./build
 ```
 
 Now just open _Reveles.pro_ in QtCreator.
@@ -434,13 +477,13 @@ Now just open _Reveles.pro_ in QtCreator.
 
 3. Select "Qt Versions" from the tabs across the top of the window.
 
-4. Chances are, Qt did not find the version we just built. So we will have to add it manually. Click on "Add" and then navigate to `~/raspi/qt5/bin/`.
+4. Chances are, Qt did not find the version we just built. So we will have to add it manually. Click on "Add" and then navigate to `~/CrossDevelopment/raspi/qt5/bin/`.
 
 5. Click on _qmake_ and press "Open".
 
 6. Next, go to the "Compilers" tab and click "Add" -> "GCC" -> "C++". Name this compiler Something easy to find like "G++-ARM".
 
-7. Navigate to `~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/`
+7. Navigate to `~/CrossDevelopment/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/`
 
 8. Select _arm-linux-gnueabihf-g++_ and press "Open"
 
@@ -518,8 +561,8 @@ $ sudo mkdir -p <directory>/lib/fonts>
 $ sudo cp /usr/share/fonts/truetype/dejavu/* <directory>/lib/fonts>
 ```
 
-#### GLIBCXX_3.4.21
-__Error message:__ `undefined reference to 'std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_create(unsigned int&, unsigned int)@GLIBCXX_3.4.21'*
+#### Undefined Reference GLIBCXX_3.4.21
+__Error message:__ `undefined reference to 'std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_create(unsigned int&, unsigned int)@GLIBCXX_3.4.21'*`
 > *Exact function may differ
 
 __Solution:__<br>
@@ -529,7 +572,7 @@ This error means one of a few things:<br>
 This solution addresses the second option:
 **[Host PC]**
 ```ShellSession
-$ cd ~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/arm-linux-gnueabihf/lib
+$ cd ~/CrossDevelopment/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/arm-linux-gnueabihf/lib
 $ ls -l | grep libstdc++.so
 ```
 > One of the files that are returned should be a symbolic link: `libstdc++.so.6 -> libstdc++.so.6.0.19` (The .0.19 is the version that comes with the cross compile tools). Make note of the numbers listed after the .so.6 in the file name.
@@ -544,7 +587,7 @@ $ ls -l | grep libstdc++.so
 **[Host PC]**
 We can fix the linked files like so:
 ```ShellSession
-$ cd ~/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/arm-linux-gnueabihf/lib
+$ cd ~/CrossDevelopment/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/arm-linux-gnueabihf/lib
 $ mv libstdc++.so.6 libstdc++.so.6.bak
 $ scp pi@<IP address of RPi>:/usr/lib/arm-linux-gnueabihf/libstdc++.so.6.0.22 ./
 $ ln -s libstdc++.so.6.0.22 libstdc++.so.6
