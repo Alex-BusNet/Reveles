@@ -21,7 +21,9 @@ int rD = 0;
 int destination;
 int number = 0;
 int state = 0;
-bool fwd;
+bool fwd = true;
+bool on = false;
+bool initialized = false;
 
 void recieveData(int byteCount)
 {
@@ -56,51 +58,59 @@ void sendData()
 FUTURE ITERATIONS SHOULD INVOLVE A DECISION TO CHANGE ITS STARTING DIRECTION!*/
 void start()
 {
-  if(fwd)
+  if(!on)
   {
     motorON();
   }
-  forward();
+  
+  if(fwd == true)
+  {
+    forward(); 
+  }
+  else
+  {
+   backward();
+  }
 }
+
 /*This function is designed to enable the robot to move forward. The inputs are adjusted to
 the orientation that spins the motors forward and begins incrementing*/
 void forward()
 {
   digitalWrite(input1, HIGH);
   digitalWrite(input2, LOW);
-  delayMicroseconds(1000);
   driveFORWARD();
-  }
+}
+
 /*This function is designed to enable the robot to move forward. The inputs are adjusted to
 the orientation that spins the motors backward and begins incrementing*/
 void backward()
 {
    digitalWrite(input1, LOW);
    digitalWrite(input2, HIGH);
-   delay(20);
    driveBACKWARD();
-  }
+}
+
 /*This function is designed to stop movement while still ready to move. The input pins will be turned high to prevent current flow,
 resulting in the robot's inability to move but can begin once a proper current path is made. */
 void motorSTOP()
 {
   digitalWrite(input1, HIGH);
   digitalWrite(input2, HIGH);
-  delay(20);
   }
 /*This function is designed for use in the initial startup of the robot. When the robot is booted up, the enable pin on the motor
 drivers will be turned high so that the robot may begin moving.*/
 void motorON()
 {
   digitalWrite(enableA, HIGH);
-  fwd = true;
+  on = true;
   delay(20);
   }
 /*This function is designed as the Emergency Stop for the robot. When the time-of-flight sensor is flagged, the robot will shut off.*/
 void motorOFF()
 {
   digitalWrite(enableA, LOW);
-  fwd = false;
+  on = false;
   }
 /*This function is designed to accelerate and deccelerate the motors in increments\
 while moving forward. There are two individual incremental settings based on the signals
@@ -122,8 +132,8 @@ void driveFORWARD()
   pwmOUT = (inch * 2)-1;
   if(pwmOUT < 48)
   {
+    fwd = false;
     motorSTOP();
-    backward();
    }
   else if (pwmOUT > 255)
   {
@@ -151,8 +161,8 @@ void driveBACKWARD()
   pwmOUT = (inch * 2)-1;
   if(pwmOUT < 48)
   {
+    fwd = true;
     motorSTOP();
-    backward();
    }
   else if (pwmOUT > 255)
   {
@@ -184,11 +194,14 @@ void setup() {
   Wire.onReceive(recieveData);
   Wire.onRequest(sendData);
   fwd = true;
+  on = false;
+  initialized = true;
 }
 
 void loop()
 { 
+  if(initialized == true)
+  {
     start();
+  }
 }
-
-
