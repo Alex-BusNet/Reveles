@@ -75,7 +75,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
     coreTimer = new QTimer();
     coreTimer->setInterval(updateInterval);
     connect(coreTimer, SIGNAL(timeout()), this, SLOT(coreLoop()));
-//    coreTimer->start();
+    coreTimer->start();
 
     cout << "[ RevelesCore ] Init complete." << endl;
 }
@@ -139,7 +139,7 @@ void RevelesCore::readAGM()
 void RevelesCore::readSensor()
 {
     float us = RevelesIO::instance()->triggerUltrasonic(0b001);
-    RevelesIO::instance()->SendMotorUpdate(us, 0.0f);
+    RevelesIO::instance()->SendMotorUpdate();
 //    emit usTriggered();
 }
 
@@ -151,10 +151,26 @@ void RevelesCore::updateMapData()
 
 void RevelesCore::coreLoop()
 {
+    static directionCount = 0;
+
 //    readSensor();
     NavigationAssisiant::instance()->Orient();
     updateMapData();
-//    readAGM();
+
+    //=========================
+    // I2C motor drive testing
+    if(directionCount == 10)
+        RevelesIO::instance()->SetMotorDirection('R');
+    else if (directionCount == 20)
+    {
+        RevelesIO::instance()->SetMotorDirection('R');
+        directionCount = 0;
+    }
+    else
+        directionCount++;
+    //=========================
+
+    //    readAGM();
 }
 
 void RevelesCore::close()

@@ -30,6 +30,11 @@ void RevelesIO::initIO()
     MagAvailable = agm->MagFound();
 
     isrWait = false;
+    dist = 0;
+    inch = 0;
+
+     // Placeholder, any value less than 48 will trigger E-Stop on the Arduino
+    tofDist = 50; // inches
 }
 
 RevelesIO::RevelesIO()
@@ -37,10 +42,42 @@ RevelesIO::RevelesIO()
 
 }
 
-void RevelesIO::SendMotorUpdate(float usDist, float tofDist)
+void RevelesIO::SendMotorUpdate()
 {
-    /// TODO: Figure out I2C Comm format
-    wiringPiI2CWrite(fdArduino, usDist);
+//=================================================================
+//             I2C Command Structure (RPi -> Arduino):
+//         (Function):(US value):(Direction):(ToF value):
+// ----------------------------------------------------------------
+// Possible values
+//    Function:
+//      (M)otor - RPi is sending drive instructions.
+//      (G)PS - RPi is requesting GPS coordinates.
+//    US Value: Floating Point value for PWM signal.
+//      (Motor command only)
+//      Value is in inches.
+//      Value is not adjusted to fit between 255 and 0.
+//    Direction: (Motor command only)
+//      (F)orward.
+//      (S)top.
+//      (R)everse.
+//    ToF value: Floating point value from Time of Flight sensors.
+//      (Motor command only)\
+//=================================================================
+
+    string cmd = "M:";
+    cmd += QString::number(inch).toStdString() + ":";
+    // cmd += direction
+    cmd += "F:";
+    cmd += QString::number(tofDist).toStdString() + ":";
+
+    cout << "[ RevelesIO ] I2C Motor command: " << cmd << endl;
+
+    wiringPiI2CWrite(fdArduino, cmd);
+}
+
+void RevelesIO::SetMotorDirection(char dir)
+{
+    motorDir = dir;
 }
 
 GPSCoord RevelesIO::ReadGPS()
@@ -87,15 +124,10 @@ float RevelesIO::triggerUltrasonic(uint8_t sel)
     pong = micros();
 
     dist = (float)(pong - ping) * 0.017150;
-    dist /= 2.5;
+    dist /= 2.5; // Convert to inches.
 
-    if( dist < 12 )
-        emit echoReady(dist, "in");
-    else
-    {
-        dist /= 12;
-        emit echoReady(dist, "ft");
-    }
+    // Currently used for D-Bus comms back to GUI.
+    emit echoReady(dist, "in");
 
     return dist;
 }
@@ -103,6 +135,7 @@ float RevelesIO::triggerUltrasonic(uint8_t sel)
 void RevelesIO::TriggerTimeOfFlight()
 {
     // TODO: setup trigger conditions.
+    tofDist = 50;
 }
 
 int RevelesIO::readPIR(bool rear)

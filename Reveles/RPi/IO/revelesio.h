@@ -47,7 +47,8 @@ public:
     static RevelesIO *instance();
     void initIO();
 
-    void SendMotorUpdate(float usDist, float tofDist);
+    void SendMotorUpdate();
+    void SetMotorDirection(char dir);
 
     GPSCoord ReadGPS();
 
@@ -69,7 +70,8 @@ private:
     int fdArduino; // File descriptor for Arduino
     int fdToF[6];  // Array of file desriptors for Time of Flight sensors.
 
-    float dist, inch;
+    float dist, inch, tofDist;
+    char motorDir;
     long durat;
 
     LSM9DS1 *agm;
