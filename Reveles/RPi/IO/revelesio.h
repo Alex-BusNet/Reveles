@@ -39,6 +39,8 @@
 /// TODO: Add ToF I2C addresses
 //-----------------------
 
+class LSM9DS1;
+
 class RevelesIO : public QObject
 {
     Q_OBJECT

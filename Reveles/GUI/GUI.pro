@@ -5,6 +5,7 @@
 #-------------------------------------------------
 
 QT       += core dbus gui
+CONFIG += c++11 console
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -22,21 +23,21 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-#DBUS_INTERFACES += reveles_dbus.xml
-
 SOURCES += \
         main.cpp \
         revelesgui.cpp\
         addlocationdialog.cpp \
         settingsscreen.cpp \
-        reveles_dbus_interface.cpp
+        reveles_dbus_interface.cpp \
+        reveles_dbus_adaptor.cpp
 
 HEADERS += \
         revelesgui.h \
         addlocationdialog.h \
         locationpushbutton.h \
         settingsscreen.h \
-        reveles_dbus_interface.h
+        reveles_dbus_interface.h \
+        reveles_dbus_adaptor.h
 
 FORMS += \
         revelesgui.ui \

@@ -798,7 +798,7 @@ $ qdbusxml2cpp -c RevelesDBusInterface -p reveles_dbus_interface.h:reveles_dbus_
 
 ## Credits
 Code base for Trine University ECE Senior Design Project 2017-18.
-Created by Frank Hittel, Alisha Johnson, and Alex Portoelse
+Created by Frank Hittel, Alisha Johnson, and Alex Portoelse.<br>
 All rights reserved. &copy; 2017
 
 Walkthrough written against the following resources:

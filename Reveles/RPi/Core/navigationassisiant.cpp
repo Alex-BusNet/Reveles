@@ -2,13 +2,14 @@
 #include <QtConcurrent>
 #include <tuple>
 #include "Common/vectorutils.h"
+#include "Common/logger.h"
 
 #define TUPI(a,b) (std::tuple<int, int>(a, b))
 #define TUPD(a,b) (std::tuple<double, double>(a,b))
 #define TUPF(a,b) (std::tuple<float, float>(a,b))
 
-#define METERS_TO_FEET 3.280839895013
-#define FEET_TO_METERS 1/3.280839895013
+#define FEET_PER_METER 3.280839895013   // ft/m
+#define METER_PER_FOOT 1/3.280839895013 // m/ft
 
 Q_GLOBAL_STATIC(NavigationAssisiant, navi)
 
@@ -28,6 +29,8 @@ NavigationAssisiant::NavigationAssisiant()
 
 void NavigationAssisiant::Init()
 {
+    instance()->setObjectName("NavigationAssistant");
+
     destination = GPSCoord{0,0};
     Orient();
 }
@@ -40,7 +43,10 @@ void NavigationAssisiant::Start(GPSCoord dest)
 {
     destination = dest;
     Orient();
-    cout << "[ NavigationAssistant ] " << GetDistance(currentLocation, destination) << " ft" << endl;
+
+    Logger::writeLine(instance(), Reveles::SET_TARGET_DEST.arg(dest.latitude).arg(dest.longitude));
+    Logger::writeLine(instance(), QString("Straight-line distance to destination: ") +
+                      QString::number(GetDistance(currentLocation, destination)) + " ft");
     FindBearing();
 //    FindPath();
 }
@@ -107,7 +113,7 @@ double NavigationAssisiant::GetDistance(GPSCoord pt1, GPSCoord pt2)
     double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
     // Distance travelled between two points (in feet)
-    return ((R * c) / METERS_TO_FEET);
+    return ((R * c) * FEET_PER_METER);
 }
 
 void NavigationAssisiant::Orient()
@@ -150,7 +156,7 @@ void NavigationAssisiant::Orient()
     else if((deg > -45) && (deg < -15))    { heading = WN; }
 
     headingAngle = deg;
-    cout << "[ NavigationAssistant ] Heading: " << DirString[heading] << endl;
+    Logger::writeLine(instance(), QString("Heading: %1").arg(QString(DirString[heading].c_str())));
 }
 
 void NavigationAssisiant::FindBearing()
@@ -175,9 +181,9 @@ void NavigationAssisiant::FindBearing()
     //Final bearing
     double fb = fmod(b + 180.0, 360.0);
 
-    cout << "[ NavigationAssistant ]         Bearing: " << b << " deg." << endl;
-    cout << "[ NavigationAssistant ] Compass Bearing: " << cb << " deg." << endl;
-    cout << "[ NavigationAssistant ]   Final Bearing: " << fb << " deg." << endl;
+    Logger::writeLine(instance(), QString("        Bearing: %1 deg.").arg(b));
+    Logger::writeLine(instance(), QString("Compass Bearing: %1 deg.").arg(cb));
+    Logger::writeLine(instance(), QString("  Final Bearing: %1 deg.").arg(fb));
 
 //    if(destVec != TUPF(0.0, 0.0))
 //    {

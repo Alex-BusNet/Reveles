@@ -2,6 +2,9 @@
 #include <wiringPiI2C.h>
 #include <wiringPi.h>
 
+#include "Common/logger.h"
+#include "Common/messages.h"
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -37,13 +40,13 @@ void LSM9DS1::setup()
     delayMicroseconds(10);
 
     int id = wiringPiI2CReadReg8(fdXG, WHO_AM_I);
-    cout << "[ RevelesIO ] XG id: 0x" << hex << id << endl;
+    Logger::writeLine(RevelesIO::instance(), Reveles::XG_ID_STR.arg(id, 2, 16));
 
     if(id == XG_ID)
         hasXG = true;
 
-    id = wiringPiI2CReadReg8(fdMag, 0x0F);
-    cout << "[ RevelesIO ] Mag id: 0x" << hex << id << endl;
+    id = wiringPiI2CReadReg8(fdMag, WHO_AM_I);
+    Logger::writeLine(RevelesIO::instance(), Reveles::MAG_ID_STR.arg(id, 2, 16));
 
     if(id == MAG_ID)
         hasMag = true;

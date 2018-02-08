@@ -30,7 +30,9 @@ SOURCES += main.cpp \
     reveles_dbus_adaptor.cpp \
     Common/vector2i.cpp \
     Common/vector2f.cpp \
-    Common/vectorpolar2f.cpp
+    Common/vectorpolar2f.cpp \
+    Common/logger.cpp \
+    reveles_dbus_interface.cpp
 
 HEADERS += \
     Common/datatypes.h \
@@ -48,7 +50,10 @@ HEADERS += \
     IO/lsm9ds1.h \
     IO/revelescamera.h \
     reveles_dbus_adaptor.h \
-    Common/vectorutils.h
+    Common/vectorutils.h \
+    Common/messages.h \
+    Common/logger.h \
+    reveles_dbus_interface.h
 
 DISTFILES += \
     Data/haarcascade_fullbody.xml \

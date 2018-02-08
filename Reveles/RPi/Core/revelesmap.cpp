@@ -14,6 +14,7 @@ RevelesMap *RevelesMap::instance()
 
 void RevelesMap::Init()
 {
+    instance()->setObjectName("RevelesMap");
     offsetLat = 41.631906;
     offsetLong = -85.006118;
 }

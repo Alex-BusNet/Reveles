@@ -1,11 +1,13 @@
 #include "settingsscreen.h"
 #include "ui_settingsscreen.h"
+//#include "../RPi/Common/messages.h"
 
 SettingsScreen::SettingsScreen(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::SettingsScreen)
 {
     ui->setupUi(this);
+//    ui->infoLabel->text().append(QString("Version: %1").arg(Reveles::REVELES_VERSION));
 }
 
 SettingsScreen::~SettingsScreen()

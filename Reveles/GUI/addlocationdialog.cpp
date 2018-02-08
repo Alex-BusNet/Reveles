@@ -144,8 +144,12 @@ void AddLocationDialog::addNewLoc()
 
 void AddLocationDialog::getLocation()
 {
-    lat->setText(QString::number((static_cast<double>(rand()) / RAND_MAX) * 180.0));
-    lon->setText(QString::number((static_cast<double>(rand()) / RAND_MAX) * 180.0));
+    emit RevelesGui::instance()->RequestLocation();
+    GPSCoord g = RevelesGui::instance()->getLocation();
+    lat->setText(QString::number(g.latitude));
+    lon->setText(QString::number(g.longitude));
+//    lat->setText(QString::number((static_cast<double>(rand()) / RAND_MAX) * 180.0));
+//    lon->setText(QString::number((static_cast<double>(rand()) / RAND_MAX) * 180.0));
 }
 
 void AddLocationDialog::buttonClicked(int key)

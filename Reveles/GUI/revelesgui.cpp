@@ -9,11 +9,14 @@ RevelesGui *RevelesGui::instance()
     return rGui;
 }
 
-RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, QWidget *parent) :
+RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAdaptor *rda, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::RevelesGui),
-    rci(iface)
+    rci(iface),
+    rdba(rda)
 {
+//    instance()->setObjectName("RevelesGUI");
+
     qRegisterMetaType<GPSCoord>("GPSCoord");
     qDBusRegisterMetaType<GPSCoord>();
 
@@ -25,6 +28,8 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, QWidget *paren
     ss = NULL;
     ald = NULL;
     trigOn = false;
+    currentLoc = GPSCoord{0,0};
+    hasComms = false;
 
     scrollWidget = new QWidget();
     sa = new QScrollArea();
@@ -52,11 +57,24 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, QWidget *paren
     this->ui->exitBtn->setShortcut(QKeySequence(Qt::Key_Escape));
 
     this->ui->distLabel->setText(QChar(0x221E));
+
+    commTimer = new QTimer();
+    commTimer->setInterval(500);
+    connect(commTimer, &QTimer::timeout, this, &RevelesGui::commTimeout);
+    commTimer->start();
 }
 
 RevelesGui::~RevelesGui()
 {
     delete ui;
+
+    if(commTimer != NULL)
+    {
+        if(commTimer->isActive())
+            commTimer->stop();
+
+        delete commTimer;
+    }
 
     if(lpbs.size() > 0)
     {
@@ -74,6 +92,7 @@ RevelesGui::~RevelesGui()
 
 void RevelesGui::setLocation(LocationPushButton *pb)
 {
+    GPSCoord dest{pb->GetIndex().latitude, pb->GetIndex().longitude};
     ui->testingLabel->setText(QString::number(pb->GetIndex().latitude) + ", " + QString::number(pb->GetIndex().longitude));
 
     // Deselect any other active buttons.
@@ -88,13 +107,15 @@ void RevelesGui::setLocation(LocationPushButton *pb)
 
     /// TODO: Add Confirm selection dialog box.
 
-    rci->setDestination(pb->GetIndex());
+    if(hasComms)
+        emit SendDestination(dest);
 }
 
 void RevelesGui::updateLocation(GPSCoord gpsc)
 {
+    currentLoc = gpsc;
     ui->testingLabel->setText(QString::number(gpsc.latitude) + ", " + QString::number(gpsc.longitude));
-    TrigDispToggle();
+    TrigDispToggle();    
 }
 
 void RevelesGui::setupLocations()
@@ -143,14 +164,31 @@ void RevelesGui::setDBusInterface(com::reveles::RevelesCoreInterface *iface)
 {
     rci = iface;
 
-    connect(rci, SIGNAL(commResponse(bool)), this, SLOT(commCheck(bool)));
-    connect(rci, SIGNAL(locationUpdate(GPSCoord)), this, SLOT(updateLocation(GPSCoord)));
+    connect(rci, &RevelesDBusInterface::commResponse, this, &RevelesGui::commCheck);
+    connect(rci, &RevelesDBusInterface::locationUpdate, this, &RevelesGui::updateLocation);
+    connect(rci, &RevelesDBusInterface::aboutToQuit, this, &RevelesGui::close);
+}
 
-    rci->commQuery();
+void RevelesGui::setDBusAdaptor(RevelesDBusAdaptor *rda)
+{
+    rdba = rda;
+
+    connect(this, &RevelesGui::sendCommCheck, rdba, &RevelesDBusAdaptor::commQuery);
+    connect(this, &RevelesGui::aboutToQuit, rdba, &RevelesDBusAdaptor::aboutToQuit);
+    connect(this, &RevelesGui::RequestLocation, rdba, &RevelesDBusAdaptor::requestCurrentLocation);
+    connect(this, &RevelesGui::SendDestination, rdba, &RevelesDBusAdaptor::setDestination);
+    connect(this, &RevelesGui::SendMapUpdateInterval, rdba, &RevelesDBusAdaptor::setMapUpdateInterval);
+}
+
+GPSCoord RevelesGui::getLocation()
+{
+    return currentLoc;
 }
 
 void RevelesGui::commCheck(bool good)
 {
+    hasComms = good;
+
     if(good)
         ui->EchoLabel->setStyleSheet("QLabel { background-color: green; }");
     else
@@ -159,8 +197,7 @@ void RevelesGui::commCheck(bool good)
 
 void RevelesGui::on_exitBtn_clicked()
 {
-    rci->aboutToQuit();
-//    this->close();
+    emit aboutToQuit();
 }
 
 //=====================================================================
@@ -196,4 +233,21 @@ void RevelesGui::on_settingsScreenPB_clicked()
     ss = new SettingsScreen(this);
     ss->setGeometry(0,0, 800, 400);
     ss->show();
+}
+
+void RevelesGui::on_mapPB_clicked()
+{
+
+}
+
+void RevelesGui::commTimeout()
+{
+    if(!hasComms)
+    {
+        emit sendCommCheck();
+    }
+    else
+    {
+        commTimer->stop();
+    }
 }

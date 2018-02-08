@@ -6,6 +6,8 @@
 #include <QStringList>
 #include <vector>
 #include "Common/detectionqueue.h"
+#include "Common/logger.h"
+#include "Common/messages.h"
 
 
 using namespace  std;
@@ -22,16 +24,18 @@ AnalyticalEngine *AnalyticalEngine::instance()
  */
 void AnalyticalEngine::Init()
 {
+    instance()->setObjectName("AnalyticalEngine");
+
     predictedState = NO_STATE;
     actualState = NO_STATE;
     presentState = NO_STATE;
     lastState = NO_STATE;
     endAnalyze = false;
 
-    QFile tmSaveData("Assets/Data/transitionMatrix.csv");
+    QFile tmSaveData("Assets/SaveData/transitionMatrix.csv");
     if(!tmSaveData.open(QIODevice::ReadOnly))
     {
-        cout << "[ AnalyticalEngine ] Transition Matrix data not found. Using default." << endl;
+        Logger::writeLine(instance(), Reveles::NO_TRANS_MAT);
     }
     else
     {
@@ -51,10 +55,10 @@ void AnalyticalEngine::Init()
     if(tmSaveData.isOpen())
         tmSaveData.close();
 
-    QFile dmSaveData("Assets/Data/decisionMatrix.csv");
+    QFile dmSaveData("Assets/SaveData/decisionMatrix.csv");
     if(!dmSaveData.open(QIODevice::ReadOnly))
     {
-        cout << "[ AnalyticalEngine ] Decision Matrix data not found." << endl;
+        Logger::writeLine(instance(), Reveles::NO_DECISION_MAT);
     }
     else
     {
@@ -96,7 +100,7 @@ void AnalyticalEngine::Start()
 
 void AnalyticalEngine::aboutToQuit()
 {
-    this->Save();
+    this->stop();
 }
 
 void AnalyticalEngine::stop()
@@ -148,7 +152,7 @@ void AnalyticalEngine::ProcessEnv()
         else
             zoneCount[ot.zone]--;
 
-        cout << "[ AnalyticalEngine ] Dir: " << ot.dir << " Index: " << ot.index << " Zone: " << ot.zone << endl;
+        cout << "{NL}[ AnalyticalEngine ] Dir: " << ot.dir << " Index: " << ot.index << " Zone: " << ot.zone << endl;
     }
 
     /// TODO: Multi obstacle avoidance handling.
@@ -248,21 +252,19 @@ ActionState AnalyticalEngine::GetMostProbableAction()
  */
 void AnalyticalEngine::Save()
 {
-    if(!QDir("Assets/Data").exists())
+    if(!QDir("Assets/SaveData").exists())
     {
-        QDir().mkdir("Assets/Data");
+        QDir().mkdir("Assets/SaveData");
     }
 
-    QDir().cd("Assets/Data");
-
-    QFile tmSaveData("transitionMatrix.csv");
+    QFile tmSaveData("Assets/SaveData/transitionMatrix.csv");
     if(!tmSaveData.open(QIODevice::WriteOnly))
     {
-        cout << "[ AnalyticalEngine ] Could not open Transition Matrix save file for writing." << endl;
+        Logger::writeLine(instance(), Reveles::TRANS_MAT_SAVE_ERR);
     }
     else
     {
-        cout << "[ AnalyticalEngine ] Saving Transition Matix" << endl;
+        Logger::writeLine(instance(), Reveles::TRANS_MAT_SAVE_PROG);
         QByteArray bArr;
         for(int i = 0; i < 7; i++)
         {
@@ -278,14 +280,14 @@ void AnalyticalEngine::Save()
     if(tmSaveData.isOpen())
         tmSaveData.close();
 
-    QFile dmSaveData("decisionMatrix.csv");
+    QFile dmSaveData("Assets/SaveData/decisionMatrix.csv");
     if(!dmSaveData.open(QIODevice::WriteOnly))
     {
-        cout << "[ AnalyticalEngine ] Could not open Decision Matrix save file for writing" << endl;
+        Logger::writeLine(instance(), Reveles::DECISION_MAT_SAVE_ERR);
     }
     else
     {
-        cout << "[ AnalyticalEngine ] Saving Decision Matrix" << endl;
+        Logger::writeLine(instance(), Reveles::DECISION_MAT_SAVE_PROG);
         QByteArray bArr;
         for(int i = 0; i < 7; i++)
         {
@@ -301,5 +303,7 @@ void AnalyticalEngine::Save()
 
     if(dmSaveData.isOpen())
         dmSaveData.close();
+
+    Logger::writeLine(instance(), "Save complete.");
 
 }

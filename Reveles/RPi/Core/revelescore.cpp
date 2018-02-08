@@ -1,14 +1,15 @@
 #include "revelescore.h"
-#include <iostream>
-#include <iomanip>
+#include <QCoreApplication>
 
 //#define USE_OBJ_DETECT
-#define OJB_DETECT_DEBUG
+//#define OBJ_DETECT_DEBUG
 
 #define FA_SW_CORNER GPSCoord{41.631906, -85.006082}
 #define FA_SE_CORNER GPSCoord{41.631910, -85.005670}
 #define FA_NE_CORNER GPSCoord{41.632562, -85.005680}
 #define FA_NW_CORNER GPSCoord{41.632559, -85.005982}
+
+#define B2STR( x ) (x ? "True" : "False")
 
 #if defined __linux__ && defined USE_OBJ_DETECT
 #include <X11/Xlib.h>
@@ -16,23 +17,42 @@
 #include <opencv2/highgui.hpp>
 #endif
 
-using namespace  std;
+using namespace std;
 
-RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
-    rdba(dbusAdaptor)
+QFile Logger::logFile("temp");
+LoggerFlags Logger::flags = NO_LOG_FLAGS;
+
+RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesCoreInterface *iface) :
+    rdba(dbusAdaptor), rci(iface)
 {
+    this->setObjectName("RevelesCore");
+
+    Logger::InitLog();
+    Logger::SetLogFlags(SHOW_POINT | SHOW_POS_NEG | BOOL_AS_ALPHA | FIXED_LENGTH);
+    Logger::SetPrecision(3);
+
+    cout << Reveles::REVELES_CORE_INFO.arg(Reveles::REVELES_VERSION).toStdString() << endl;
+
+    this->installEventFilter(new RevelesEventFilter(this));
+
     // Inbound comms (GUI -> CORE)
-    connect(rdba, SIGNAL(commQuery()), this, SLOT(commCheck()));
-    connect(rdba, SIGNAL(requestCurrentLocation()), this, SLOT(updateMapData()));
-    connect(rdba, SIGNAL(setMapUpdateInterval(int)), this, SLOT(setMapUpdateInterval(int)));
-    connect(rdba, SIGNAL(requestMapUpdate()), this, SLOT(updateMapData()));
-    connect(rdba, SIGNAL(aboutToQuit()), AnalyticalEngine::instance(), SLOT(aboutToQuit()));
-    connect(rdba, SIGNAL(aboutToQuit()), ObjectDetector::instance(), SLOT(aboutToQuit()));
-    connect(rdba, SIGNAL(aboutToQuit()), this, SLOT(close()));
+    connect(rci, &RevelesDBusInterface::commQuery, this, &RevelesCore::commCheck);
+    connect(rci, &RevelesDBusInterface::requestCurrentLocation, this, &RevelesCore::updateMapData);
+    connect(rci, &RevelesDBusInterface::requestMapUpdate, this, &RevelesCore::updateMapData);
+    connect(rci, &RevelesDBusInterface::setMapUpdateInterval, this, &RevelesCore::setMapUpdateInterval);
+    connect(rci, &RevelesDBusInterface::setDestination, this, &RevelesCore::setDestination);
+    connect(rci, &RevelesDBusInterface::aboutToQuit, AnalyticalEngine::instance(), &AnalyticalEngine::aboutToQuit);
+#ifdef USE_OBJ_DETECT
+    connect(rci, SIGNAL(aboutToQuit()), ObjectDetector::instance(), SLOT(aboutToQuit()));
+#endif
+    connect(rci, &RevelesDBusInterface::aboutToQuit, this, &RevelesCore::closeCore);
+
+    // Loop the aboutToQuit() signal from the /GUI object to the aboutToQuit() signal from the /Core object
+    connect(rci, &RevelesDBusInterface::aboutToQuit, rdba, &RevelesDBusAdaptor::aboutToQuit);
 
     // Outbound comms (CORE -> GUI)
-    connect(this, SIGNAL(commResponse(bool)), rdba, SIGNAL(commResponse(bool)));
-    connect(this, SIGNAL(currentLocation(GPSCoord)), rdba, SIGNAL(locationUpdate(GPSCoord)));
+    connect(this, &RevelesCore::commResponse, rdba, &RevelesDBusAdaptor::commResponse);
+    connect(this, &RevelesCore::currentLocation, rdba, &RevelesDBusAdaptor::locationUpdate);
 
     // Additional comms (CORE -> CORE)
     connect(this, &RevelesCore::currentLocation, NavigationAssisiant::instance(), &NavigationAssisiant::updateLocation);
@@ -45,23 +65,22 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
 
     // Variable Init
     AnalyticalEngine::instance()->Init();
+    NavigationAssisiant::instance()->Init();
     RevelesIO::instance()->initIO();
     RevelesMap::instance()->Init();
 
-    cout << boolalpha;
-    cout << "[ RevelesCore ] Accelerometer/Gyroscope found: " << RevelesIO::instance()->hasXG() << endl;
-    cout << "[ RevelesCore ] Magnetometer found: " << RevelesIO::instance()->hasMag() << endl;
-    cout << noboolalpha;
+    Logger::writeLine(this, Reveles::XG_FOUND.arg(B2STR(RevelesIO::instance()->hasXG())));
+    Logger::writeLine(this, Reveles::MAG_FOUND.arg(B2STR(RevelesIO::instance()->hasMag())));
 
     commsGood = false;
     updateInterval = 1000;
 
     /// TODO: Change this to ping GPS module for current location
     dest = GPSCoord{0, 0};
-    loc = dest;
+    loc = FA_SE_CORNER;
 
 #ifdef USE_OBJ_DETECT
-#ifdef OJB_DETECT_DEBUG
+#ifdef OBJ_DETECT_DEBUG
     namedWindow("Detector Output", WINDOW_AUTOSIZE);
 #endif
     AnalyticalEngine::instance()->Start();
@@ -70,14 +89,19 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor) :
 
     // Test the GetDistance() function
     NavigationAssisiant::instance()->updateLocation(RevelesMap::instance()->GetOffset());
-    NavigationAssisiant::instance()->Start(FA_SE_CORNER);
+    Logger::writeLine(this, QString("Testing GetDistance()..."));
+    Logger::writeLine(this,
+                      QString("SE corner to NE corner: %1 ft")
+                      .arg(NavigationAssisiant::instance()->GetDistance(FA_SE_CORNER, FA_NE_CORNER)));
 
     coreTimer = new QTimer();
     coreTimer->setInterval(updateInterval);
     connect(coreTimer, SIGNAL(timeout()), this, SLOT(coreLoop()));
     coreTimer->start();
 
-    cout << "[ RevelesCore ] Init complete." << endl;
+    active = true;
+    Logger::writeLine(this, Reveles::CORE_INIT_COMPLETE);
+//    setDestination(FA_SW_CORNER);
 }
 
 RevelesCore::~RevelesCore()
@@ -92,14 +116,13 @@ RevelesCore::~RevelesCore()
 
 void RevelesCore::commCheck()
 {
-    cout << "[ RevelesCore ] Signal recieved from GUI" << endl;
+    Logger::writeLine(this, Reveles::CORE_COMM_RECIEVED);
     commsGood = true;
     emit commResponse(commsGood);
 }
 
 void RevelesCore::setDestination(GPSCoord gpsc)
 {
-    cout << "[ RevelesCore ] Setting Target Destination to " << gpsc.latitude << ", " << gpsc.longitude << endl;
     dest = gpsc;
     NavigationAssisiant::instance()->Start(dest);
 }
@@ -111,29 +134,30 @@ void RevelesCore::setMapUpdateInterval(int milliseconds)
     coreTimer->setInterval(updateInterval);
     coreTimer->start();
 
-    cout << "[ RevelesCore ] Map Update Interval changed." << endl;
+    Logger::writeLine(this, Reveles::MAP_INTERVAL_CHANGED);
 }
 
 void RevelesCore::getCurrentLocation()
 {
-    emit currentLocation(loc);
+    // location is temporary
+    emit currentLocation(FA_NW_CORNER);
 }
 
 void RevelesCore::updateOrientation()
 {
+
 }
 
 void RevelesCore::readAGM()
 {
-    cout << setprecision(3) << showpoint << fixed << showpos;
     MagDirection md = RevelesIO::instance()->ReadMagnetometer();
-    cout << "[ RevelesCore ] Mag Data:   X: " << md.x << " Y: " << md.y << " Z: " << md.z << " uT" << endl;
-//    AccelDirection ad = RevelesIO::instance()->ReadAccelerometer();
-//    cout << "[ RevelesCore ] Accel Data: X: " << ad.x << " Y: " << ad.y << " Z: " << ad.z << " m/s/s" << endl;
-//    GyroDirection gd = RevelesIO::instance()->ReadGyroscope();
-//    cout << "[ RevelesCore ] Gyro Data:  X: " << gd.x << " Y: " << gd.y << " Z: " << gd.z << " rad/s" << endl;
-    cout << setprecision(6) << noshowpoint << noshowpos << endl;
-    cout.unsetf(ios::fixed);
+//    Logger::writeLine(this, Reveles::MAG_DATA.arg(md.x, 5, 10).arg(md.y, 5, 10).arg(md.z, 5, 10));
+
+    AccelDirection ad = RevelesIO::instance()->ReadAccelerometer();
+//    Logger::writeLine(this, Reveles::ACCEL_DATA.arg(ad.x, 5, 10).arg(ad.y, 5, 10).arg(ad.z, 5, 10));
+
+    GyroDirection gd = RevelesIO::instance()->ReadGyroscope();
+//    Logger::writeLine(this, Reveles::GYRO_DATA.arg(gd.x, 5, 10).arg(gd.y, 5, 10).arg(gd.z, 5, 10));
 }
 
 void RevelesCore::readSensor()
@@ -151,31 +175,74 @@ void RevelesCore::updateMapData()
 
 void RevelesCore::coreLoop()
 {
-    static directionCount = 0;
+    static int directionCount = 0;
 
-//    readSensor();
+    readSensor();
     NavigationAssisiant::instance()->Orient();
     updateMapData();
 
     //=========================
     // I2C motor drive testing
-    if(directionCount == 10)
+    if(directionCount == 1)
+        RevelesIO::instance()->SetMotorDirection('F');
+    else if(directionCount == 10)
+        RevelesIO::instance()->SetMotorDirection('S');
+    else if (directionCount == 11)
         RevelesIO::instance()->SetMotorDirection('R');
-    else if (directionCount == 20)
+    else if(directionCount == 20)
     {
-        RevelesIO::instance()->SetMotorDirection('R');
+        RevelesIO::instance()->SetMotorDirection('S');
         directionCount = 0;
     }
-    else
-        directionCount++;
+
+    directionCount++;
     //=========================
 
-    //    readAGM();
+    readAGM();
 }
 
-void RevelesCore::close()
+void RevelesCore::closeCore()
 {
-    cout << "[ RevelesCore ] Closing..." << endl;
-    this->close();
+    if(coreTimer->isActive())
+    {
+        coreTimer->stop();
+    }
+
+    Logger::writeLine(this, QString("Closing..."));
+    Logger::ClearLogFlags();
+    Logger::CloseLog();
+
+    rdba->aboutToQuit();
+
+    active =  false;
+
+    if(this->parent() != NULL)
+        ((QCoreApplication*)this->parent())->exit(0);
 }
 
+
+bool RevelesEventFilter::eventFilter(QObject *watched, QEvent *event)
+{
+    Logger::write(this, QString("Event Fired."));
+    if(event->type() == QEvent::KeyPress)
+    {
+        QKeyEvent *key = static_cast<QKeyEvent*>(event);
+
+        if(key->key() == Qt::Key_Escape)
+            rc->rdba->aboutToQuit();
+        else
+            return QObject::eventFilter(watched, event);
+
+        return true;
+    }
+    else
+        return QObject::eventFilter(watched, event);
+
+    return false;
+}
+
+RevelesEventFilter::RevelesEventFilter(RevelesCore *parent)
+    : rc(parent)
+{
+
+}

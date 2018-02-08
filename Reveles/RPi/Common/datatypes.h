@@ -127,5 +127,16 @@ struct ObjectTracking
 
 enum FutureStatus {STOPPED, RUNNING, PAUSED, FINISHED, NON_EXISTENT };
 
+typedef enum LoggerFlag
+{
+    NO_LOG_FLAGS    = 0b0000,
+    BOOL_AS_ALPHA   = 0b0001,
+    SHOW_POINT      = 0b0010,
+    FIXED_LENGTH    = 0b0100,
+    SHOW_POS_NEG    = 0b1000
+} LoggerFlag;
+
+Q_DECLARE_FLAGS(LoggerFlags, LoggerFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS( LoggerFlags )
 
 #endif // DATATYPES_H

@@ -1,4 +1,6 @@
 #include "objectdetector.h"
+#include "Common/logger.h"
+#include "Common/messages.h"
 
 // Convert to string
 #define SSTR( x ) static_cast<std::ostringstream &>((std::ostringstream() << std::dec << x )).str()
@@ -21,6 +23,8 @@ ObjectDetector *ObjectDetector::instance()
 
 void ObjectDetector::Init()
 {
+    instance()->setObjectName("ObjectDetector");
+
     for (int i = 0; i < 16; i++)
     {
         objects[i] = ObjContainer{ Point(0,0), false, -1, NO_STATE };
@@ -29,17 +33,17 @@ void ObjectDetector::Init()
 
     if(!lowerBody.load("Data/haarcascade_lowerbody.xml"))
     {
-        cout << "[ ObjectDetector ] lower body load failed!" << endl;
+        Logger::writeLine(instance(), Reveles::HAAR_LOWER_BODY_LOAD_FAIL);
     }
 
     if(!fullBody.load("Data/haarcascade_fullbody.xml"))
     {
-        cout << "[ ObjectDetector ] full body load failed!" << endl;
+        Logger::writeLine(instance(), Reveles::HAAR_FULL_BODY_LOAD_FAIL);
     }
 
     if(!upperBody.load("Data/haarcascade_upperbody.xml"))
     {
-        cout << "[ ObjectDetector ] upper body load failed!" << endl;
+        Logger::writeLine(instance(), Reveles::HAAR_UPPER_BODY_LOAD_FAIL);
     }
 
     exiting = false;
@@ -73,16 +77,18 @@ void ObjectDetector::PeopleDetect()
     {
 //        DetectAndDraw(hog, frame);
         FaceFinder(frame);
+#if defined OBJ_DETECT_DEBUG && defined USE_OBJ_DETECT
         imshow("Detector Output", frame);
+#endif
 
         if (exiting)
         {
-            cout << "[ ObjectDetector ] Stopping Object Detection." << endl;
+            Logger::writeLine(instance(), Reveles::OD_STOPPING);
             break;
         }
     }
 
-    cout << "[ ObjectDetector ] No frame to read." << endl;
+    Logger::writeLine(instance(), Reveles::FRAME_READ_FAIL);
 }
 
 FutureStatus ObjectDetector::GetFutureStatus()

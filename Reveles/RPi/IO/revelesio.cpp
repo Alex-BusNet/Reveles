@@ -2,6 +2,9 @@
 #include <iostream>
 #include <random>
 #include <math.h>
+#include "Common/logger.h"
+#include "Common/messages.h"
+#include <cstdlib>
 
 Q_GLOBAL_STATIC(RevelesIO, rio)
 
@@ -12,6 +15,8 @@ RevelesIO *RevelesIO::instance()
 
 void RevelesIO::initIO()
 {
+    instance()->setObjectName("RevelesIO");
+
     wiringPiSetup();
     pinMode(SEL_A, OUTPUT);
     pinMode(SEL_B, OUTPUT);
@@ -32,6 +37,7 @@ void RevelesIO::initIO()
     isrWait = false;
     dist = 0;
     inch = 0;
+    motorDir = 'F';
 
      // Placeholder, any value less than 48 will trigger E-Stop on the Arduino
     tofDist = 50; // inches
@@ -64,24 +70,30 @@ void RevelesIO::SendMotorUpdate()
 //      (Motor command only)\
 //=================================================================
 
-    string cmd = "M:";
-    cmd += QString::number(inch).toStdString() + ":";
-    // cmd += direction
-    cmd += "F:";
-    cmd += QString::number(tofDist).toStdString() + ":";
+    QByteArray cmd;
+    cmd.append("M:");
+    cmd.append(QString::number(inch) + ":");
+    cmd.append(QString(motorDir) + ":");
+    cmd.append(QString::number(tofDist) + ":");
 
-    cout << "[ RevelesIO ] I2C Motor command: " << cmd << endl;
+    Logger::writeLine(instance(), Reveles::I2C_MOTOR.arg(QString(cmd)));
+    Logger::writeLine(instance(), QString("cmd as int: ") + cmd.toHex());
 
-    wiringPiI2CWrite(fdArduino, cmd);
+    /// Need to figure out how to turn the cmd string into int.
+//    wiringPiI2CWrite(fdArduino, cmd.toHex());
 }
 
 void RevelesIO::SetMotorDirection(char dir)
 {
     motorDir = dir;
+    SendMotorUpdate();
 }
 
 GPSCoord RevelesIO::ReadGPS()
 {    
+    QString cmd = "G:";
+    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(cmd));
+
     // Stubbed GPS module.
     return GPSCoord{
         ((static_cast<double>(rand()) / RAND_MAX) * 180.0),
@@ -113,13 +125,13 @@ float RevelesIO::triggerUltrasonic(uint8_t sel)
 
     while(digitalRead(ECHO) == LOW && ((micros() - trigStart) < TIMEOUT)){;}
 
-    if(((micros() - trigStart) > TIMEOUT)) { emit echoReady(-1, ""); std::cout << "timeout 1" << std::endl; return -1;}
+    if(((micros() - trigStart) > TIMEOUT)) { emit echoReady(-1, ""); return -1;}
 
     ping = micros();
 
     while(digitalRead(ECHO) == HIGH && ((micros() - trigStart) < TIMEOUT)) {;}
 
-    if(((micros() - trigStart) > TIMEOUT)) { emit echoReady(-1, ""); std::cout << "timeout 2" << std::endl; return -1; }
+    if(((micros() - trigStart) > TIMEOUT)) { emit echoReady(-1, ""); return -1; }
 
     pong = micros();
 

@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include "Common/datatypes.h"
 #include <iostream>
+#include "revelesio.h"
 
 #define  XG_ADDR  (0x6B)
 #define MAG_ADDR  (0x1E)
@@ -34,6 +35,8 @@
 #define GRAVITY_STANDARD        9.80665f
 
 using namespace std;
+
+//class RevelesIO;
 
 class LSM9DS1
 {
