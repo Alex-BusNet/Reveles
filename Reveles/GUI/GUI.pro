@@ -29,7 +29,8 @@ SOURCES += \
         addlocationdialog.cpp \
         settingsscreen.cpp \
         reveles_dbus_interface.cpp \
-        reveles_dbus_adaptor.cpp
+        reveles_dbus_adaptor.cpp \
+    mapview.cpp
 
 HEADERS += \
         revelesgui.h \
@@ -37,7 +38,8 @@ HEADERS += \
         locationpushbutton.h \
         settingsscreen.h \
         reveles_dbus_interface.h \
-        reveles_dbus_adaptor.h
+        reveles_dbus_adaptor.h \
+    mapview.h
 
 FORMS += \
         revelesgui.ui \

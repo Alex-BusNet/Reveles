@@ -50,9 +50,9 @@ RevelesIO::RevelesIO()
 
 void RevelesIO::SendMotorUpdate()
 {
-//=================================================================
-//             I2C Command Structure (RPi -> Arduino):
-//         (Function):(US value):(Direction):(ToF value):
+//=========================================================================
+//                 I2C Command Structure (RPi -> Arduino):
+// <START> -> <M | G> -> <US reading> -> <F | S | R> -> <ToF reading> -> <END>
 // ----------------------------------------------------------------
 // Possible values
 //    Function:
@@ -67,20 +67,63 @@ void RevelesIO::SendMotorUpdate()
 //      (S)top.
 //      (R)everse.
 //    ToF value: Floating point value from Time of Flight sensors.
-//      (Motor command only)\
-//=================================================================
+//      (Motor command only)
+//==========================================================================
+
+//---------------------------------------------------------------------------
+    //Debugging section:
 
     QByteArray cmd;
-    cmd.append("M:");
-    cmd.append(QString::number(inch) + ":");
-    cmd.append(QString(motorDir) + ":");
-    cmd.append(QString::number(tofDist) + ":");
+    cmd.append("M");
+    cmd.append(":");
+    cmd.append(QString::number(inch));
+    cmd.append(":");
+    cmd.append(QString(motorDir));
+    cmd.append(":");
+    cmd.append(QString::number(tofDist));
+    cmd.append(":");
 
     Logger::writeLine(instance(), Reveles::I2C_MOTOR.arg(QString(cmd)));
-    Logger::writeLine(instance(), QString("cmd as int: ") + cmd.toHex());
+//---------------------------------------------------------------------------
 
-    /// Need to figure out how to turn the cmd string into int.
-//    wiringPiI2CWrite(fdArduino, cmd.toHex());
+    int cmdOut = START;
+    Logger::writeLine(instance(), QString("START:         0x%1").arg(cmdOut, 8, 16, QChar('0')));
+    wiringPiI2CWrite(fdArduino, cmdOut);
+
+    cmdOut = CMD_M;
+    Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(cmdOut, 8, 16, QChar('0')));
+    wiringPiI2CWrite(fdArduino, cmdOut);
+
+    cmdOut = 0x0;
+
+    QString iParse = QString::number(inch);
+    for(int i = 0; i < iParse.length(); i++)
+    {
+        cmdOut <<= 8;
+        cmdOut |= asciiMap[iParse.at(i).toLatin1()];
+    }
+    wiringPiI2CWrite(fdArduino, cmdOut);
+    Logger::writeLine(instance(), QString("US Dist:       0x%1").arg(cmdOut, 8, 16, QChar('0')));
+
+    cmdOut = asciiMap[motorDir];
+    Logger::writeLine(instance(), QString("Motor Dir:     0x%1").arg(cmdOut, 8, 16, QChar('0')));
+    wiringPiI2CWrite(fdArduino, cmdOut);
+
+    cmdOut = 0x0;
+    iParse = QString::number(tofDist);
+    for(int i = 0; i < iParse.length(); i++)
+    {
+        cmdOut <<= 8;
+        cmdOut |= asciiMap[iParse.at(i).toLatin1()];
+    }
+
+    wiringPiI2CWrite(fdArduino, cmdOut);
+    Logger::writeLine(instance(), QString("ToF Dist:      0x%1").arg(cmdOut, 8, 16, QChar('0')));
+
+    cmdOut = END;
+    wiringPiI2CWrite(fdArduino, cmdOut);
+
+    Logger::writeLine(instance(), QString("END:           0x%1").arg(cmdOut, 8, 16, QChar('0')));
 }
 
 void RevelesIO::SetMotorDirection(char dir)
@@ -91,8 +134,15 @@ void RevelesIO::SetMotorDirection(char dir)
 
 GPSCoord RevelesIO::ReadGPS()
 {    
-    QString cmd = "G:";
-    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(cmd));
+    int cmd = START;
+    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(cmd, 8, 16, QChar('0')));
+    cmd = CMD_G;
+    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(cmd, 8, 16, QChar('0')));
+    cmd = END;
+    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(cmd, 8, 16, QChar('0')));
+
+    // Wait for response.
+    // Format: <START> -> <LATITUDE> -> <latitude value> -> <LONGITUDE> -> <longitude value> -> <END>
 
     // Stubbed GPS module.
     return GPSCoord{

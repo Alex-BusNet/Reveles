@@ -41,6 +41,7 @@ public slots:
     void setMapUpdateInterval(int milliseconds);
     void getCurrentLocation();
 
+
 private:
     void updateOrientation();
     void readAGM();
@@ -55,7 +56,8 @@ signals:
     void usTriggered();
     void currentLocation(GPSCoord gpsc);
     void commResponse(bool good);
-
+    void sendAGStatus(bool good);
+    void sendMagStatus(bool good);
 };
 
 class RevelesEventFilter : public QObject

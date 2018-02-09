@@ -55,6 +55,12 @@ class RevelesDBusAdaptor: public QDBusAbstractAdaptor
 "      <annotation value=\"GPSCoord\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
 "      <arg direction=\"out\" type=\"(dd)\" name=\"loc\"/>\n"
 "    </signal>\n"
+"    <signal name=\"setAGStatus\">\n"
+"      <arg direction=\"out\" type=\"b\" name=\"good\"/>\n"
+"    </signal>\n"
+"    <signal name=\"setMagStatus\">\n"
+"      <arg direction=\"out\" type=\"b\" name=\"good\"/>\n"
+"    </signal>\n"
 "  </interface>\n"
         "")
 public:
@@ -71,7 +77,9 @@ Q_SIGNALS: // SIGNALS
     void locationUpdate(GPSCoord loc);
     void requestCurrentLocation();
     void requestMapUpdate();
+    void setAGStatus(bool good);
     void setDestination(GPSCoord gpsc);
+    void setMagStatus(bool good);
     void setMapUpdateInterval(int milliseconds);
 };
 

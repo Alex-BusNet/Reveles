@@ -29,7 +29,7 @@ public:
 
 private:
 //    map<string, Node> savedDestinations;
-    vector<GPSCoord> grid;
+    vector<Node> grid;
     double offsetLat, offsetLong;
 
     void saveMapData();

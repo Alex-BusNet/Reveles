@@ -8,6 +8,9 @@
 #define FA_SE_CORNER GPSCoord{41.631910, -85.005670}
 #define FA_NE_CORNER GPSCoord{41.632562, -85.005680}
 #define FA_NW_CORNER GPSCoord{41.632559, -85.005982}
+#define FA_MAP_NW GPSCoord{41.632559, -85.006123}
+#define FA_MAP_SW GPSCoord{41.631906, -85.006123}
+#define FA_MAP_SE GPSCoord{41.631906, -85.005665}
 
 #define B2STR( x ) (x ? "True" : "False")
 
@@ -53,6 +56,8 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     // Outbound comms (CORE -> GUI)
     connect(this, &RevelesCore::commResponse, rdba, &RevelesDBusAdaptor::commResponse);
     connect(this, &RevelesCore::currentLocation, rdba, &RevelesDBusAdaptor::locationUpdate);
+    connect(this, &RevelesCore::sendAGStatus, rdba, &RevelesDBusAdaptor::setAGStatus);
+    connect(this, &RevelesCore::sendMagStatus, rdba, &RevelesDBusAdaptor::setMagStatus);
 
     // Additional comms (CORE -> CORE)
     connect(this, &RevelesCore::currentLocation, NavigationAssisiant::instance(), &NavigationAssisiant::updateLocation);
@@ -71,6 +76,8 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 
     Logger::writeLine(this, Reveles::XG_FOUND.arg(B2STR(RevelesIO::instance()->hasXG())));
     Logger::writeLine(this, Reveles::MAG_FOUND.arg(B2STR(RevelesIO::instance()->hasMag())));
+    emit sendAGStatus(RevelesIO::instance()->hasXG());
+    emit sendMagStatus(RevelesIO::instance()->hasMag());
 
     commsGood = false;
     updateInterval = 1000;
@@ -93,6 +100,10 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     Logger::writeLine(this,
                       QString("SE corner to NE corner: %1 ft")
                       .arg(NavigationAssisiant::instance()->GetDistance(FA_SE_CORNER, FA_NE_CORNER)));
+
+    Logger::writeLine(this, QString("Map dimensions: %1 x %2 tiles.")
+                      .arg(NavigationAssisiant::instance()->GetDistance(FA_MAP_NW, FA_MAP_SW) / 2)
+                      .arg(NavigationAssisiant::instance()->GetDistance(FA_MAP_SW, FA_MAP_SE) / 2));
 
     coreTimer = new QTimer();
     coreTimer->setInterval(updateInterval);

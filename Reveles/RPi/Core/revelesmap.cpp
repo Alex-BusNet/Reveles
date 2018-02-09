@@ -17,6 +17,25 @@ void RevelesMap::Init()
     instance()->setObjectName("RevelesMap");
     offsetLat = 41.631906;
     offsetLong = -85.006118;
+
+    // Grid size: 120 tile x 63 tile (approx)
+    for(int x = 0; x < 120; x++)
+    {
+        for(int y = 0; y < 63; y++)
+        {
+            grid.push_back(Node
+                           {
+                               GPSCoord
+                               {
+                                   offsetLat + (.00005 * (x +1)),
+                                   offsetLong + (.00005 * (y +1))
+                               },
+                               UNKNOWN
+                           });
+        }
+    }
+
+
 }
 
 GPSCoord RevelesMap::GetOffset()
@@ -32,8 +51,8 @@ void RevelesMap::AddPoint(GPSCoord gpsc)
 
     }
 
-    if(!gridHasPoint(gpsc))
-        grid.push_back(gpsc);
+//    if(!gridHasPoint(gpsc))
+//        grid.push_back(gpsc);
 }
 
 list<GPSCoord> RevelesMap::GetNearbyPoints(GPSCoord gpsc)
@@ -96,11 +115,11 @@ void RevelesMap::LoadMapData()
 
 bool RevelesMap::gridHasPoint(GPSCoord gpsc)
 {
-    for(GPSCoord c : grid)
-    {
-        if(gpsc == c)
-            return true;
-    }
+//    for(GPSCoord c : grid)
+//    {
+//        if(gpsc == c)
+//            return true;
+//    }
 
     return false;
 }

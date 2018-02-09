@@ -3,6 +3,7 @@
 #include <QMetaType>
 #include <QtDBus/QDBusArgument>
 #include <cstring>
+#include <QMap>
 
 struct GPSCoord {
     double latitude;
@@ -138,5 +139,39 @@ typedef enum LoggerFlag
 
 Q_DECLARE_FLAGS(LoggerFlags, LoggerFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS( LoggerFlags )
+
+enum I2C_COMMANDS
+{
+    START     = 0x5354515354,
+    END       = 0x454E44,
+    M_FWD     = 0x46,
+    CMD_G     = 0x47,
+    CMD_M     = 0x4D,
+    M_REV     = 0x52,
+    M_STOP    = 0x53,
+    LATITUDE  = 0x4C41544954554445,
+    LONGITUDE = 0x4C4f4E474954554445
+};
+
+static QMap<char, qulonglong> asciiMap =
+{
+    {'.', 0x2E}, //46
+    {'0', 0x30}, //48
+    {'1', 0x31}, //49
+    {'2', 0x32}, //50
+    {'3', 0x33}, //51
+    {'4', 0x34}, //52
+    {'5', 0x35}, //53
+    {'6', 0x36}, //54
+    {'7', 0x37}, //55
+    {'8', 0x38}, //56
+    {'9', 0x39}, //57
+    {':', 0x3A}, //58
+    {'F', 0x46}, //70
+    {'G', 0x47}, //71
+    {'M', 0x4D}, //77
+    {'R', 0x52}, //82
+    {'S', 0x53}  //83
+};
 
 #endif // DATATYPES_H

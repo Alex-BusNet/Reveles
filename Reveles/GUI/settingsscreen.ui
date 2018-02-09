@@ -35,7 +35,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>3</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="settingsTab">
     <attribute name="title">
@@ -61,18 +61,67 @@
     <attribute name="title">
      <string>Status</string>
     </attribute>
-    <widget class="QLabel" name="label_2">
+    <widget class="QWidget" name="horizontalLayoutWidget">
      <property name="geometry">
       <rect>
-       <x>240</x>
-       <y>140</y>
-       <width>251</width>
-       <height>17</height>
+       <x>0</x>
+       <y>0</y>
+       <width>771</width>
+       <height>301</height>
       </rect>
      </property>
-     <property name="text">
-      <string>TODO: Add Status indicators for HW</string>
-     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QLabel" name="dbusStatusLabel">
+          <property name="text">
+           <string>D-Bus Comms</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="locationUpdateLabel">
+          <property name="text">
+           <string>Location Update</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="coordinateLabel">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QLabel" name="agStatusLabel">
+          <property name="text">
+           <string>Accelerometer / Gyroscope</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="magStatusLabel">
+          <property name="text">
+           <string>Magnetometer</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="usDistLabel">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </widget>
    </widget>
    <widget class="QWidget" name="aboutTab">

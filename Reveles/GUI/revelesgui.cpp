@@ -41,7 +41,12 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     sc = new QWidget;
     sc->setLayout(new QVBoxLayout);
     sc->layout()->addWidget(sa);
+
+    mapView = new MapView();
+    mapView->setScreenSize(ui->tabWidget->width(), ui->tabWidget->height());
+
     ui->tabWidget->addTab(sc, "Locations");
+    ui->tabWidget->addTab(mapView, "Map");
     QIcon *loc, *nLoc, *settings;
 
     loc = new QIcon("Assets/Icons/locations.png");
@@ -52,11 +57,13 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     ui->addLocationPB->setIcon(*nLoc);
     ui->settingsScreenPB->setIcon(*settings);
 
+    ss = new SettingsScreen(this);
+    ss->setGeometry(0,0, 800, 400);
+    ss->hide();
+
     this->setStyleSheet(menuStyle);
 
     this->ui->exitBtn->setShortcut(QKeySequence(Qt::Key_Escape));
-
-    this->ui->distLabel->setText(QChar(0x221E));
 
     commTimer = new QTimer();
     commTimer->setInterval(500);
@@ -88,12 +95,17 @@ RevelesGui::~RevelesGui()
     delete gl;
     delete scrollWidget;
     delete sa;
+
+    if(mapView != NULL)
+        delete mapView;
+
+    if(ss != NULL)
+        delete ss;
 }
 
 void RevelesGui::setLocation(LocationPushButton *pb)
 {
     GPSCoord dest{pb->GetIndex().latitude, pb->GetIndex().longitude};
-    ui->testingLabel->setText(QString::number(pb->GetIndex().latitude) + ", " + QString::number(pb->GetIndex().longitude));
 
     // Deselect any other active buttons.
     for(int j = 0; j < lpbs.size(); j++)
@@ -114,8 +126,25 @@ void RevelesGui::setLocation(LocationPushButton *pb)
 void RevelesGui::updateLocation(GPSCoord gpsc)
 {
     currentLoc = gpsc;
-    ui->testingLabel->setText(QString::number(gpsc.latitude) + ", " + QString::number(gpsc.longitude));
-    TrigDispToggle();    
+    if(ss != NULL)
+        ss->setCoordText(QString::number(gpsc.latitude) + ", " + QString::number(gpsc.longitude));
+
+    TrigDispToggle();
+
+    if(ui->tabWidget->currentIndex() == 1)
+        mapView->update();
+}
+
+void RevelesGui::magStatus(bool good)
+{
+    if(ss != NULL)
+        ss->setMagStatus(good);
+}
+
+void RevelesGui::agStatus(bool good)
+{
+    if(ss != NULL)
+        ss->setAGStatus(good);
 }
 
 void RevelesGui::setupLocations()
@@ -167,6 +196,8 @@ void RevelesGui::setDBusInterface(com::reveles::RevelesCoreInterface *iface)
     connect(rci, &RevelesDBusInterface::commResponse, this, &RevelesGui::commCheck);
     connect(rci, &RevelesDBusInterface::locationUpdate, this, &RevelesGui::updateLocation);
     connect(rci, &RevelesDBusInterface::aboutToQuit, this, &RevelesGui::close);
+    connect(rci, &RevelesDBusInterface::getAGStatus, this, &RevelesGui::agStatus);
+    connect(rci, &RevelesDBusInterface::getMagStatus, this, &RevelesGui::magStatus);
 }
 
 void RevelesGui::setDBusAdaptor(RevelesDBusAdaptor *rda)
@@ -189,10 +220,8 @@ void RevelesGui::commCheck(bool good)
 {
     hasComms = good;
 
-    if(good)
-        ui->EchoLabel->setStyleSheet("QLabel { background-color: green; }");
-    else
-        ui->EchoLabel->setStyleSheet("QLabel { background-color: red; }");
+    if(ss != NULL)
+        ss->setDBusStatus(good);
 }
 
 void RevelesGui::on_exitBtn_clicked()
@@ -205,20 +234,20 @@ void RevelesGui::on_exitBtn_clicked()
 
 void RevelesGui::displayDist(float dist, QString unit)
 {
+    QString t = "";
     if (dist < 0)
-        this->ui->distLabel->setText(QChar(0x221E));
+        t = QString(QChar(0x221E));
     else
-        this->ui->distLabel->setText(QString("%0 %1").arg(dist).arg(unit));
+        t = (QString("%0 %1").arg(dist).arg(unit));
 
-    this->ui->TrigLabel->setStyleSheet("QLabel { background-color: transparent; } ");
+    if (ss != NULL)
+        ss->setUSDistReading(t);
 }
 
 void RevelesGui::TrigDispToggle()
 {
-    if( !trigOn )
-        this->ui->TrigLabel->setStyleSheet("QLabel { background-color: green; } ");
-    else
-        this->ui->TrigLabel->setStyleSheet("QLabel { background-color: red; } ");
+    if(ss != NULL)
+        ss->setLocUpdateStatus(trigOn);
 
     trigOn = !trigOn;
 }
@@ -227,17 +256,12 @@ void RevelesGui::TrigDispToggle()
 
 void RevelesGui::on_settingsScreenPB_clicked()
 {
-    if(ss != NULL)
-        delete ss;
-
-    ss = new SettingsScreen(this);
-    ss->setGeometry(0,0, 800, 400);
     ss->show();
 }
 
 void RevelesGui::on_mapPB_clicked()
 {
-
+    ui->tabWidget->setCurrentIndex(1);
 }
 
 void RevelesGui::commTimeout()
@@ -249,5 +273,11 @@ void RevelesGui::commTimeout()
     else
     {
         commTimer->stop();
+        mapView->setScreenSize(ui->tabWidget->width(), ui->tabWidget->height());
     }
+}
+
+void RevelesGui::on_locationsScreenPB_clicked()
+{
+    ui->tabWidget->setCurrentIndex(0);
 }

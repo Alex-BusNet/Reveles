@@ -45,7 +45,9 @@ Q_SIGNALS: // SIGNALS
     void locationUpdate(GPSCoord loc);
     void requestCurrentLocation();
     void requestMapUpdate();
+    void getAGStatus(bool good);
     void setDestination(GPSCoord gpsc);
+    void getMagStatus(bool good);
     void setMapUpdateInterval(int milliseconds);
 };
 

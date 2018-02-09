@@ -10,6 +10,7 @@
 #include "locationpushbutton.h"
 #include "addlocationdialog.h"
 #include "settingsscreen.h"
+#include "mapview.h"
 #include "../RPi/Common/datatypes.h"
 #include "reveles_dbus_interface.h"
 #include "reveles_dbus_adaptor.h"
@@ -50,6 +51,8 @@ signals:
 public slots:
     void commCheck(bool good);
     void updateLocation(GPSCoord gpsc);
+    void magStatus(bool good);
+    void agStatus(bool good);
 
 private slots:
 
@@ -69,11 +72,14 @@ private slots:
 
     void commTimeout();
 
+    void on_locationsScreenPB_clicked();
+
 private:
     Ui::RevelesGui *ui;
     QScrollArea *sa;
     QGridLayout *gl;
     QWidget *scrollWidget, *sc;
+    MapView *mapView;
     SettingsScreen *ss;
     AddLocationDialog *ald;
 

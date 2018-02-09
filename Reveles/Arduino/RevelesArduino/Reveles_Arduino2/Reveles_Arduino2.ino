@@ -11,15 +11,35 @@
 #define enableA 10
 #define input1 11
 #define input2 12
-#define frontTrigPin 1 // trigPIN1
-#define frontEchoPin 2 // echoPIN1
+#define frontTrigPin 2 // trigPIN1
+#define frontEchoPin 3 // echoPIN1
 #define rearTrigPin 6  // trigPIN2
 #define rearEchoPin 7  // echoPIN2
 #define LED 13
-// I2C drive commands
-#define FOWARD_STATE = 1
-#define STOP_STATE = 0
-#define REVERSE_STATE = -1
+
+// I2C drive states
+#define FOWARD_STATE 1
+#define STOP_STATE  0
+#define REVERSE_STATE  -1
+
+// I2C Comm commands
+#define START      0x5354515354,
+#define END        0x454E44,
+#define M_FWD      0x46,
+#define CMD_G      0x47,
+#define CMD_M      0x4D,
+#define M_REV      0x52,
+#define M_STOP     0x53,
+#define LATITUDE   0x4C41544954554445,
+#define LONGITUDE  0x4C4f4E474954554445
+
+// I2C Comm states
+#define WAITING_FOR_START     0
+#define WAITING_FOR_US_DATA   1
+#define WAITING_FOR_MOTOR_DIR 2
+#define WAITING_FOR_TOF_DATA  3
+#define WAITING_FOR_END       4
+#define WAITING_FOR_MG	      5 // Waiting for (M)otor or (G)PS.
 
 // Other defines
 #define INT_MAX 2147483647
@@ -35,113 +55,111 @@ int rD = 0;
 int destination = 0;
 
 // I2C variables
-String command = "";      // Info recieved from RPi
-String cmdBreakdown[4];
-String gpsResponse = "0.00000,0.00000";  // Should contain two floats, comma separated, no spaces
-int number = 0;
-int state = STOP_STATE;
+String command = "";  // Info recieved from RPi
+int commState = 0;
+bool respond = false; // Send GPS info back to RPi
 
+int state = STOP_STATE;
 bool fwd = true;          // Direction switch (temp)
 bool on = false;          // Are the motors on.
 bool initialized = false; // Sanity check
 //-----------------
 
-//=================================================================
-//             I2C Command Structure (RPi -> Arduino): 
-//         (Function):(US value):(Direction):(ToF value):
-// ----------------------------------------------------------------
+//=============================================================================
+//                   I2C Command Structure (RPi -> Arduino):
+// <START> -> <M | G> -> <US reading> -> <F | S | R> -> <ToF reading> -> <END>
+//-----------------------------------------------------------------------------
+//	 [ ALL COMMANDS AND VALUES ARE RECIEVED IN HEXADECIMAL FORMAT ]
+//
 // Possible values
 //    Function:
 //      (M)otor - RPi is sending drive instructions.
 //      (G)PS - RPi is requesting GPS coordinates.
 //    US Value: Floating Point value for PWM signal.
-//      (Motor command only) 
+//      (Motor command only)
 //      Value is in inches.
 //      Value is not adjusted to fit between 255 and 0.
 //    Direction: (Motor command only)
 //      (F)orward.
 //      (S)top.
 //      (R)everse.
-//    ToF value: Floating point value from Time of Flight sensors. 
+//    ToF value: Floating point value from Time of Flight sensors.
 //      (Motor command only)
-//      E-Stop may still need to be determined.
-//=================================================================
+//=============================================================================
 
 void recieveData(int byteCount)
 {
     while(0 < Wire.available())
     {
         // Concatenate each byte to the string.
-        command += Wire.read(); 
-        //number = Wire.read();
+        command += Wire.read();
 
     }
     
     Serial.print("data recieved");
     Serial.print(command);
 
-    int lastIdx = 0; // tracks where we found the previous instance of ':' in the command string.
-    for (int i = 0; i < 4; i++)
+    int cmd = command.toInt();
+
+    if (commState == WAITING_FOR_START)
     {
-      cmdBreakdown[i] = command.substring(lastIdx, command.indexOf(':', lastIdx));
-      lastIdx = command.indexOf(':', lastIdx)
-
-      // Since the GPS command won't have anything beyond the (Function) parameter, 
-      // we need to break out of the loop so we don't read NULL characters from
-      // the command string.
-      if(lastIdx == command.lastIndexOf(':')) { break; }
+        if((cmd & START) == START) { commState = WAITING_FOR_MG; }
     }
-    
-    // Check to make sure the first value is a letter.
-    // toInt() returns a zero (0) on an invalid conversion
-    if(cmdBreakdown[0].toInt() == 0)
+    else if (commState == WAITING_FOR MG)
     {
-          if(cmdBreakdown[0].equals("M"))
-          {
-            //--------------------
-            // Update motor drive
-            //--------------------
-            
-            // Get Ultrasonic distance
-            inch = cmdBreakdown[1].toInt();
-
-            // Get the direction to drive
-            if(cmdBreakdown[2].equals("F")
-              state = FORWARD_STATE;
-            else if(cmdBreakdown[2].equals("S"))
-              state = STOP_STATE;
-            else if(cmdBreakdown[2].equals("R"))
-              state = REVERSE_STATE;
-
-            // Get the ToF distance
-            tofDistance = cmdBreakdown[3].toInt();
-          }
-          else if (cmdBreakdown[0].equals('G'))
-          {
-            // Get GPS Coordinates
-            // Set a flag indicating the RPi is waiting for GPS data?
-          }
+	if((cmd & CMD_M) == CMD_M) { commState = WAITING_FOR_US_DATA; }
+	else if((cmd & CMD_G) == CMD_G) { respond = true; commState = WAITING_FOR_END; }
     }
-    
-//    Serial.println(number);
-//    if(number == 1)
-//    {
-//        if(state == 0)
-//        {
-//            digitalWrite(13, HIGH);
-//            state = 1;
-//        }
-//        else
-//        {
-//            digitalWrite(13, LOW);
-//            state = 0;
-//        }
-//    }
+    else if(commState == WAITING_FOR_US_DATA)
+    {
+	// Are we going to need additional conversion code here? -Alex
+	inch = cmd;
+	commState = WAITING_FOR_MOTOR_DIR;
+    }
+    else if (commState == WAITING_FOR_MOTOR_DIR)
+    {
+	if((cmd & M_FWD) == M_FWD)        { state = FORWARD_STATE; }
+	else if((cmd & M_STOP) == M_STOP) { state = STOP_STATE; }
+	else if((cmd & M_REV) == M_REV)   { state = REVERSE_STATE; }
+
+	commState = WAITING_FOR_TOF_DATA;
+    }
+    else if (commState == WAITING_FOR_TOF_DATA)
+    {
+	// Are we going to need additional conversion code here? -Alex
+	tofDistance = cmd;
+	commState = WAITING_FOR_END;
+    }
+    else if (commState == WAITING_FOR_END)
+    {
+	if((cmd & END) == END) { commState = WAITING_FOR_START; }
+    }
+	
 }
+
+//=======================================================================================
+//                        I2C Command Structure (Arduino -> RPi):
+// <START> -> <LATITUDE> -> <latitude value> -> <LONGITUDE> -> <longitude value> -> <END>
+//---------------------------------------------------------------------------------------
+//	           [ COMMANDS ARE IN HEXADECIMAL, VALUES ARE IN DECIMAL ]
+//=======================================================================================
 
 void sendData()
 {
-    Wire.write(number);
+    if(respond)
+    {
+	Wire.write(START);
+	delayMicroseconds(5);
+	Wire.write(LATITUDE);
+	delayMicroseconds(5);
+	Wire.write(0.00000); // Need to get actual value from GPS
+	delayMicroseconds(5);
+	Wire.write(LONGITUDE);
+	delayMicroseconds(5);
+	Wire.write(0.00000); // Need to get actual value from GPS
+	delayMicroseconds(5);
+	Wire.write(END);
+    }
 }
 
 /*This function is designed for use in the initial boot-up of the robot. The motors will be turned on if not already and begin moving forward,
@@ -229,7 +247,7 @@ void driveFORWARD()
   pwmOUT = (inch * 2)-1;
   if(pwmOUT < 48)
   {
-    state = REVERSE_STATE
+    state = REVERSE_STATE;
     motorSTOP();
   }
   else if (pwmOUT > 255)
@@ -300,7 +318,7 @@ void setup() {
 
   // Setup motor drive flags.
   on = false;
-  state = FORWARD_STATE
+  state = FORWARD_STATE;
   initialized = true;
 }
 
