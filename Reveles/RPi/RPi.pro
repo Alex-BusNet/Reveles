@@ -33,7 +33,7 @@ SOURCES += main.cpp \
     Common/vectorpolar2f.cpp \
     Common/logger.cpp \
     reveles_dbus_interface.cpp \
-    Common/tile.cpp
+#    Common/tile.cpp
 
 HEADERS += \
     Common/datatypes.h \
@@ -55,7 +55,8 @@ HEADERS += \
     Common/messages.h \
     Common/logger.h \
     reveles_dbus_interface.h \
-    Common/tile.h
+#    Common/tile.h \
+#    Common/noderenders.h
 
 DISTFILES += \
     Data/haarcascade_fullbody.xml \

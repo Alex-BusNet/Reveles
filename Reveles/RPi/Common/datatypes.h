@@ -65,7 +65,14 @@ struct DecisionPoint {
 };
 
 // The DOOR type may not be used.
-enum NodeType { WALL, PATH, STAIRS, DOOR, UNKNOWN };
+enum NodeType
+{
+    WALL, STAIRS, DOOR, PATH, UNKNOWN,
+//    R_WALL, T_WALL, B_WALL,
+//    V_PATH, H_PATH,
+//    L_T, R_T, B_T, T_T,
+//    L_DEAD_END, R_DEAD_END, B_DEAD_END, T_DEAD_END
+};
 
 struct Node {
     GPSCoord coord;

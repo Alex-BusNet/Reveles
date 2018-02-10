@@ -61,6 +61,9 @@ class RevelesDBusAdaptor: public QDBusAbstractAdaptor
 "    <signal name=\"setMagStatus\">\n"
 "      <arg direction=\"out\" type=\"b\" name=\"good\"/>\n"
 "    </signal>\n"
+"    <signal name=\"sendLogMessage\">\n"
+"      <arg direction=\"out\" type=\"s\" name=\"msg\"/>\n"
+"    </signal>\n"
 "  </interface>\n"
         "")
 public:
@@ -81,6 +84,8 @@ Q_SIGNALS: // SIGNALS
     void setDestination(GPSCoord gpsc);
     void setMagStatus(bool good);
     void setMapUpdateInterval(int milliseconds);
+    void sendLogMessage(QString msg);
+    void sendPathInfo(QVector<GPSCoord> path);
 };
 
 #endif

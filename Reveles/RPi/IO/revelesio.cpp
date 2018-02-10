@@ -141,14 +141,38 @@ GPSCoord RevelesIO::ReadGPS()
     cmd = END;
     Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(cmd, 8, 16, QChar('0')));
 
+    GPSCoord gpsc{0,0};
+
     // Wait for response.
     // Format: <START> -> <LATITUDE> -> <latitude value> -> <LONGITUDE> -> <longitude value> -> <END>
+    delayMicroseconds(50);
+    Logger::writeLine(instance(), "Reading Arduino...");
+    int response = wiringPiI2CRead(fdArduino);
 
-    // Stubbed GPS module.
-    return GPSCoord{
-        ((static_cast<double>(rand()) / RAND_MAX) * 180.0),
-        ((static_cast<double>(rand()) / RAND_MAX) * 180.0)
-    };
+    if(response == START)
+    {
+        bool readLat = false, readLong = false;
+        while(response != END)
+        {
+            response = wiringPiI2CRead(fdArduino);
+            if (response == LATITUDE && !readLat)
+                readLat = true;
+            else if (readLat)
+            {
+                gpsc.latitude = response;
+                readLat = false;
+            }
+            else if (response == LONGITUDE && !readLong)
+                readLong = true;
+            else if(readLong)
+            {
+                gpsc.longitude = response;
+                readLong = false;
+            }
+        }
+    }
+
+    return gpsc;
 }
 
 /*

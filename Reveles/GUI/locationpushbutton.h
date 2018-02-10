@@ -12,6 +12,7 @@ public:
     ~LocationPushButton();
 
     GPSCoord GetIndex();
+    QString GetName();
 
 private:
     GPSCoord location;
@@ -43,6 +44,11 @@ inline LocationPushButton::~LocationPushButton()
 inline GPSCoord LocationPushButton::GetIndex()
 {
     return location;
+}
+
+inline QString LocationPushButton::GetName()
+{
+    return this->text();
 }
 
 inline void LocationPushButton::lpb_click_handler()

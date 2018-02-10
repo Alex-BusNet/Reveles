@@ -53,6 +53,7 @@ public slots:
     void updateLocation(GPSCoord gpsc);
     void magStatus(bool good);
     void agStatus(bool good);
+    void logMessage(QString msg);
 
 private slots:
 
@@ -92,6 +93,7 @@ private:
     bool trigOn, hasComms;
 
     void setupLocations();
+    void saveLocations();
 
     vector<LocationPushButton*> lpbs;
 

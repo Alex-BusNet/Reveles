@@ -3,8 +3,8 @@
 
 #include <QWidget>
 #include <QPainter>
+#include "tile.h"
 #include "../RPi/Common/datatypes.h"
-#include "../RPi/Common/tile.h"
 
 class MapView : public QWidget
 {
@@ -15,8 +15,12 @@ public:
     void setScreenSize(int w, int h);
     void paintEvent(QPaintEvent *event);
 
+public slots:
+    void SetPathInfo(QVector<GPSCoord> path);
+
 private:
     QVector<Tile*> map;
+
     int revelesTile, targetTile, startTile;
     int screenSizeX, screenSizeY;
     int mapX, mapY;

@@ -8,15 +8,17 @@
 #include "datatypes.h"
 #include <QFile>
 
-class Logger //: public QObject
+class Logger : public QObject
 {
-    //Q_OBJECT
+    Q_OBJECT
 
 public:
+    Logger();
+    ~Logger();
+    static Logger* instance();
+
     static LoggerFlags flags;
     static QFile logFile;
-
-    ~Logger();
 
     static void InitLog();
     static void SetLogFlags(LoggerFlags lf);
@@ -28,8 +30,10 @@ public:
     static void writeLine(const QObject *src, QString message);
 
 private:
-    Logger();
     static void write(const QObject *src, std::string message);
+    void sendSignal(QString msg);
+signals:
+    void newMessage(const QString msg);
 };
 
 #endif // LOGGER_H

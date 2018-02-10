@@ -21,6 +21,8 @@ public:
     void setDBusStatus(bool stat);
     void setCoordText(QString coord);
     void setUSDistReading(QString reading);
+    void addToLog(QString str);
+
 
 private slots:
     void on_buttonBox_rejected();

@@ -1,5 +1,8 @@
 #include "revelesmap.h"
 
+#define THRESHOLD_LATITUDE  (0.0000103651 / 2)
+#define THRESHOLD_LONGITUDE (0.0000038167 / 2)
+
 Q_GLOBAL_STATIC(RevelesMap, rm)
 
 RevelesMap::RevelesMap()
@@ -27,20 +30,39 @@ void RevelesMap::Init()
                            {
                                GPSCoord
                                {
-                                   offsetLat + (.00005 * (x +1)),
-                                   offsetLong + (.00005 * (y +1))
+                                   offsetLat +  (THRESHOLD_LATITUDE * (x +1)),
+                                   offsetLong + (THRESHOLD_LONGITUDE * (y +1))
                                },
                                UNKNOWN
                            });
         }
     }
-
-
 }
 
 GPSCoord RevelesMap::GetOffset()
 {
     return GPSCoord{offsetLat, offsetLong};
+}
+
+double RevelesMap::GetLatitudeThreshold()
+{
+    return THRESHOLD_LATITUDE;
+}
+
+double RevelesMap::GetLongitudeThreshold()
+{
+    return THRESHOLD_LONGITUDE;
+}
+
+/**
+ * @brief Updates the NodeType of the selected node
+ * @param x The x coordinate of the tile
+ * @param y The y corrdinate of the tile
+ * @param t The new NodeType of the tile
+ */
+void RevelesMap::UpdatePath(int x, int y, NodeType t)
+{
+    grid.at((x / 2) + (120 * y)).nt = t;
 }
 
 void RevelesMap::AddPoint(GPSCoord gpsc)

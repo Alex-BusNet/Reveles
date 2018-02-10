@@ -1,4 +1,6 @@
 #include "mapview.h"
+#include <random>
+#include <ctime>
 
 MapView::MapView(QWidget *parent) : QWidget(parent)
 {
@@ -13,6 +15,24 @@ void MapView::setScreenSize(int w, int h)
 
     this->tileWidth = w / mapX;
     this->tileHeight = h / mapY;
+
+    srand(time(0));
+
+    int posX = 0, posY = 0;
+
+    for(int x = 0; x < 120; x++)
+    {
+        for(int y = 0; y < 63; y++)
+        {
+            map.push_back(new Tile(posX, posY, ((NodeType)(rand() % 4))));
+            map.last()->SetDim(tileWidth, tileHeight);
+
+            posY += tileHeight;
+        }
+
+        posX += tileWidth;
+        posY = 0;
+    }
 }
 
 void MapView::paintEvent(QPaintEvent *event)
@@ -25,13 +45,22 @@ void MapView::paintEvent(QPaintEvent *event)
         p->setWidthF(0.5);
         paint.setPen(*p);
 
-        for(int x = 0; x < 120; x++)
+        foreach(Tile* t, map)
         {
-            for(int y = 0; y < 63; y++)
-            {
-                paint.drawRect(x + (tileWidth * x), y + (tileHeight * y),
-                                tileWidth, tileHeight);
-            }
+            t->drawTile(&paint);
         }
     }
+}
+
+// The acutal contents of the QVector are subject to change.
+// May turn into a list of integer values where each integer
+//    is the index of the tile in the map object.
+void MapView::SetPathInfo(QVector<GPSCoord> path)
+{
+//    foreach(GPSCoord t, path)
+//    {
+//        map[]->SetRoute(true);
+//    }
+
+//    map[]->SetHasReveles(true);
 }

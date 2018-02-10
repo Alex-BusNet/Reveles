@@ -49,6 +49,8 @@ Q_SIGNALS: // SIGNALS
     void setDestination(GPSCoord gpsc);
     void getMagStatus(bool good);
     void setMapUpdateInterval(int milliseconds);
+    void sendLogMessage(QString msg);
+    void sendPathInfo(QVector<GPSCoord> path);
 };
 
 namespace com {

@@ -31,6 +31,10 @@ public:
 public slots:
     void updateLocation(GPSCoord loc);
 
+signals:
+    void PathReady(QVector<GPSCoord> path);
+    void PathUpdate();
+
 private:
     // Functions
     void FindPath();
@@ -41,7 +45,7 @@ private:
     void DeadReckon();
 
     // Variables
-    QList<GPSCoord> path;
+    QVector<GPSCoord> path;
     GPSCoord currentLocation, destination;
     Direction heading;
     double headingAngle;

@@ -2,9 +2,16 @@
 #include <QDir>
 #include <ctime>
 
+Q_GLOBAL_STATIC(Logger, logger)
+
 Logger::Logger()
 {
 
+}
+
+Logger *Logger::instance()
+{
+    return logger;
 }
 
 Logger::~Logger()
@@ -103,12 +110,21 @@ void Logger::CloseLog()
 
 void Logger::write(const QObject *src, std::string message)
 {
-    std::cout << "[ " << src->objectName().toStdString() << " ] " << message;
+    QString m("[ " + src->objectName() + " ] " + QString::fromStdString(message));
+
+    std::cout << m.toStdString(); //"[ " << src->objectName().toStdString() << " ] " << message;
+
+    instance()->sendSignal(m);
 
     if(logFile.isOpen())
     {
         logFile.write((QString("[ %1 ] ").arg(src->objectName()).toStdString() + message).c_str());
     }
+}
+
+void Logger::sendSignal(QString msg)
+{
+    emit newMessage(msg);
 }
 
 void Logger::write(const QObject *src, QString message)

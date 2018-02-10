@@ -11,6 +11,9 @@ SettingsScreen::SettingsScreen(QWidget *parent) :
                            + QString("Version: %1").arg(Reveles::REVELES_VERSION));
 
     ui->usDistLabel->setText(QChar(0x221E));
+    ui->tabWidget->setCurrentIndex(0);
+
+    this->setStyleSheet("QLabel { background-color: red; }");
 }
 
 SettingsScreen::~SettingsScreen()
@@ -58,6 +61,14 @@ void SettingsScreen::setCoordText(QString coord)
 void SettingsScreen::setUSDistReading(QString reading)
 {
     ui->usDistLabel->setText(reading);
+}
+
+void SettingsScreen::addToLog(QString str)
+{
+    if(str.endsWith(QChar('\n')))
+        str.truncate(str.length() - 1);
+
+    ui->logView->append(str);
 }
 
 void SettingsScreen::on_buttonBox_rejected()

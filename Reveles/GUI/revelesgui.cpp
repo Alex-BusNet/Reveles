@@ -43,7 +43,6 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     sc->layout()->addWidget(sa);
 
     mapView = new MapView();
-    mapView->setScreenSize(ui->tabWidget->width(), ui->tabWidget->height());
 
     ui->tabWidget->addTab(sc, "Locations");
     ui->tabWidget->addTab(mapView, "Map");
@@ -58,12 +57,14 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     ui->settingsScreenPB->setIcon(*settings);
 
     ss = new SettingsScreen(this);
-    ss->setGeometry(0,0, 800, 400);
+    ss->setGeometry(0,0, this->width(), this->height());
     ss->hide();
 
     this->setStyleSheet(menuStyle);
 
     this->ui->exitBtn->setShortcut(QKeySequence(Qt::Key_Escape));
+
+    setupLocations();
 
     commTimer = new QTimer();
     commTimer->setInterval(500);
@@ -147,19 +148,93 @@ void RevelesGui::agStatus(bool good)
         ss->setAGStatus(good);
 }
 
+void RevelesGui::logMessage(QString msg)
+{
+    if(ss != NULL)
+        ss->addToLog(msg);
+}
+
 void RevelesGui::setupLocations()
 {
-    for(int row = 0; row < 1; row++)
+    QFile locSaveFile("Assets/Data/locations.json");
+    if(!locSaveFile.open(QIODevice::ReadOnly))
     {
-        for(int col = 0; col < 1; col++)
-        {
-            LocationPushButton *pb = new LocationPushButton(QString::number(lpbs.size()), GPSCoord{0.0, 0.0});
-            connect(pb, SIGNAL(lpb_clicked(LocationPushButton*)), this, SLOT(setLocation(LocationPushButton*)));
-            gl->addWidget(pb, row, col);
-            pb->setFixedSize(pb->width() / 3, pb->height() / 3);
-            lpbs.push_back(pb);
-        }
+        if(ss != NULL)
+            ss->addToLog(QString("[ RevelesGUI ] Location save data not found.\n"));
+        else
+            std::cout << "{NL}[ RevelesGUI ] Location save data not found." << std::endl;
+
+        return;
     }
+
+    if(ss != NULL)
+        ss->addToLog(QString("[ RevelesGUI ] Loading saved locations...\n"));
+    else
+        std::cout << "{NL}[ RevelesGUI ] Loading saved locations..." << std::endl;
+
+    QByteArray lpbByteArr = locSaveFile.readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(lpbByteArr);
+    QJsonArray arr = doc.array();
+
+    for(int i = 0; i < arr.size(); i++)
+    {
+        QJsonObject obj = arr.at(i).toObject();
+        addLocation(obj["name"].toString(),
+                GPSCoord{obj["latitude"].toDouble(), obj["longitude"].toDouble()});
+    }
+
+    locSaveFile.close();
+
+    if(ss != NULL)
+        ss->addToLog(QString("[ RevelesGUI ] Locations loaded.\n"));
+    else
+        std::cout << "{NL}[ RevelesGUI ] Locations loaded." << std::endl;
+}
+
+void RevelesGui::saveLocations()
+{
+    if(ss != NULL)
+        ss->addToLog(QString("[ RevelesGUI ] Saving locations...\n"));
+    else
+        std::cout << "{NL}[ RevelesGUI ] Saving locations..." << std::endl;
+
+    if(!QDir("Assets/Data").exists())
+    {
+        QDir::current().mkdir("Assets/Data");
+    }
+
+    QFile locSaveFile("Assets/Data/locations.json");
+    if(!locSaveFile.open(QIODevice::WriteOnly))
+    {
+        if(ss != NULL)
+            ss->addToLog(QString("[ RevelesGUI ] Could not open Location data save file!\n"));
+        else
+            qWarning("{NL}[ Reveles GUI ] Could not open Location data save file!");
+
+        return;
+    }
+
+    QJsonDocument doc;
+    QJsonObject lpb;
+    QJsonArray lpbArr;
+
+    foreach(LocationPushButton *p, lpbs)
+    {
+        lpb["name"] = p->GetName();
+        lpb["latitude"] = p->GetIndex().latitude;
+        lpb["longitude"] = p->GetIndex().longitude;
+        lpbArr.push_back(lpb);
+    }
+
+    doc.setArray(lpbArr);
+    locSaveFile.write(doc.toJson());
+    locSaveFile.flush();
+    locSaveFile.close();
+
+    if(ss != NULL)
+        ss->addToLog(QString("[ RevelesGUI ] Locations saved.\n"));
+    else
+        std::cout << "{NL}[ RevelesGUI ] Locations saved." << endl;
 }
 
 void RevelesGui::on_addLocationPB_clicked()
@@ -198,6 +273,8 @@ void RevelesGui::setDBusInterface(com::reveles::RevelesCoreInterface *iface)
     connect(rci, &RevelesDBusInterface::aboutToQuit, this, &RevelesGui::close);
     connect(rci, &RevelesDBusInterface::getAGStatus, this, &RevelesGui::agStatus);
     connect(rci, &RevelesDBusInterface::getMagStatus, this, &RevelesGui::magStatus);
+    connect(rci, &RevelesDBusInterface::sendLogMessage, this, &RevelesGui::logMessage);
+    connect(rci, &RevelesDBusInterface::sendPathInfo, mapView, &MapView::SetPathInfo);
 }
 
 void RevelesGui::setDBusAdaptor(RevelesDBusAdaptor *rda)
@@ -226,6 +303,7 @@ void RevelesGui::commCheck(bool good)
 
 void RevelesGui::on_exitBtn_clicked()
 {
+    this->saveLocations();
     emit aboutToQuit();
 }
 
@@ -274,6 +352,11 @@ void RevelesGui::commTimeout()
     {
         commTimer->stop();
         mapView->setScreenSize(ui->tabWidget->width(), ui->tabWidget->height());
+
+        if(ss != NULL)
+            ss->addToLog(QString("[ RevelesGUI ] mapView Screen size set to: %1, %2\n")
+                         .arg(ui->tabWidget->width())
+                         .arg(ui->tabWidget->height()));
     }
 }
 

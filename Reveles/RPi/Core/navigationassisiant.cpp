@@ -30,8 +30,8 @@ NavigationAssisiant::NavigationAssisiant()
 void NavigationAssisiant::Init()
 {
     instance()->setObjectName("NavigationAssistant");
-
     destination = GPSCoord{0,0};
+    path.push_back(destination);
     Orient();
 }
 
@@ -65,6 +65,8 @@ void NavigationAssisiant::FindPath()
 
     // If a path does not exist, then travel to point closest to the destination
     //  then switch to blind navigation mode.
+
+    emit PathReady(path);
 }
 
 QList<GPSCoord> NavigationAssisiant::GetNeighbors(GPSCoord node)

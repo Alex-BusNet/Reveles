@@ -20,6 +20,10 @@ public:
 
     void Init();
     GPSCoord GetOffset();
+    double GetLatitudeThreshold();
+    double GetLongitudeThreshold();
+
+    void UpdatePath(int x, int y, NodeType t);
 
     void AddPoint(GPSCoord gpsc);
     list<GPSCoord> GetNearbyPoints(GPSCoord gpsc);

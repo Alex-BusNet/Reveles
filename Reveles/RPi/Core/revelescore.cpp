@@ -58,6 +58,8 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     connect(this, &RevelesCore::currentLocation, rdba, &RevelesDBusAdaptor::locationUpdate);
     connect(this, &RevelesCore::sendAGStatus, rdba, &RevelesDBusAdaptor::setAGStatus);
     connect(this, &RevelesCore::sendMagStatus, rdba, &RevelesDBusAdaptor::setMagStatus);
+    connect(Logger::instance(), &Logger::newMessage, rdba, &RevelesDBusAdaptor::sendLogMessage);
+    connect(NavigationAssisiant::instance(), &NavigationAssisiant::PathReady, rdba, &RevelesDBusAdaptor::sendPathInfo);
 
     // Additional comms (CORE -> CORE)
     connect(this, &RevelesCore::currentLocation, NavigationAssisiant::instance(), &NavigationAssisiant::updateLocation);
@@ -104,6 +106,14 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     Logger::writeLine(this, QString("Map dimensions: %1 x %2 tiles.")
                       .arg(NavigationAssisiant::instance()->GetDistance(FA_MAP_NW, FA_MAP_SW) / 2)
                       .arg(NavigationAssisiant::instance()->GetDistance(FA_MAP_SW, FA_MAP_SE) / 2));
+    Logger::writeLine(this, QString("Latitude delta per tile: %1")
+                      .arg((FA_MAP_NW.latitude - FA_MAP_SW.latitude) / 63.0, 11, 'F', 10, QChar('0')));
+    Logger::writeLine(this, QString("Longitude delta per tile: %1")
+                      .arg((FA_MAP_SE.longitude - FA_MAP_SW.longitude) / 120.0, 11, 'F', 10, QChar('0')));
+
+    Logger::writeLine(this, QString("Testing ReadGPS()..." ));
+    GPSCoord g = RevelesIO::instance()->ReadGPS();
+    Logger::writeLine(this, QString("Response: %1, %2").arg(g.latitude).arg(g.longitude));
 
     coreTimer = new QTimer();
     coreTimer->setInterval(updateInterval);
@@ -112,7 +122,6 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 
     active = true;
     Logger::writeLine(this, Reveles::CORE_INIT_COMPLETE);
-//    setDestination(FA_SW_CORNER);
 }
 
 RevelesCore::~RevelesCore()

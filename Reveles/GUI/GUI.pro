@@ -30,6 +30,7 @@ SOURCES += \
         settingsscreen.cpp \
         reveles_dbus_interface.cpp \
         reveles_dbus_adaptor.cpp \
+        tile.cpp \
     mapview.cpp
 
 HEADERS += \
@@ -39,6 +40,8 @@ HEADERS += \
         settingsscreen.h \
         reveles_dbus_interface.h \
         reveles_dbus_adaptor.h \
+        tile.h \
+        noderenders.h \
     mapview.h
 
 FORMS += \

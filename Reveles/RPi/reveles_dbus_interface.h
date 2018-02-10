@@ -47,6 +47,7 @@ Q_SIGNALS: // SIGNALS
     void requestMapUpdate();
     void setDestination(GPSCoord gpsc);
     void setMapUpdateInterval(int milliseconds);
+    void sendLogMessage(QString msg);
 };
 
 namespace com {
