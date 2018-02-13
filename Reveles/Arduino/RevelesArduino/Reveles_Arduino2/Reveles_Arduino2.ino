@@ -18,20 +18,20 @@
 #define LED 13
 
 // I2C drive states
-#define FOWARD_STATE 1
+#define FORWARD_STATE 1
 #define STOP_STATE  0
 #define REVERSE_STATE  -1
 
 // I2C Comm commands
-#define START      0x5354515354,
-#define END        0x454E44,
-#define M_FWD      0x46,
-#define CMD_G      0x47,
-#define CMD_M      0x4D,
-#define M_REV      0x52,
-#define M_STOP     0x53,
-#define LATITUDE   0x4C41544954554445,
-#define LONGITUDE  0x4C4f4E474954554445
+#define START_CMD  "START" //0x5354515354,
+#define END_CMD    "END" //0x454E44,
+#define M_FWD      "F" //0x46,
+#define CMD_G      "G" //0x47,
+#define CMD_M      "M" //0x4D,
+#define M_REV      "R" //0x52,
+#define M_STOP     "STOP" //0x53,
+#define LATITUDE   "LATITUDE" //0x4C41544954554445,
+#define LONGITUDE  "LONGITUDE" //0x4C4f4E474954554445
 
 // I2C Comm states
 #define WAITING_FOR_START     0
@@ -39,7 +39,7 @@
 #define WAITING_FOR_MOTOR_DIR 2
 #define WAITING_FOR_TOF_DATA  3
 #define WAITING_FOR_END       4
-#define WAITING_FOR_MG	      5 // Waiting for (M)otor or (G)PS.
+#define WAITING_FOR_MG        5 // Waiting for (M)otor or (G)PS.
 
 // Other defines
 #define INT_MAX 2147483647
@@ -69,7 +69,7 @@ bool initialized = false; // Sanity check
 //                   I2C Command Structure (RPi -> Arduino):
 // <START> -> <M | G> -> <US reading> -> <F | S | R> -> <ToF reading> -> <END>
 //-----------------------------------------------------------------------------
-//	 [ ALL COMMANDS AND VALUES ARE RECIEVED IN HEXADECIMAL FORMAT ]
+//   [ ALL COMMANDS AND VALUES ARE RECIEVED IN HEXADECIMAL FORMAT ]
 //
 // Possible values
 //    Function:
@@ -99,66 +99,77 @@ void recieveData(int byteCount)
     Serial.print("data recieved");
     Serial.print(command);
 
-    int cmd = command.toInt();
+//    int cmd = command.toInt();
 
     if (commState == WAITING_FOR_START)
     {
-        if((cmd & START) == START) { commState = WAITING_FOR_MG; }
+        //if((cmd & START_CMD) == START_CMD) { commState = WAITING_FOR_MG; }
+        if(command == START_CMD) { commState = WAITING_FOR_MG; }
     }
-    else if (commState == WAITING_FOR MG)
+    else if (commState == WAITING_FOR_MG)
     {
-	if((cmd & CMD_M) == CMD_M) { commState = WAITING_FOR_US_DATA; }
-	else if((cmd & CMD_G) == CMD_G) { respond = true; commState = WAITING_FOR_END; }
+//      if((cmd & CMD_M) == CMD_M) { commState = WAITING_FOR_US_DATA; }
+//      else if((cmd & CMD_G) == CMD_G) { respond = true; commState = WAITING_FOR_END; }
+
+      if(command == CMD_M) { commState = WAITING_FOR_US_DATA; }
+      else if(command == CMD_G) { respond = true; commState = WAITING_FOR_END; } 
     }
     else if(commState == WAITING_FOR_US_DATA)
     {
-	// Are we going to need additional conversion code here? -Alex
-	inch = cmd;
-	commState = WAITING_FOR_MOTOR_DIR;
+      // Are we going to need additional conversion code here? -Alex
+//      inch = cmd;
+      inch = command.toInt();
+      commState = WAITING_FOR_MOTOR_DIR;
     }
     else if (commState == WAITING_FOR_MOTOR_DIR)
     {
-	if((cmd & M_FWD) == M_FWD)        { state = FORWARD_STATE; }
-	else if((cmd & M_STOP) == M_STOP) { state = STOP_STATE; }
-	else if((cmd & M_REV) == M_REV)   { state = REVERSE_STATE; }
+//      if((cmd & M_FWD) == M_FWD)        { state = FORWARD_STATE; }
+//      else if((cmd & M_STOP) == M_STOP) { state = STOP_STATE; }
+//      else if((cmd & M_REV) == M_REV)   { state = REVERSE_STATE; }
 
-	commState = WAITING_FOR_TOF_DATA;
+      if(command == M_FWD) {state = FORWARD_STATE; }
+      else if(command == M_STOP) { state = STOP_STATE; }
+      else if(command == M_REV) { state = REVERSE_STATE; }
+    
+      commState = WAITING_FOR_TOF_DATA;
     }
     else if (commState == WAITING_FOR_TOF_DATA)
     {
-	// Are we going to need additional conversion code here? -Alex
-	tofDistance = cmd;
-	commState = WAITING_FOR_END;
+      // Are we going to need additional conversion code here? -Alex
+//      tofDistance = cmd;
+      tofDistance = command.toInt();
+      commState = WAITING_FOR_END;
     }
     else if (commState == WAITING_FOR_END)
     {
-	if((cmd & END) == END) { commState = WAITING_FOR_START; }
+//      if((cmd & END_CMD) == END_CMD) { commState = WAITING_FOR_START; }
+      if(command == END_CMD) { commState = WAITING_FOR_START; }
     }
-	
+  
 }
 
 //=======================================================================================
 //                        I2C Command Structure (Arduino -> RPi):
 // <START> -> <LATITUDE> -> <latitude value> -> <LONGITUDE> -> <longitude value> -> <END>
 //---------------------------------------------------------------------------------------
-//	           [ COMMANDS ARE IN HEXADECIMAL, VALUES ARE IN DECIMAL ]
+//             [ COMMANDS ARE IN HEXADECIMAL, VALUES ARE IN DECIMAL ]
 //=======================================================================================
 
 void sendData()
 {
     if(respond)
     {
-	Wire.write(START);
-	delayMicroseconds(5);
-	Wire.write(LATITUDE);
-	delayMicroseconds(5);
-	Wire.write(0.00000); // Need to get actual value from GPS
-	delayMicroseconds(5);
-	Wire.write(LONGITUDE);
-	delayMicroseconds(5);
-	Wire.write(0.00000); // Need to get actual value from GPS
-	delayMicroseconds(5);
-	Wire.write(END);
+      Wire.write(START_CMD);
+      delayMicroseconds(5);
+      Wire.write(LATITUDE);
+      delayMicroseconds(5);
+      Wire.write("0.00"); // Need to get actual value from GPS
+      delayMicroseconds(5);
+      Wire.write(LONGITUDE);
+      delayMicroseconds(5);
+      Wire.write("0.00"); // Need to get actual value from GPS
+      delayMicroseconds(5);
+      Wire.write(END_CMD);
     }
 }
 
@@ -299,10 +310,10 @@ void setup() {
   pinMode(enableA, OUTPUT);
   pinMode(input1, OUTPUT);
   pinMode(input2, OUTPUT);
-  pinMode(trigPIN1, OUTPUT);
-  pinMode(trigPIN2, OUTPUT);
-  pinMode(echoPIN1, INPUT);
-  pinMode(echoPIN2, INPUT);
+  pinMode(frontTrigPin, OUTPUT);
+  pinMode(rearTrigPin, OUTPUT);
+  pinMode(frontEchoPin, INPUT);
+  pinMode(rearEchoPin, INPUT);
   
   // Used for initial motor startup
   digitalWrite(enableA, LOW);
