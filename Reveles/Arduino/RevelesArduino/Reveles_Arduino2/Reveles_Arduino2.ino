@@ -1,25 +1,31 @@
-/*
- * DC Motor Control Program
+ /*
+ * Reveles DC Motor Control Program
  * Motor Control written by Frank Hittel
  * I2C communication written by Alisha Johnson
 */
 
 #include <Wire.h>
 #include <SPI.h>
+#include <Adafruit_GPS.h>
+#include <Servo.h>
 
 #define SLAVE_ADDRESS 0x04
-#define enableA 10
-#define input1 11
-#define input2 12
-#define frontTrigPin 2 // trigPIN1
-#define frontEchoPin 3 // echoPIN1
-#define rearTrigPin 6  // trigPIN2
-#define rearEchoPin 7  // echoPIN2
-#define LED 13
+#define enableA       10
+#define input1        11
+#define input2        12
+#define frontTrigPin  2 // trigPIN1
+#define frontEchoPin  3 // echoPIN1
+#define rearTrigPin   6 // trigPIN2
+#define rearEchoPin   7 // echoPIN2
+#define GPS_RX_PIN    1 // HardwareSerial TX
+#define GPS_TX_PIN    0 // HardwareSerial RX
+#define LED           13
+// SCL A5
+// SDA A4
 
-// I2C drive states
-#define FORWARD_STATE 1
-#define STOP_STATE  0
+// Motor Drive states
+#define FOWARD_STATE    1
+#define STOP_STATE      0
 #define REVERSE_STATE  -1
 
 // I2C Comm commands
@@ -53,6 +59,13 @@ int pwmOUT = 0;     // Motor Drive speed signal
 int tofDistance = INT_MAX;
 int rD = 0;
 int destination = 0;
+double latitude = 0.0;
+double longitude = 0.0;
+
+Adafruit_GPS gps(&Serial1);
+HardwareSerial hs = Serial1;
+Servo frontServo;
+Servo rearServo;
 
 // I2C variables
 String command = "";  // Info recieved from RPi
@@ -144,8 +157,7 @@ void recieveData(int byteCount)
     {
 //      if((cmd & END_CMD) == END_CMD) { commState = WAITING_FOR_START; }
       if(command == END_CMD) { commState = WAITING_FOR_START; }
-    }
-  
+    } 
 }
 
 //=======================================================================================
@@ -159,17 +171,30 @@ void sendData()
 {
     if(respond)
     {
-      Wire.write(START_CMD);
+      readGPS();
+      
+      Wire.write(START);
       delayMicroseconds(5);
       Wire.write(LATITUDE);
       delayMicroseconds(5);
-      Wire.write("0.00"); // Need to get actual value from GPS
+      Wire.write(latitude);
       delayMicroseconds(5);
       Wire.write(LONGITUDE);
       delayMicroseconds(5);
-      Wire.write("0.00"); // Need to get actual value from GPS
+      Wire.write(longitude);
       delayMicroseconds(5);
-      Wire.write(END_CMD);
+      Wire.write(END);
+    }
+}
+
+void readGPS()
+{
+    gps.read();
+
+    if(gps.fix)
+    {
+      latitude = gps.latitude;
+      longitude = gps.longitude;
     }
 }
 
@@ -305,15 +330,31 @@ void driveBACKWARD()
 }
 
 void setup() {
-  //set up pins and digital inputs
-  Serial.begin(9600);
+  // Serial Settings for reading GPS
+//  Serial.begin(115200);
+//  delay(5000);
+
+  // Start reading GPS with passed baud rate
+  gps.begin(9600); 
+  // Turn on RMC (recommended minimum) and GGA (fix data) including altitude
+  gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+  // Set update rate to 1Hz
+  gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
+  // Request updates on antenna status.
+//  gps.sendCommand(PGCMD_ANTENNA);
+
+  // Motor Control I/O
   pinMode(enableA, OUTPUT);
   pinMode(input1, OUTPUT);
   pinMode(input2, OUTPUT);
-  pinMode(frontTrigPin, OUTPUT);
-  pinMode(rearTrigPin, OUTPUT);
-  pinMode(frontEchoPin, INPUT);
-  pinMode(rearEchoPin, INPUT);
+  pinMode(trigPIN1, OUTPUT);
+  pinMode(trigPIN2, OUTPUT);
+  pinMode(echoPIN1, INPUT);
+  pinMode(echoPIN2, INPUT);
+
+  // Servo I/O
+  frontServo.attach(4);
+  rearServo.attach(5);
   
   // Used for initial motor startup
   digitalWrite(enableA, LOW);
