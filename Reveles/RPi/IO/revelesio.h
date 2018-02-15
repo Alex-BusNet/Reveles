@@ -66,7 +66,7 @@ public:
 
     float triggerUltrasonic(uint8_t sel);
     void TriggerTimeOfFlight();
-    int readPIR(bool rear);
+    bool readPIR(bool rear);
 
     MagDirection ReadMagnetometer();
     AccelDirection ReadAccelerometer();
@@ -95,6 +95,7 @@ private:
 
 signals:
     void echoReady(float dist, QString unit);
+    void motorDirectionUpdate(uint8_t dir);
 };
 
 #endif // REVELESIO_H

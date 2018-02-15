@@ -112,6 +112,7 @@ void RevelesIO::SetMotorDirection(uint8_t dir)
 {
     motorDir = dir;
     SendMotorUpdate();
+    emit motorDirectionUpdate(dir);
 }
 
 void RevelesIO::SendGPSRequest()
@@ -253,12 +254,12 @@ void RevelesIO::TriggerTimeOfFlight()
     tofDist = 50;
 }
 
-int RevelesIO::readPIR(bool rear)
+bool RevelesIO::readPIR(bool rear)
 {
     if(rear)
-        return digitalRead(SIG_2);
+        return digitalRead(SIG_2) ? true : false;
     else
-        return digitalRead(SIG_1);
+        return digitalRead(SIG_1) ? true : false;
 }
 
 MagDirection RevelesIO::ReadMagnetometer()

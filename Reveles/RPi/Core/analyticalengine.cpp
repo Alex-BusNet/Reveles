@@ -31,6 +31,9 @@ void AnalyticalEngine::Init()
     presentState = NO_STATE;
     lastState = NO_STATE;
     endAnalyze = false;
+    tof = 66; // inches
+    us = 160; // inches
+    pir = false;
 
     QFile tmSaveData("Assets/SaveData/transitionMatrix.csv");
     if(!tmSaveData.open(QIODevice::ReadOnly))
@@ -92,10 +95,15 @@ void AnalyticalEngine::Start()
     future = QtConcurrent::run([=]() {
         while(!endAnalyze)
         {
-//            CheckEnv();
+            CheckEnv();
             ProcessEnv();
         }
     });
+}
+
+void AnalyticalEngine::SetMotorDirection(uint8_t dir)
+{
+    motorDir = dir;
 }
 
 void AnalyticalEngine::aboutToQuit()
@@ -123,15 +131,16 @@ AnalyticalEngine::AnalyticalEngine()
  */
 void AnalyticalEngine::CheckEnv()
 {
-    pirs[0] = RevelesIO::instance()->readPIR(PIR_FL);
-    pirs[1] = RevelesIO::instance()->readPIR(PIR_FR);
-    pirs[2] = RevelesIO::instance()->readPIR(PIR_BL);
-    pirs[3] = RevelesIO::instance()->readPIR(PIR_BR);
-
-    uss[0] = RevelesIO::instance()->triggerUltrasonic(US_LEFT);
-    uss[0] = RevelesIO::instance()->triggerUltrasonic(US_FRONT);
-    uss[0] = RevelesIO::instance()->triggerUltrasonic(US_RIGHT);
-    uss[0] = RevelesIO::instance()->triggerUltrasonic(US_BACK);
+    if(motorDir == M_FWD)
+    {
+        pir = RevelesIO::instance()->readPIR(false);
+        us = RevelesIO::instance()->triggerUltrasonic(US_FRONT); // Stair US
+    }
+    else if(motorDir == M_REV)
+    {
+        us = RevelesIO::instance()->triggerUltrasonic(US_BACK); // Stair US
+        pir = RevelesIO::instance()->readPIR(true);
+    }
 }
 
 /*!
@@ -139,21 +148,68 @@ void AnalyticalEngine::CheckEnv()
  */
 void AnalyticalEngine::ProcessEnv()
 {
-    /// Can this be threaded?
+    // DON'T GO DOWN THE STAIRS!!!
+    if(us < 12 /* inches */)
+    {
+        RevelesIO::instance()->SetMotorDirection(M_STOP);
+        delay(430);
+        RevelesIO::instance()->SetMotorDirection(M_REV);
+    }
+
+    // Simple path adjustment for now. Values are estimates.
+    // Person found (distance unknown)
+    if(pir)
+    {
+        // Read ToF for right wall;
+        if (tof > 36) // inches
+        {
+            // Servo commands take ~340ms to send
+            // therefore, these command sequences
+            // need to be spaced apart more than
+            // the estimated time to send them.
+            RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+            delay(350);
+            RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+            delay(350);
+            RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+            delay(350);
+            RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+        }
+        else
+        {
+            // Read ToF for left wall
+            if (tof > 36) // inches
+            {
+                // Servo commands take ~340ms to send
+                // therefore, these command sequences
+                // need to be spaced apart more than
+                // the estimated time to send them.
+                RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+                delay(350);
+                RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+                delay(350);
+                RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+                delay(350);
+                RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+            }
+        }
+    }
+
+
 
     // Determine if object exists
 
     // Check the ObjectDetector for any objects.
-    if(!DetectionQueue::isEmpty())
-    {
-        ObjectTracking ot = DetectionQueue::dequeue();
-        if(ot.dir != NO_STATE)
-            zoneCount[ot.zone]++;
-        else
-            zoneCount[ot.zone]--;
+//    if(!DetectionQueue::isEmpty())
+//    {
+//        ObjectTracking ot = DetectionQueue::dequeue();
+//        if(ot.dir != NO_STATE)
+//            zoneCount[ot.zone]++;
+//        else
+//            zoneCount[ot.zone]--;
 
-        cout << "{NL}[ AnalyticalEngine ] Dir: " << ot.dir << " Index: " << ot.index << " Zone: " << ot.zone << endl;
-    }
+//        cout << "{NL}[ AnalyticalEngine ] Dir: " << ot.dir << " Index: " << ot.index << " Zone: " << ot.zone << endl;
+//    }
 
     /// TODO: Multi obstacle avoidance handling.
     ///     Note: Some of this handling will

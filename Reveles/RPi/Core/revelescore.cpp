@@ -63,6 +63,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 
     // Additional comms (CORE -> CORE)
     connect(this, &RevelesCore::currentLocation, NavigationAssisiant::instance(), &NavigationAssisiant::updateLocation);
+    connect(RevelesIO::instance(), &RevelesIO::motorDirectionUpdate, AnalyticalEngine::instance(), &AnalyticalEngine::SetMotorDirection);
 
 #ifdef USE_OBJ_DETECT
     XInitThreads();
@@ -92,9 +93,9 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 #ifdef OBJ_DETECT_DEBUG
     namedWindow("Detector Output", WINDOW_AUTOSIZE);
 #endif
-    AnalyticalEngine::instance()->Start();
     ObjectDetector::instance()->Run();
 #endif
+    AnalyticalEngine::instance()->Start();
 
     // Test the GetDistance() function
     NavigationAssisiant::instance()->updateLocation(RevelesMap::instance()->GetOffset());

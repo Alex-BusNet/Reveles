@@ -38,14 +38,17 @@ public:
     void Init();
     void Start();
 
+
 public slots:
     void aboutToQuit();
     void stop();
+    void SetMotorDirection(uint8_t dir);
 
 private:
     // Variables
 
-    int pirs[4], uss[4], tofs[6];
+    int us, tof;
+    bool pir;
     // The transition matrix is a 7x7 array
     // of probabilities. The index at (i,j)
     // represents the probability that a
@@ -99,6 +102,8 @@ private:
 
     ActionState lastState, presentState, predictedState, actualState;
     bool endAnalyze;
+
+    uint8_t motorDir;
 
     QFuture<void> future;
 
