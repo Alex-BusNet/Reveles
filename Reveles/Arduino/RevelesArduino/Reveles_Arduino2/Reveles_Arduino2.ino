@@ -167,9 +167,9 @@ void recieveData(int byteCount)
     }
     else if (commState == WAITING_FOR_START)
     {
-        if((cmd & START_CMD) == START_CMD) { commState = WAITING_FOR_MG; }
+        if((cmd & START_CMD) == START_CMD) { commState = WAITING_FOR_MGS; }
     }
-    else if (commState == WAITING_FOR_MG)
+    else if (commState == WAITING_FOR_MGS)
     {
         if((cmd & CMD_M) == CMD_M) { commState = WAITING_FOR_US_DATA; }
         else if((cmd & CMD_G) == CMD_G) { respond = true; commState = WAITING_FOR_END; }
@@ -429,7 +429,7 @@ void turnLeft()
         rearServo.write(sPosition);
      }
 
-     for(; sPositions >= 90; sPosition--)
+     for(; sPosition >= 90; sPosition--)
      {
         frontServo.write(sPosition);
         rearServo.write(sPosition);
@@ -474,7 +474,7 @@ void returnToNeutral()
     }
     else if(sPosition > 90)
     {
-         for(; sPositions >= 90; sPosition--)
+         for(; sPosition >= 90; sPosition--)
          {
             frontServo.write(sPosition);
             rearServo.write(sPosition);
