@@ -9,7 +9,9 @@
 #include <Adafruit_GPS.h>
 #include <Servo.h>
 
-#define SLAVE_ADDRESS   0x04
+#define SLAVE_ADDRESS   0x04 // I2C address of the Arduino
+//----------------------------------
+//        PIN DEFINES
 #define enableA         10
 #define input1          11
 #define input2          12
@@ -26,70 +28,92 @@
 #define FRONT_SERVO_SIG 4
 #define REAR_SERVO_SIG  5
 
-// Motor Drive states
+//----------------------------------
+//        Motor Drive states
 #define FORWARD_STATE   1
 #define STOP_STATE      0
 #define REVERSE_STATE  -1
 
-// I2C Comm commands
-#define COM_CHECK  0xAA
-#define START_CMD  0x00
-#define END_CMD    0xA3
-#define M_FWD      0x11
-#define CMD_G      0x20
-#define CMD_M      0x10
-#define M_REV      0x12
-#define M_STOP     0x13
-#define LATITUDE   0x21
-#define LONGITUDE  0x22
-#define CMD_FLUSH  0x4C
+//----------------------------------
+//        Servo Drive states
+#define NEUTRAL_STATE   0
+#define LEFT_STATE     -1
+#define RIGHT_STATE     1
 
-// I2C Comm states
-#define WAITING_FOR_HELLO     6
-#define WAITING_FOR_START     0
-#define WAITING_FOR_US_DATA   1
-#define WAITING_FOR_MOTOR_DIR 2
-#define WAITING_FOR_TOF_DATA  3
-#define WAITING_FOR_END       4
-#define WAITING_FOR_MG        5 // Waiting for (M)otor or (G)PS.
+//----------------------------------
+//        I2C Comm commands
+#define COM_CHECK   0xAA
+#define START_CMD   0x00
+#define END_CMD     0xA3
+#define M_FWD       0x11
+#define CMD_G       0x20
+#define CMD_M       0x10
+#define CMD_S       0x30
+#define M_REV       0x12
+#define M_STOP      0x13
+#define LATITUDE    0x21
+#define LONGITUDE   0x22
+#define TURN_LEFT   0x31
+#define TURN_RIGHT  0x32
+#define RET_NEUTRAL 0x33
+#define CMD_FLUSH   0x4C
 
-// Other defines
+//----------------------------------
+//        I2C Comm states
+#define WAITING_FOR_START      0
+#define WAITING_FOR_US_DATA    1
+#define WAITING_FOR_MOTOR_DIR  2
+#define WAITING_FOR_TOF_DATA   3
+#define WAITING_FOR_END        4
+#define WAITING_FOR_MGS        5 // Waiting for (M)otor, (G)PS, or (S)ervo.
+#define WAITING_FOR_HELLO      6
+#define WAITING_FOR_SERVO_DIR  7
+#define WAITING_FOR_SERVO_VAL  8
+
+//----------------------------------
+//        Other defines
 #define INT_MAX 32767
 
-//-----------------
-// Variables 
-long duration = 0L; // Time for response to arrive from (temp)
-int distance = 0;   // Calculated value from US (temp)
-int inch = 0;       // Calculated value from US (temp)
-int pwmOUT = 0;     // Motor Drive speed signal
+//----------------------------------
+//        Variables 
+long duration = 0L;  // Time for response to arrive from (temp)
+int distance = 0;    // Calculated value from US (temp)
+int inch = 0;        // Ultrasonic value received from RPi
+int pwmOUT = 0;      // Motor Drive speed signal
+int turnValue = 0;   // Turn value received from RPi (may be unneeded)
+int sPosition = 90; // Current position of Servos (in degrees)..
 int tofDistance = INT_MAX;
 int rD = 0;
 int destination = 0;
 int latitude = 0; // int type is temporary
 int longitude = 0; // int type is temporary
 
+int mState = STOP_STATE;
+int sState = NEUTRAL_STATE;
+bool fwd = true;                // Direction switch (temp)
+bool on = false;                // Are the motors on.
+bool updateMotorState = true;   // Was a command given to change motor direction.
+bool updateServoState = false;  // Was a command given to change the servo position.
+bool initialized = false;       // Sanity check
+
 Adafruit_GPS gps(&Serial);
 HardwareSerial hs = Serial;
 Servo frontServo;
 Servo rearServo;
 
-// I2C variables
-//byte cmd = CMD_FLUSH; // Info recieved from RPi
+//----------------------------------
+//          I2C variables
 int commState = WAITING_FOR_HELLO;
-bool respond = false; // Send GPS info back to RPi
-String commStateStrings[] = {"WAITING_FOR_START", "WAITING_FOR_US_DATA", 
-                             "WAITING_FOR_MOTOR_DIR", "WAITING_FOR_TOF_DATA",
-                             "WAITING_FOR_END\t", "WAITING_FOR_MG\t", "WAITING_FOR_HELLO" };
-
-int state = STOP_STATE;
-bool fwd = true;          // Direction switch (temp)
-bool on = false;          // Are the motors on.
-bool initialized = false; // Sanity check
-//-----------------
+bool respond = false;       // Send GPS info back to RPi
+String commStateStrings[] = {"WAITING_FOR_START", "WAITING_FOR_US_DATA",                    //
+                             "WAITING_FOR_MOTOR_DIR", "WAITING_FOR_TOF_DATA",               // This is for debugging
+                             "WAITING_FOR_END\t", "WAITING_FOR_MG\t", "WAITING_FOR_HELLO",  // purposes.
+                             "WAITING_FOR_SERVO_DIR", "WAITING_FOR_SERVO_VAL"};             //
 
 //================================================================================
 //                      I2C Command Structure (RPi -> Arduino):
-// <START> -> <Function> -> <US reading> -> <Direction> -> <ToF reading> -> <END>
+// <START> -> <Function>|-> <US reading> -> <Direction> -> <ToF reading> -> <END>
+//                      |-> <Servo Direction> -> <Servo value> -> <END>
 //--------------------------------------------------------------------------------
 //            [ ALL COMMANDS ARE RECIEVED IN BINARY, VALUES ARE IN DECIMAL ]
 //
@@ -97,6 +121,7 @@ bool initialized = false; // Sanity check
 //    Function:
 //      CMD_M - RPi is sending drive instructions.
 //      CMD_G - RPi is requesting GPS coordinates.
+//      CMD_S - RPi is sending turning instructions.
 //    US Value: Floating Point value for PWM signal.
 //      (Motor command only)
 //      Value is in inches.
@@ -108,6 +133,13 @@ bool initialized = false; // Sanity check
 //    ToF value: Floating point value from Time of Flight sensors.
 //      (Motor command only)
 //      Value is in inches.
+//    Servo Direction: (Servo command only)
+//      TURN_RIGHT - Indicates Reveles should turn to the right. (Relative to self).
+//      TURN_LEFT  - Indicates Reveles shoudl turn to the left. (Relative to self).
+//    Servo Value: (Servo command only)
+//      Degrees servo should turn.
+//      Value is always positive
+//      Value is not mapped to PWM output
 //================================================================================
 
 void recieveData(int byteCount)
@@ -141,6 +173,7 @@ void recieveData(int byteCount)
     {
         if((cmd & CMD_M) == CMD_M) { commState = WAITING_FOR_US_DATA; }
         else if((cmd & CMD_G) == CMD_G) { respond = true; commState = WAITING_FOR_END; }
+        else if((cmd & CMD_S) == CMD_S) { commState = WAITING_FOR_SERVO_DIR; }
     }
     else if(commState == WAITING_FOR_US_DATA)
     {
@@ -150,9 +183,9 @@ void recieveData(int byteCount)
     }
     else if (commState == WAITING_FOR_MOTOR_DIR)
     {
-        if((cmd & M_STOP) == M_STOP)      { state = STOP_STATE; motorSTOP(); }
-        else if((cmd & M_FWD) == M_FWD)   { state = FORWARD_STATE; forward();}
-        else if((cmd & M_REV) == M_REV)   { state = REVERSE_STATE; backward(); }
+        if((cmd & M_STOP) == M_STOP)      { mState = STOP_STATE; updateMotorState = true; }
+        else if((cmd & M_FWD) == M_FWD)   { mState = FORWARD_STATE; updateMotorState = true; }
+        else if((cmd & M_REV) == M_REV)   { mState = REVERSE_STATE; updateMotorState = true; }
       
         commState = WAITING_FOR_TOF_DATA;
     }
@@ -160,6 +193,20 @@ void recieveData(int byteCount)
     {
         // Are we going to need additional conversion code here? -Alex
         tofDistance = cmd;
+        commState = WAITING_FOR_END;
+    }
+    else if (commState == WAITING_FOR_SERVO_DIR)
+    {
+        if((cmd & TURN_LEFT) == TURN_LEFT)          { sState = LEFT_STATE; updateServoState = true; }
+        else if((cmd & TURN_RIGHT) == TURN_RIGHT)   { sState = RIGHT_STATE; updateServoState = true; }
+        else if((cmd & RET_NEUTRAL) == RET_NEUTRAL) { sState = NEUTRAL_STATE; updateServoState = true; }
+
+        commState = WAITING_FOR_SERVO_VAL;
+    }
+    else if (commState == WAITING_FOR_SERVO_VAL)
+    {
+        // This command may be unneeded. -Alex
+        turnValue = cmd;
         commState = WAITING_FOR_END;
     }
     else if (commState == WAITING_FOR_END)
@@ -197,12 +244,13 @@ void sendData()
 void readGPS()
 {
     gps.read();
-
+    
     if(gps.fix)
     {
-      latitude = gps.latitude;
-      longitude = gps.longitude;
+        latitude = gps.latitude;
+        longitude = gps.longitude;
     }
+    
     digitalWrite(GPS_READY_PIN, LOW);
     delay(5);
     digitalWrite(GPS_READY_PIN, HIGH);
@@ -214,22 +262,35 @@ void readGPS()
 FUTURE ITERATIONS SHOULD INVOLVE A DECISION TO CHANGE ITS STARTING DIRECTION!*/
 void start()
 {
-  if(!on)
-  {
-      motorON();
-      if(state == FORWARD_STATE) { forward(); }
-      else if(state == REVERSE_STATE) { backward(); }
-      else { motorSTOP(); }
-  }
-  
-  if(state == FORWARD_STATE)
-  {
-    driveFORWARD(); 
-  }
-  else if(state == REVERSE_STATE)
-  {
-    driveBACKWARD();
-  }
+    if(!on)
+    {
+        motorON();
+    }
+
+    if(updateMotorState)
+    {
+        updateMotorState = false;
+        if(mState == FORWARD_STATE) { forward(); }
+        else if(mState == REVERSE_STATE) { backward(); }
+        else { motorSTOP(); }
+    }
+
+    if(updateServoState)
+    {
+        updateServoState = false;
+        if(sState == LEFT_STATE) { turnLeft(); }
+        else if(sState == RIGHT_STATE) { turnRight(); }
+        else { returnToNeutral(); }
+    }
+    
+    if(mState == FORWARD_STATE)
+    {
+        driveFORWARD(); 
+    }
+    else if(mState == REVERSE_STATE)
+    {
+        driveBACKWARD();
+    }
 }
 
 /*This function is designed to enable the robot to move forward. The inputs are adjusted to
@@ -259,23 +320,23 @@ void motorSTOP()
 //    Serial.println("Stopping");
     digitalWrite(input1, HIGH);
     digitalWrite(input2, HIGH);
-    readGPS();
+    readGPS(); // Temporary; used for testing.
 }
 
 /*This function is designed for use in the initial startup of the robot. When the robot is booted up, the enable pin on the motor
 drivers will be turned high so that the robot may begin moving.*/
 void motorON()
 {
-  digitalWrite(enableA, HIGH);
-  on = true;
-  delay(20);
+    digitalWrite(enableA, HIGH);
+    on = true;
+    delay(20);
 }
 
 /*This function is designed as the Emergency Stop for the robot. When the time-of-flight sensor is flagged, the robot will shut off.*/
 void motorOFF()
 {
-  digitalWrite(enableA, LOW);
-  on = false;
+    digitalWrite(enableA, LOW);
+    on = false;
 }
 
 /*This function is designed to accelerate and deccelerate the motors in increments\
@@ -299,18 +360,18 @@ void driveFORWARD()
 //  inch = distance/2.5; //calculate in inches 
   //----------------------------
   // Final code starts here
-  pwmOUT = (inch * 2)-1;
-  if(pwmOUT < 48)
-  {
-    state = REVERSE_STATE;
-    motorSTOP();
-  }
-  else if (pwmOUT > 255)
-  {
-    pwmOUT = 255;
-  }
-   
-  analogWrite(enableA,pwmOUT);
+    pwmOUT = (inch * 2)-1;
+    if(pwmOUT < 48)
+    {
+        mState = STOP_STATE;
+//        motorSTOP();
+    }
+    else if (pwmOUT > 255)
+    {
+        pwmOUT = 255;
+    }
+    
+    analogWrite(enableA,pwmOUT);
 }
 
 /*This function is designed to accelerate and deccelerate the motors in increments\
@@ -334,80 +395,156 @@ void driveBACKWARD()
 //  inch = distance/2.5; //calculate in inches
   //----------------------------
   // Final code starts here
-  pwmOUT = (inch * 2)-1;
-  if(pwmOUT < 48)
-  {
-    state = FORWARD_STATE;
-    motorSTOP();
-  }
-  else if (pwmOUT > 255)
-  {
-    pwmOUT = 255;
-  }
-  
-  analogWrite(enableA,pwmOUT);
+    pwmOUT = (inch * 2)-1;
+    if(pwmOUT < 48)
+    {
+        mState = STOP_STATE;
+//        motorSTOP();
+    }
+    else if (pwmOUT > 255)
+    {
+        pwmOUT = 255;
+    }
+    
+    analogWrite(enableA,pwmOUT);
+}
+
+/*
+ * Servos should turn such that the wheels
+ * are pointing in different directions.
+ */
+void turnLeft()
+{
+    /* 
+     *  This code is borrowed from earlier versions
+     * and may not work properly
+     */
+     
+     frontServo.write(sPosition);
+     rearServo.write(sPosition);
+
+     for(; sPosition <= 180; sPosition++)
+     {
+        frontServo.write(sPosition);
+        rearServo.write(sPosition);
+     }
+
+     for(; sPositions >= 90; sPosition--)
+     {
+        frontServo.write(sPosition);
+        rearServo.write(sPosition);
+     }
+}
+
+void turnRight()
+{
+    /* 
+     *  This code is borrowed from earlier versions
+     * and may not work properly
+     */
+         
+     frontServo.write(sPosition);
+     rearServo.write(sPosition);
+
+     for(; sPosition >= 0; sPosition--)
+     {
+        frontServo.write(sPosition);
+        rearServo.write(sPosition);
+     }
+
+     // Wait 1 second before returning servos to center.
+     delay(1000);
+
+     for(; sPosition <= 90; sPosition++)
+     {
+        frontServo.write(sPosition);
+        rearServo.write(sPosition);
+     }
+}
+
+void returnToNeutral()
+{
+    if(sPosition < 90)
+    {
+        for(; sPosition <= 90; sPosition++)
+        {
+            frontServo.write(sPosition);
+            rearServo.write(sPosition);
+        }
+    }
+    else if(sPosition > 90)
+    {
+         for(; sPositions >= 90; sPosition--)
+         {
+            frontServo.write(sPosition);
+            rearServo.write(sPosition);
+         }
+    }
 }
 
 void setup() {
-  // Serial Settings for reading GPS
+    // Serial Settings for reading GPS
 //  Serial.begin(115200);
-  Serial.begin(9600);
+    Serial.begin(9600);
 //  delay(5000);
 
-  // Start reading GPS with passed baud rate
-  gps.begin(9600); 
-  // Turn on RMC (recommended minimum) and GGA (fix data) including altitude
-  gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-  // Set update rate to 1Hz
-  gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
-  // Request updates on antenna status.
-//  gps.sendCommand(PGCMD_ANTENNA);
+    // Start reading GPS with passed baud rate
+    gps.begin(9600); 
+    // Turn on RMC (recommended minimum) and GGA (fix data) including altitude
+    gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+    // Set update rate to 1Hz
+    gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
+    // Request updates on antenna status.
+//    gps.sendCommand(PGCMD_ANTENNA);
 
-  // Motor Control I/O
-  pinMode(enableA, OUTPUT);
-  pinMode(input1, OUTPUT);
-  pinMode(input2, OUTPUT);
-  pinMode(frontTrigPin, OUTPUT);
-  pinMode(rearTrigPin, OUTPUT);
-  pinMode(frontEchoPin, INPUT);
-  pinMode(rearEchoPin, INPUT);
-  pinMode(GPS_READY_PIN, OUTPUT);
+    // Motor Control I/O
+    pinMode(enableA, OUTPUT);
+    pinMode(input1, OUTPUT);
+    pinMode(input2, OUTPUT);
+    pinMode(frontTrigPin, OUTPUT);
+    pinMode(rearTrigPin, OUTPUT);
+    pinMode(frontEchoPin, INPUT);
+    pinMode(rearEchoPin, INPUT);
+    pinMode(GPS_READY_PIN, OUTPUT);
 
-  // Servo I/O
-  frontServo.attach(FRONT_SERVO_SIG);
-  rearServo.attach(REAR_SERVO_SIG);
-  
-  // Used for initial motor startup
-  digitalWrite(enableA, LOW);
-  digitalWrite(input1, LOW);
-  digitalWrite(input2, LOW);
-
-  //initialize i2c as slave
-  Wire.begin(SLAVE_ADDRESS);
-
-  //define callbacks for i2c communication
-  Wire.onReceive(recieveData);
-  Wire.onRequest(sendData);
-
-  // Make sure the interrupt pin is low.
-  digitalWrite(GPS_READY_PIN, LOW);
-
-  // Setup motor drive flags.
-  on = false;
-  state = STOP_STATE;
-  initialized = true;
-  commState = WAITING_FOR_HELLO;
-  inch = 156;
+    // Servo I/O
+    frontServo.attach(FRONT_SERVO_SIG);
+    rearServo.attach(REAR_SERVO_SIG);
+    
+    // Used for initial motor startup
+    digitalWrite(enableA, LOW);
+    digitalWrite(input1, LOW);
+    digitalWrite(input2, LOW);
+    
+    //initialize i2c as slave
+    Wire.begin(SLAVE_ADDRESS);
+    
+    //define callbacks for i2c communication
+    Wire.onReceive(recieveData);
+    Wire.onRequest(sendData);
+    
+    // Make sure the interrupt pin is low.
+    digitalWrite(GPS_READY_PIN, LOW);
+    
+    // Setup motor drive flags.
+    on = false;
+    mState = STOP_STATE;
+    sState = NEUTRAL_STATE;
+    commState = WAITING_FOR_HELLO;
+    inch = 156;
+    frontServo.write(sPosition);
+    rearServo.write(sPosition);
+    initialized = true;
 }
 
 void loop()
 { 
-  if(initialized == true)
-  {
-    start();
-
-    if(respond)
-      sendData();
-  }
+    if(initialized == true)
+    {
+        start();
+    
+        if(respond)
+            sendData();
+    }
 }
 

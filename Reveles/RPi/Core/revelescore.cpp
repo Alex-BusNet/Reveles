@@ -8,9 +8,9 @@
 #define FA_SE_CORNER GPSCoord{41.631910, -85.005670}
 #define FA_NE_CORNER GPSCoord{41.632562, -85.005680}
 #define FA_NW_CORNER GPSCoord{41.632559, -85.005982}
-#define FA_MAP_NW GPSCoord{41.632559, -85.006123}
-#define FA_MAP_SW GPSCoord{41.631906, -85.006123}
-#define FA_MAP_SE GPSCoord{41.631906, -85.005665}
+#define FA_MAP_NW 	 GPSCoord{41.632559, -85.006123}
+#define FA_MAP_SW 	 GPSCoord{41.631906, -85.006123}
+#define FA_MAP_SE 	 GPSCoord{41.631906, -85.005665}
 
 #define B2STR( x ) (x ? "True" : "False")
 
@@ -207,14 +207,24 @@ void RevelesCore::coreLoop()
     //=========================
     // I2C motor drive testing
     if(directionCount == 1)
+	{
         RevelesIO::instance()->SetMotorDirection(M_FWD);
-    else if(directionCount == 10)
-        RevelesIO::instance()->SetMotorDirection(M_STOP);
-    else if (directionCount == 12)
-        RevelesIO::instance()->SetMotorDirection(M_REV);
-    else if(directionCount == 22)
+		RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+    }
+	else if(directionCount == 10)
+    {
+		RevelesIO::instance()->SetMotorDirection(M_STOP);
+		RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+    }
+	else if (directionCount == 12)
+    {
+		RevelesIO::instance()->SetMotorDirection(M_REV);
+		RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+    }
+	else if(directionCount == 22)
     {
         RevelesIO::instance()->SetMotorDirection(M_STOP);
+		RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
         directionCount = 0;
     }
 

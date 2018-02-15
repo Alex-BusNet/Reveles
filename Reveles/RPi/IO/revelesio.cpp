@@ -54,6 +54,7 @@ void RevelesIO::initIO()
     dist = 0;
     inch = 156;
     motorDir = M_FWD;
+	servoDir = RET_NEUTRAL;
 
      // Placeholder, any value less than 48 will trigger E-Stop on the Arduino
     tofDist = 50; // inches
@@ -85,22 +86,6 @@ void RevelesIO::SendMotorUpdate()
 //    ToF value: Floating point value from Time of Flight sensors.
 //      (Motor command only)
 //==========================================================================
-
-//---------------------------------------------------------------------------
-    //Debugging section:
-
-    QByteArray cmd;
-    cmd.append("M");
-    cmd.append(":");
-    cmd.append(QString::number(inch));
-    cmd.append(":0x");
-    cmd.append(QString::number(motorDir, 16));
-    cmd.append(":");
-    cmd.append(QString::number(tofDist));
-    cmd.append(":");
-
-    Logger::writeLine(instance(), Reveles::I2C_MOTOR.arg(QString(cmd)));
-//---------------------------------------------------------------------------
 
     // Total time to transmit: 425ms
     wiringPiI2CWrite(fdArduino, START);
@@ -140,6 +125,32 @@ void RevelesIO::SendGPSRequest()
     Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
     Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
     Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
+}
+
+void RevelesIO::SendServoUpdate()
+{
+	wiringPiI2CWrite(fdArduino, START);
+	delay(85);
+	wiringPiI2CWrite(fdArduino, CMD_S);
+	delay(85);
+	wiringPiI2CWrite(fdArduino, servoDir);
+	delay(85);
+	
+	if(servoDir == TURN_LEFT)
+		wiringPiI2CWrite(fdArduino, 180);
+	else if(servoDir == TURN_RIGHT)
+		wiringPiI2CWrite(fdArduino, 0);
+	else
+		wiringPiI2CWrite(fdArduino, 90);
+	
+	delay(85);
+	wiringPiI2CWrite(fdArduino, END);
+}
+
+void RevelesIO::SetServoDirection(uint8_t dir)
+{
+	servoDir = dir;
+	SendServoUpdate();
 }
 
 GPSCoord RevelesIO::GetLastGPSCoord()

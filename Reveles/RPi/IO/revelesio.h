@@ -57,6 +57,8 @@ public:
     void SendMotorUpdate();
     void SetMotorDirection(uint8_t dir);
     void SendGPSRequest();
+	void SendServoUpdate();
+	void SetServoDirection(uint8_t dir);
 
     GPSCoord GetLastGPSCoord();
 
@@ -81,7 +83,8 @@ private:
     int fdToF[6];  // Array of file desriptors for Time of Flight sensors.
 
     int dist, inch, tofDist;
-    int8_t motorDir;
+    uint8_t motorDir;
+	uint8_t servoDir;
     long durat;
 
     GPSCoord lastKnownCoord;
