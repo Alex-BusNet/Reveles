@@ -123,12 +123,14 @@ void RevelesIO::SendGPSRequest()
     wiringPiI2CWrite(fdArduino, END);
 
     Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
-    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
-    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(CMD_G, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(END, 2, 16, QChar('0')));
 }
 
 void RevelesIO::SendServoUpdate()
 {
+    int angle = 90;
+    // Total time to transmit: 340ms
 	wiringPiI2CWrite(fdArduino, START);
 	delay(85);
 	wiringPiI2CWrite(fdArduino, CMD_S);
@@ -137,14 +139,21 @@ void RevelesIO::SendServoUpdate()
 	delay(85);
 	
 	if(servoDir == TURN_LEFT)
-		wiringPiI2CWrite(fdArduino, 180);
+        angle = 180;
 	else if(servoDir == TURN_RIGHT)
-		wiringPiI2CWrite(fdArduino, 0);
+        angle = 0;
 	else
-		wiringPiI2CWrite(fdArduino, 90);
-	
+        angle = 90;
+
+    wiringPiI2CWrite(fdArduino, angle);
 	delay(85);
 	wiringPiI2CWrite(fdArduino, END);
+
+    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(START, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(CMD_S, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(servoDir, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), Reveles::I2C_SERVO_ANGLE.arg(angle, 3, 10, QChar('0')));
+    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(END, 2, 16, QChar('0')));
 }
 
 void RevelesIO::SetServoDirection(uint8_t dir)

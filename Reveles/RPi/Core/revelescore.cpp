@@ -205,7 +205,7 @@ void RevelesCore::coreLoop()
 //    updateMapData();
 
     //=========================
-    // I2C motor drive testing
+    // I2C motor and servo drive testing
     if(directionCount == 1)
 	{
         RevelesIO::instance()->SetMotorDirection(M_FWD);

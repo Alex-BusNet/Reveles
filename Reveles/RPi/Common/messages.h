@@ -24,13 +24,15 @@ namespace Reveles
     static const QString SET_TARGET_DEST = "Setting Target Destination to %1, %2";
     static const QString MAP_INTERVAL_CHANGED = "Map Update Interval changed.";
 
-    static const QString MAG_DATA =   "Mag Data:   X: %1 Y: %2 Z: %3 gauss";
+    static const QString MAG_DATA =   "  Mag Data: X: %1 Y: %2 Z: %3 gauss";
     static const QString ACCEL_DATA = "Accel Data: X: %1 Y: %2 Z: %3 m/s/s";
-    static const QString GYRO_DATA =  "Gyro Data:  X: %1 Y: %2 Z: %3 rad/s";
+    static const QString GYRO_DATA =  " Gyro Data: X: %1 Y: %2 Z: %3 rad/s";
 
-    static const QString I2C_MOTOR = "I2C Motor command: %1";
-    static const QString I2C_GPS_SEND = "I2C GPS Command: 0b%1";
-    static const QString I2C_GPS_RESP = "I2C GPS response: 0b%1";
+    static const QString I2C_MOTOR    = "I2C Motor command:  %1";
+    static const QString I2C_GPS_SEND = "I2C GPS Command:  0x%1";
+    static const QString I2C_GPS_RESP = "I2C GPS response: 0x%1";
+    static const QString I2C_SERVO_SEND  = "I2C Servo Command:   0x%1";
+    static const QString I2C_SERVO_ANGLE = "I2C Servo Angle:   %1 deg";
 
     static const QString NO_TRANS_MAT = "Transition Matrix not found. Using default.";
     static const QString NO_DECISION_MAT = "Decision Matrix not found.";
@@ -45,7 +47,7 @@ namespace Reveles
     static const QString OD_STOPPING = "Stopping Object Detector...";
     static const QString FRAME_READ_FAIL = "No frame to read.";
 
-    static const QString REVELES_VERSION = "0.6.0210";
+    static const QString REVELES_VERSION = "0.7.0215";
     static const QString REVELES_CORE_INFO = "========================================\n"
                                              "RevelesCore            Version: %1\n"
                                              "                                        \n"
