@@ -111,8 +111,10 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     Logger::writeLine(this, QString("Longitude delta per tile: %1")
                       .arg((FA_MAP_SE.longitude - FA_MAP_SW.longitude) / 120.0, 11, 'F', 10, QChar('0')));
 
-    Logger::writeLine(this, QString("Testing ReadGPS()..." ));
-    GPSCoord g = RevelesIO::instance()->ReadGPS();
+    Logger::writeLine(this, QString("Testing GPS..." ));
+    RevelesIO::instance()->SendGPSRequest();
+    delay(1000);
+    GPSCoord g = RevelesIO::instance()->GetLastGPSCoord();
     Logger::writeLine(this, QString("Response: %1, %2").arg(g.latitude).arg(g.longitude));
 
     coreTimer = new QTimer();
@@ -189,7 +191,8 @@ void RevelesCore::readSensor()
 
 void RevelesCore::updateMapData()
 {
-    loc = RevelesIO::instance()->ReadGPS();
+    RevelesIO::instance()->SendGPSRequest();
+    loc = RevelesIO::instance()->GetLastGPSCoord();
     emit currentLocation(loc);
 }
 
@@ -197,28 +200,28 @@ void RevelesCore::coreLoop()
 {
     static int directionCount = 0;
 
-    readSensor();
-    NavigationAssisiant::instance()->Orient();
-    updateMapData();
+//    readSensor();
+//    NavigationAssisiant::instance()->Orient();
+//    updateMapData();
 
     //=========================
     // I2C motor drive testing
     if(directionCount == 1)
-        RevelesIO::instance()->SetMotorDirection('F');
+        RevelesIO::instance()->SetMotorDirection(M_FWD);
     else if(directionCount == 10)
-        RevelesIO::instance()->SetMotorDirection('S');
-    else if (directionCount == 11)
-        RevelesIO::instance()->SetMotorDirection('R');
-    else if(directionCount == 20)
+        RevelesIO::instance()->SetMotorDirection(M_STOP);
+    else if (directionCount == 12)
+        RevelesIO::instance()->SetMotorDirection(M_REV);
+    else if(directionCount == 22)
     {
-        RevelesIO::instance()->SetMotorDirection('S');
+        RevelesIO::instance()->SetMotorDirection(M_STOP);
         directionCount = 0;
     }
 
     directionCount++;
     //=========================
 
-    readAGM();
+//    readAGM();
 }
 
 void RevelesCore::closeCore()

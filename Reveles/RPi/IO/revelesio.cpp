@@ -7,6 +7,7 @@
 #include <cstdlib>
 
 Q_GLOBAL_STATIC(RevelesIO, rio)
+#define B2STR( x ) (x ? "True" : "False")
 
 RevelesIO *RevelesIO::instance()
 {
@@ -26,8 +27,23 @@ void RevelesIO::initIO()
     pinMode(TRIG, OUTPUT);
     /// TODO: Add pins for ToF
 
+    // Need to play with this a bit. The ISR is triggering way too much.
+//    wiringPiISR(RECIEVE_READY, INT_EDGE_RISING, GPS_Response_Ready);
+
+    arduinoFound = false;
     fdArduino = wiringPiI2CSetup(ARDUINO);
 
+    wiringPiI2CWrite(fdArduino, COM_CHECK);
+    uint8_t res = wiringPiI2CRead(fdArduino);
+
+    if((res & COM_CHECK) == COM_CHECK)
+        arduinoFound = true;
+    else
+        arduinoFound = false;
+
+    Logger::writeLine(instance(), QString("Arduino found at 0x%1: %2").arg(ARDUINO, 2, 16, QChar('0')).arg(B2STR(arduinoFound)));
+
+    lastKnownCoord = GPSCoord{0, 0};
     agm = new LSM9DS1();
     agm->setup();
 
@@ -36,8 +52,8 @@ void RevelesIO::initIO()
 
     isrWait = false;
     dist = 0;
-    inch = 0;
-    motorDir = 'F';
+    inch = 156;
+    motorDir = M_FWD;
 
      // Placeholder, any value less than 48 will trigger E-Stop on the Arduino
     tofDist = 50; // inches
@@ -77,8 +93,8 @@ void RevelesIO::SendMotorUpdate()
     cmd.append("M");
     cmd.append(":");
     cmd.append(QString::number(inch));
-    cmd.append(":");
-    cmd.append(QString(motorDir));
+    cmd.append(":0x");
+    cmd.append(QString::number(motorDir, 16));
     cmd.append(":");
     cmd.append(QString::number(tofDist));
     cmd.append(":");
@@ -86,66 +102,56 @@ void RevelesIO::SendMotorUpdate()
     Logger::writeLine(instance(), Reveles::I2C_MOTOR.arg(QString(cmd)));
 //---------------------------------------------------------------------------
 
-    int cmdOut = START;
-    Logger::writeLine(instance(), QString("START:         0x%1").arg(cmdOut, 8, 16, QChar('0')));
-    wiringPiI2CWrite(fdArduino, cmdOut);
+    // Total time to transmit: 425ms
+    wiringPiI2CWrite(fdArduino, START);
+    delay(85);
+    wiringPiI2CWrite(fdArduino, CMD_M);
+    delay(85);
+    wiringPiI2CWrite(fdArduino, inch);
+    delay(85);
+    wiringPiI2CWrite(fdArduino, motorDir);
+    delay(85);
+    wiringPiI2CWrite(fdArduino, tofDist);
+    delay(85);
+    wiringPiI2CWrite(fdArduino, END);
 
-    cmdOut = CMD_M;
-    Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(cmdOut, 8, 16, QChar('0')));
-    wiringPiI2CWrite(fdArduino, cmdOut);
-
-    cmdOut = 0x0;
-
-    QString iParse = QString::number(inch);
-    for(int i = 0; i < iParse.length(); i++)
-    {
-        cmdOut <<= 8;
-        cmdOut |= asciiMap[iParse.at(i).toLatin1()];
-    }
-    wiringPiI2CWrite(fdArduino, cmdOut);
-    Logger::writeLine(instance(), QString("US Dist:       0x%1").arg(cmdOut, 8, 16, QChar('0')));
-
-    cmdOut = asciiMap[motorDir];
-    Logger::writeLine(instance(), QString("Motor Dir:     0x%1").arg(cmdOut, 8, 16, QChar('0')));
-    wiringPiI2CWrite(fdArduino, cmdOut);
-
-    cmdOut = 0x0;
-    iParse = QString::number(tofDist);
-    for(int i = 0; i < iParse.length(); i++)
-    {
-        cmdOut <<= 8;
-        cmdOut |= asciiMap[iParse.at(i).toLatin1()];
-    }
-
-    wiringPiI2CWrite(fdArduino, cmdOut);
-    Logger::writeLine(instance(), QString("ToF Dist:      0x%1").arg(cmdOut, 8, 16, QChar('0')));
-
-    cmdOut = END;
-    wiringPiI2CWrite(fdArduino, cmdOut);
-
-    Logger::writeLine(instance(), QString("END:           0x%1").arg(cmdOut, 8, 16, QChar('0')));
+    Logger::writeLine(instance(), QString("START:         0x%1").arg(START, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(CMD_M, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), QString("US Dist:       %1 in").arg(inch, 4, 10, QChar('0')));
+    Logger::writeLine(instance(), QString("Motor Dir:     0x%1").arg(motorDir, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), QString("ToF Dist:      %1 in").arg(tofDist, 4, 10, QChar('0')));
+    Logger::writeLine(instance(), QString("END:           0x%1").arg(END, 2, 16, QChar('0')));
 }
 
-void RevelesIO::SetMotorDirection(char dir)
+void RevelesIO::SetMotorDirection(uint8_t dir)
 {
     motorDir = dir;
     SendMotorUpdate();
 }
 
-GPSCoord RevelesIO::ReadGPS()
-{    
-    int cmd = START;
-    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(cmd, 8, 16, QChar('0')));
-    cmd = CMD_G;
-    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(cmd, 8, 16, QChar('0')));
-    cmd = END;
-    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(cmd, 8, 16, QChar('0')));
+void RevelesIO::SendGPSRequest()
+{
+    wiringPiI2CWrite(fdArduino, START);
+    delay(85);
+    wiringPiI2CWrite(fdArduino, CMD_G);
+    delay(85);
+    wiringPiI2CWrite(fdArduino, END);
 
+    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
+}
+
+GPSCoord RevelesIO::GetLastGPSCoord()
+{
+    return lastKnownCoord;
+}
+
+void RevelesIO::ReadGPS()
+{
     GPSCoord gpsc{0,0};
-
-    // Wait for response.
     // Format: <START> -> <LATITUDE> -> <latitude value> -> <LONGITUDE> -> <longitude value> -> <END>
-    delayMicroseconds(50);
+
     Logger::writeLine(instance(), "Reading Arduino...");
     int response = wiringPiI2CRead(fdArduino);
 
@@ -155,6 +161,8 @@ GPSCoord RevelesIO::ReadGPS()
         while(response != END)
         {
             response = wiringPiI2CRead(fdArduino);
+            Logger::writeLine(instance(), QString("GPS Response: %1").arg(response));
+
             if (response == LATITUDE && !readLat)
                 readLat = true;
             else if (readLat)
@@ -172,7 +180,8 @@ GPSCoord RevelesIO::ReadGPS()
         }
     }
 
-    return gpsc;
+    Logger::writeLine(instance(), QString("GPS Response: %1, %2").arg(gpsc.latitude).arg(gpsc.longitude));
+    lastKnownCoord = gpsc;
 }
 
 /*
@@ -261,4 +270,9 @@ bool RevelesIO::hasXG()
 bool RevelesIO::hasMag()
 {
     return this->MagAvailable;
+}
+
+void GPS_Response_Ready()
+{
+    RevelesIO::instance()->ReadGPS();
 }

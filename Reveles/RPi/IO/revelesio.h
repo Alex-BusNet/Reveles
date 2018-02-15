@@ -29,6 +29,9 @@
 //---------------------------
 
 #define TIMEOUT 500000
+#define RECIEVE_READY 25
+#define SDA 8
+#define SCL 9
 
 //-----------------------
 //  I2C Device Addresses
@@ -41,6 +44,8 @@
 
 class LSM9DS1;
 
+void GPS_Response_Ready();
+
 class RevelesIO : public QObject
 {
     Q_OBJECT
@@ -50,9 +55,12 @@ public:
     void initIO();
 
     void SendMotorUpdate();
-    void SetMotorDirection(char dir);
+    void SetMotorDirection(uint8_t dir);
+    void SendGPSRequest();
 
-    GPSCoord ReadGPS();
+    GPSCoord GetLastGPSCoord();
+
+    void ReadGPS();
 
     float triggerUltrasonic(uint8_t sel);
     void TriggerTimeOfFlight();
@@ -66,15 +74,17 @@ public:
     bool hasMag();
 
 private:
-    bool isrWait;
+    bool isrWait, arduinoFound;
     bool XGAvailable, MagAvailable;
 
     int fdArduino; // File descriptor for Arduino
     int fdToF[6];  // Array of file desriptors for Time of Flight sensors.
 
-    float dist, inch, tofDist;
-    char motorDir;
+    int dist, inch, tofDist;
+    int8_t motorDir;
     long durat;
+
+    GPSCoord lastKnownCoord;
 
     LSM9DS1 *agm;
 

@@ -29,8 +29,8 @@ namespace Reveles
     static const QString GYRO_DATA =  "Gyro Data:  X: %1 Y: %2 Z: %3 rad/s";
 
     static const QString I2C_MOTOR = "I2C Motor command: %1";
-    static const QString I2C_GPS_SEND = "I2C GPS Command: 0x%1";
-    static const QString I2C_GPS_RESP = "I2C GPS response: 0x%1";
+    static const QString I2C_GPS_SEND = "I2C GPS Command: 0b%1";
+    static const QString I2C_GPS_RESP = "I2C GPS response: 0b%1";
 
     static const QString NO_TRANS_MAT = "Transition Matrix not found. Using default.";
     static const QString NO_DECISION_MAT = "Decision Matrix not found.";

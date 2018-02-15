@@ -149,15 +149,17 @@ Q_DECLARE_OPERATORS_FOR_FLAGS( LoggerFlags )
 
 enum I2C_COMMANDS
 {
-    START     = 0x5354515354,
-    END       = 0x454E44,
-    M_FWD     = 0x46,
-    CMD_G     = 0x47,
-    CMD_M     = 0x4D,
-    M_REV     = 0x52,
-    M_STOP    = 0x53,
-    LATITUDE  = 0x4C41544954554445,
-    LONGITUDE = 0x4C4f4E474954554445
+    COM_CHECK = 0xAA,
+    START     = 0x00,
+    END       = 0xA3,
+    M_FWD     = 0x11,
+    CMD_G     = 0x20,
+    CMD_M     = 0x10,
+    M_REV     = 0x12,
+    M_STOP    = 0x13,
+    LATITUDE  = 0x21,
+    LONGITUDE = 0x22,
+    CMD_FLUSH = 0x4C
 };
 
 static QMap<char, qulonglong> asciiMap =
