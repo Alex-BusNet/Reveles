@@ -210,22 +210,22 @@ void RevelesCore::coreLoop()
     if(directionCount == 1)
 	{
         RevelesIO::instance()->SetMotorDirection(M_FWD);
-		RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+//		RevelesIO::instance()->SetServoDirection(TURN_LEFT);
     }
 	else if(directionCount == 10)
     {
 		RevelesIO::instance()->SetMotorDirection(M_STOP);
-		RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+//		RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
     }
 	else if (directionCount == 12)
     {
 		RevelesIO::instance()->SetMotorDirection(M_REV);
-		RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+//		RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
     }
 	else if(directionCount == 22)
     {
         RevelesIO::instance()->SetMotorDirection(M_STOP);
-		RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+//		RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
         directionCount = 0;
     }
 

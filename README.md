@@ -589,8 +589,10 @@ We can fix the linked files like so:
 ```ShellSession
 $ cd ~/CrossDevelopment/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/arm-linux-gnueabihf/lib
 $ mv libstdc++.so.6 libstdc++.so.6.bak
+$ mv libstdc++.so libstdc++.so.bak
 $ scp pi@<IP address of RPi>:/usr/lib/arm-linux-gnueabihf/libstdc++.so.6.0.22 ./
 $ ln -s libstdc++.so.6.0.22 libstdc++.so.6
+$ ln -s libstdc++.so.6.0.22 libstdc++.so
 ```
 Reveles should now be able to compile.
 
