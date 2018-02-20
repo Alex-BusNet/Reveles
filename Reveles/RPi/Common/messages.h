@@ -41,6 +41,11 @@ namespace Reveles
     static const QString DECISION_MAT_SAVE_ERR = "Could not open Decision Matrix save file for writing.";
     static const QString DECISION_MAT_SAVE_PROG = "Saving Decision Matrix...";
 
+    static const QString MAP_SAVE_ERR = "Could not open Map Data save file for writing.";
+    static const QString MAP_SAVE_PROG = "Saving Map Data...";
+    static const QString MAP_LOAD_ERR = "Map Data save file not found. Generating blank map.";
+    static const QString MAP_LOAD_PROG = "Loading Map Data...";
+
     static const QString HAAR_LOWER_BODY_LOAD_FAIL = "Failed to load lower body Haar Cascade Classifier!";
     static const QString HAAR_UPPER_BODY_LOAD_FAIL = "Failed to load upper body Haar Cascade Classifier!";
     static const QString HAAR_FULL_BODY_LOAD_FAIL = "Failed to load full bodt Haar Cascade Classifier!";

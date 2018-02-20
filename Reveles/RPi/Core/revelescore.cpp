@@ -95,7 +95,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 #endif
     ObjectDetector::instance()->Run();
 #endif
-    AnalyticalEngine::instance()->Start();
+//    AnalyticalEngine::instance()->Start();
 
     // Test the GetDistance() function
     NavigationAssisiant::instance()->updateLocation(RevelesMap::instance()->GetOffset());
@@ -129,7 +129,9 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 
 RevelesCore::~RevelesCore()
 {
+#if defined USE_OBJ_DETECT && defined OBJ_DETECT_DEBUG
     destroyAllWindows();
+#endif
     if(coreTimer != NULL && coreTimer->isActive())
     {
         coreTimer->stop();
@@ -199,40 +201,41 @@ void RevelesCore::updateMapData()
 
 void RevelesCore::coreLoop()
 {
-    static int directionCount = 0;
+//    static int directionCount = 0;
 
-//    readSensor();
-//    NavigationAssisiant::instance()->Orient();
-//    updateMapData();
+    NavigationAssisiant::instance()->Orient();
+    updateMapData();
 
     //=========================
     // I2C motor and servo drive testing
-    if(directionCount == 1)
-	{
-        RevelesIO::instance()->SetMotorDirection(M_FWD);
-//		RevelesIO::instance()->SetServoDirection(TURN_LEFT);
-    }
-	else if(directionCount == 10)
-    {
-		RevelesIO::instance()->SetMotorDirection(M_STOP);
-//		RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
-    }
-	else if (directionCount == 12)
-    {
-		RevelesIO::instance()->SetMotorDirection(M_REV);
-//		RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
-    }
-	else if(directionCount == 22)
-    {
-        RevelesIO::instance()->SetMotorDirection(M_STOP);
-//		RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
-        directionCount = 0;
-    }
+//    Logger::writeLine(this, QString("Direction Count: %1").arg(directionCount));
 
-    directionCount++;
+//    if(directionCount == 1)
+//    {
+//        RevelesIO::instance()->SetMotorDirection(M_FWD);
+//        RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+//    }
+//	  else if(directionCount == 10)
+//    {
+//		  RevelesIO::instance()->SetMotorDirection(M_STOP);
+//		  RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+//    }
+//	  else if (directionCount == 12)
+//    {
+//		  RevelesIO::instance()->SetMotorDirection(M_REV);
+//		  RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+//    }
+//	  else if(directionCount == 22)
+//    {
+//        RevelesIO::instance()->SetMotorDirection(M_STOP);
+//		  RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+//        directionCount = -1;
+//    }
+
+//    directionCount++;
     //=========================
 
-//    readAGM();
+    readAGM();
 }
 
 void RevelesCore::closeCore()
@@ -248,7 +251,7 @@ void RevelesCore::closeCore()
 
     rdba->aboutToQuit();
 
-    active =  false;
+    active = false;
 
     if(this->parent() != NULL)
         ((QCoreApplication*)this->parent())->exit(0);

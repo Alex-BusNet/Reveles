@@ -64,8 +64,8 @@ public:
 
     void ReadGPS();
 
-    float triggerUltrasonic(uint8_t sel);
-    void TriggerTimeOfFlight();
+    int triggerUltrasonic(uint8_t sel);
+    int ReadTimeOfFlight();
     bool readPIR(bool rear);
 
     MagDirection ReadMagnetometer();
@@ -83,8 +83,8 @@ private:
     int fdToF[6];  // Array of file desriptors for Time of Flight sensors.
 
     int dist, inch, tofDist;
-    uint8_t motorDir;
-	uint8_t servoDir;
+    int8_t motorDir;
+    int8_t servoDir;
     long durat;
 
     GPSCoord lastKnownCoord;

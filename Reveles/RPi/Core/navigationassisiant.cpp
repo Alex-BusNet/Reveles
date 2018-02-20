@@ -4,9 +4,9 @@
 #include "Common/vectorutils.h"
 #include "Common/logger.h"
 
-#define TUPI(a,b) (std::tuple<int, int>(a, b))
-#define TUPD(a,b) (std::tuple<double, double>(a,b))
-#define TUPF(a,b) (std::tuple<float, float>(a,b))
+//#define TUPI(a,b) (std::tuple<int, int>(a, b))
+//#define TUPD(a,b) (std::tuple<double, double>(a,b))
+//#define TUPF(a,b) (std::tuple<float, float>(a,b))
 
 #define FEET_PER_METER 3.280839895013   // ft/m
 #define METER_PER_FOOT 1/3.280839895013 // m/ft

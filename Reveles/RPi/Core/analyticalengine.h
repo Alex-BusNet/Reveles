@@ -21,6 +21,20 @@
 #define US_STAIR 0b011
 #define US_BACK  0b100
 
+/*=================================
+ * Time Of Flight sensor locations
+ *          0-----1-----2
+ *          |   Front   |
+ *          |           |
+ *          |           |
+ *          7           3
+ *          |           |
+ *          |           |
+ *          |           |
+ *          6-----5-----4
+ *=================================
+*/
+
 /*
  * The AnalyticalEngine class is intended to process
  * the environment and make adjustments to Reveles' path
@@ -46,9 +60,11 @@ public slots:
 
 private:
     // Variables
-
-    int us, tof;
+    int us;
+    int tof[8];
     bool pir;
+
+
     // The transition matrix is a 7x7 array
     // of probabilities. The index at (i,j)
     // represents the probability that a
@@ -103,7 +119,7 @@ private:
     ActionState lastState, presentState, predictedState, actualState;
     bool endAnalyze;
 
-    uint8_t motorDir;
+    uint8_t motorDir, servoDir;
 
     QFuture<void> future;
 

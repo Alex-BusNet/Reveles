@@ -87,7 +87,7 @@ void RevelesIO::SendMotorUpdate()
 //      (Motor command only)
 //==========================================================================
 
-    // Total time to transmit: 425ms
+    // Total time to transmit: 510ms
     wiringPiI2CWrite(fdArduino, START);
     delay(85);
     wiringPiI2CWrite(fdArduino, CMD_M);
@@ -99,13 +99,14 @@ void RevelesIO::SendMotorUpdate()
     wiringPiI2CWrite(fdArduino, tofDist);
     delay(85);
     wiringPiI2CWrite(fdArduino, END);
+//    delay(85);
 
-    Logger::writeLine(instance(), QString("START:         0x%1").arg(START, 2, 16, QChar('0')));
-    Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(CMD_M, 2, 16, QChar('0')));
-    Logger::writeLine(instance(), QString("US Dist:       %1 in").arg(inch, 4, 10, QChar('0')));
+//    Logger::writeLine(instance(), QString("START:         0x%1").arg(START, 2, 16, QChar('0')));
+//    Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(CMD_M, 2, 16, QChar('0')));
+//    Logger::writeLine(instance(), QString("US Dist:       %1 in").arg(inch, 4, 10, QChar('0')));
     Logger::writeLine(instance(), QString("Motor Dir:     0x%1").arg(motorDir, 2, 16, QChar('0')));
-    Logger::writeLine(instance(), QString("ToF Dist:      %1 in").arg(tofDist, 4, 10, QChar('0')));
-    Logger::writeLine(instance(), QString("END:           0x%1").arg(END, 2, 16, QChar('0')));
+//    Logger::writeLine(instance(), QString("ToF Dist:      %1 in").arg(tofDist, 4, 10, QChar('0')));
+//    Logger::writeLine(instance(), QString("END:           0x%1").arg(END, 2, 16, QChar('0')));
 }
 
 void RevelesIO::SetMotorDirection(uint8_t dir)
@@ -122,6 +123,7 @@ void RevelesIO::SendGPSRequest()
     wiringPiI2CWrite(fdArduino, CMD_G);
     delay(85);
     wiringPiI2CWrite(fdArduino, END);
+//    delay(85);
 
     Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
     Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(CMD_G, 2, 16, QChar('0')));
@@ -131,13 +133,13 @@ void RevelesIO::SendGPSRequest()
 void RevelesIO::SendServoUpdate()
 {
     int angle = 90;
-    // Total time to transmit: 340ms
+    // Total time to transmit: 425ms
 	wiringPiI2CWrite(fdArduino, START);
 	delay(85);
 	wiringPiI2CWrite(fdArduino, CMD_S);
 	delay(85);
 	wiringPiI2CWrite(fdArduino, servoDir);
-	delay(85);
+//	delay(85);
 	
 	if(servoDir == TURN_LEFT)
         angle = 180;
@@ -149,6 +151,7 @@ void RevelesIO::SendServoUpdate()
     wiringPiI2CWrite(fdArduino, angle);
 	delay(85);
 	wiringPiI2CWrite(fdArduino, END);
+    delay(85);
 
     Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(START, 2, 16, QChar('0')));
     Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(CMD_S, 2, 16, QChar('0')));
@@ -209,7 +212,7 @@ void RevelesIO::ReadGPS()
  * triggerUltrasonic written based of hc-sr04.c
  * from https://github.com/dmeziere/rpi-hc-sr04/blob/master/util/hc-sr04.c
  */
-float RevelesIO::triggerUltrasonic(uint8_t sel)
+int RevelesIO::triggerUltrasonic(uint8_t sel)
 {
     digitalWrite(TRIG, LOW);
     delay(50);
@@ -248,10 +251,11 @@ float RevelesIO::triggerUltrasonic(uint8_t sel)
     return dist;
 }
 
-void RevelesIO::TriggerTimeOfFlight()
+int RevelesIO::ReadTimeOfFlight()
 {
-    // TODO: setup trigger conditions.
+    // TODO: Add selector for proper ToF reading.
     tofDist = 50;
+    return tofDist;
 }
 
 bool RevelesIO::readPIR(bool rear)

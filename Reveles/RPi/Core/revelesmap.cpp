@@ -30,8 +30,9 @@ void RevelesMap::Init()
                            {
                                GPSCoord
                                {
-                                   offsetLat +  (THRESHOLD_LATITUDE * (x +1)),
-                                   offsetLong + (THRESHOLD_LONGITUDE * (y +1))
+                                   // Need to check accuracy of these values
+                                   offsetLat +  ((THRESHOLD_LATITUDE * 2) * (x + 1)),
+                                   offsetLong + ((THRESHOLD_LONGITUDE * 2) * (y +1))
                                },
                                UNKNOWN
                            });
@@ -62,16 +63,13 @@ double RevelesMap::GetLongitudeThreshold()
  */
 void RevelesMap::UpdatePath(int x, int y, NodeType t)
 {
-    grid.at((x / 2) + (120 * y)).nt = t;
+    // Need to double check this calculation
+    grid.at(x + (120 * y)).nt = t;
 }
 
 void RevelesMap::AddPoint(GPSCoord gpsc)
 {
     // One grid square corresponds to a 2ft x 2ft area.
-    if(gpsc.latitude < offsetLat)
-    {
-
-    }
 
 //    if(!gridHasPoint(gpsc))
 //        grid.push_back(gpsc);
@@ -127,21 +125,96 @@ void RevelesMap::RegisterDestination(string name, GPSCoord gpsc)
 
 void RevelesMap::saveMapData()
 {
+    if(!QDir("Assets/SaveData").exists())
+        QDir().mkdir("Assets/SaveData");
 
+    QFile rmSaveData("Assets/SaveData/revelesMapData.json");
+    if(!rmSaveData.open(QIODevice::WriteOnly))
+    {
+        Logger::writeLine(instance(), Reveles::MAP_SAVE_ERR);
+    }
+    else
+    {
+        Logger::writeLine(instance(), Reveles::MAP_SAVE_PROG);
+        QJsonDocument doc;
+        QJsonArray mdArr;
+
+        foreach(Node n, grid)
+        {
+            QJsonObject obj;
+            obj["latitude"] = n.coord.latitude;
+            obj["longitude"] = n.coord.longitude;
+            obj["nodetype"] = n.nt;
+
+            mdArr.push_back(obj);
+        }
+
+        doc.setArray(mdArr);
+        rmSaveData.write(doc.toJson());
+
+        rmSaveData.flush();
+
+        Logger::writeLine(instance(), "Save complete");
+    }
+
+    if(rmSaveData.isOpen())
+        rmSaveData.close();
 }
 
 void RevelesMap::LoadMapData()
 {
+    QFile rmSaveData("Assets/SaveData/revelesMapData.json");
+    if(!rmSaveData.open(QIODevice::ReadOnly))
+    {
+        Logger::writeLine(instance(), Reveles::MAP_LOAD_ERR);
+    }
+    else
+    {
+        Logger::writeLine(instance(), Reveles::MAP_LOAD_PROG);
+        QJsonDocument doc = QJsonDocument::fromJson(rmSaveData.readAll());
+        QJsonArray mdArr = doc.array();
 
+        for(int i = 0; i < mdArr.size(); i++)
+        {
+            QJsonObject obj = mdArr[i].toObject();
+            Node n {
+                GPSCoord {
+                    obj["latitude"].toDouble(),
+                    obj["longitude"].toDouble()
+                },
+                (NodeType)obj["nodetype"].toInt()
+            };
+
+            grid.push_back(n);
+
+        }
+
+        Logger::writeLine(instance(), "Load complete");
+    }
+
+    if(rmSaveData.isOpen())
+        rmSaveData.close();
 }
 
 bool RevelesMap::gridHasPoint(GPSCoord gpsc)
 {
-//    for(GPSCoord c : grid)
-//    {
-//        if(gpsc == c)
-//            return true;
-//    }
+    int tileX, tileY;
+
+    tileX = (gpsc.longitude - offsetLong) / 120;
+    tileY = (gpsc.latitude - offsetLat) / 63;
+
+    double targetLat = grid.at(tileX + (120 * tileY)).coord.latitude;
+    double targetLong = grid.at(tileX + (120 * tileY)).coord.longitude;
+
+    if((gpsc.latitude > (targetLat - THRESHOLD_LATITUDE))
+            && (gpsc.latitude < (targetLat + THRESHOLD_LATITUDE)))
+    {
+        if((gpsc.longitude > (targetLong - THRESHOLD_LONGITUDE))
+                && (gpsc.longitude < (targetLong + THRESHOLD_LONGITUDE)))
+            return true;
+        else
+            return false;
+    }
 
     return false;
 }

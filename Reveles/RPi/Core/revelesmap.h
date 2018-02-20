@@ -7,6 +7,13 @@
 #include <list>
 #include <string>
 #include <map>
+#include <QDir>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include "Common/messages.h"
+#include "Common/logger.h"
 
 using namespace std;
 

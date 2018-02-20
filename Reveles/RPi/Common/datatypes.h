@@ -4,6 +4,11 @@
 #include <QtDBus/QDBusArgument>
 #include <cstring>
 #include <QMap>
+#include <tuple>
+
+#define TUPI(a,b) (std::tuple<int, int>(a, b))
+#define TUPD(a,b) (std::tuple<double, double>(a,b))
+#define TUPF(a,b) (std::tuple<float, float>(a,b))
 
 struct GPSCoord {
     double latitude;
@@ -13,6 +18,16 @@ struct GPSCoord {
     {
         return ((this->latitude == other.latitude)
                && (this->longitude == other.longitude));
+    }
+
+    bool operator!=(GPSCoord& other)
+    {
+        return ((this->latitude != other.latitude) || (this->longitude != other.longitude));
+    }
+
+    bool operator!=(std::tuple<double, double> &td)
+    {
+        return((this->latitude != std::get<0>(td)) || (this->longitude != std::get<1>(td)));
     }
 
     GPSCoord operator+(std::tuple<double, double> &td)

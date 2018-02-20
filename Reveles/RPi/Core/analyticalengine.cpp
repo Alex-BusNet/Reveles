@@ -9,7 +9,6 @@
 #include "Common/logger.h"
 #include "Common/messages.h"
 
-
 using namespace  std;
 
 Q_GLOBAL_STATIC(AnalyticalEngine, rae)
@@ -31,9 +30,11 @@ void AnalyticalEngine::Init()
     presentState = NO_STATE;
     lastState = NO_STATE;
     endAnalyze = false;
-    tof = 66; // inches
+    tof[0] = tof[1] = tof[2] = tof[3] = tof[4] = tof[5] = tof[6] = tof[7] = 66; // inches
     us = 160; // inches
     pir = false;
+    motorDir = M_STOP;
+    servoDir = RET_NEUTRAL;
 
     QFile tmSaveData("Assets/SaveData/transitionMatrix.csv");
     if(!tmSaveData.open(QIODevice::ReadOnly))
@@ -135,12 +136,49 @@ void AnalyticalEngine::CheckEnv()
     {
         pir = RevelesIO::instance()->readPIR(false);
         us = RevelesIO::instance()->triggerUltrasonic(US_FRONT); // Stair US
+        tof[1] = RevelesIO::instance()->ReadTimeOfFlight();
     }
     else if(motorDir == M_REV)
     {
         us = RevelesIO::instance()->triggerUltrasonic(US_BACK); // Stair US
         pir = RevelesIO::instance()->readPIR(true);
+        tof[5] = RevelesIO::instance()->ReadTimeOfFlight();
     }
+
+    if(servoDir == TURN_LEFT)
+    {
+        if(motorDir == M_FWD)
+        {
+            tof[1] = RevelesIO::instance()->ReadTimeOfFlight();
+            tof[0] = RevelesIO::instance()->ReadTimeOfFlight();
+        }
+        else if(motorDir == M_REV)
+        {
+            tof[5] = RevelesIO::instance()->ReadTimeOfFlight();
+            tof[6] = RevelesIO::instance()->ReadTimeOfFlight();
+        }
+    }
+    else if(servoDir == TURN_RIGHT)
+    {
+        if(motorDir == M_FWD)
+        {
+            tof[1] = RevelesIO::instance()->ReadTimeOfFlight();
+            tof[2] = RevelesIO::instance()->ReadTimeOfFlight();
+        }
+        else if(motorDir == M_REV)
+        {
+            tof[4] = RevelesIO::instance()->ReadTimeOfFlight();
+            tof[5] = RevelesIO::instance()->ReadTimeOfFlight();
+        }
+    }
+
+    Logger::writeLine(instance(), QString("ToF readings:"
+                                  "             [0]: %1 [1]: %2 [2]: %3"
+                                  "             [7]: %4         [3]: %5"
+                                  "             [6]: %6 [5]: %7 [4]: %8")
+                      .arg(tof[0], tof[1], tof[2])
+                      .arg(tof[7], tof[3])
+                      .arg(tof[6], tof[5], tof[4]));
 }
 
 /*!
@@ -152,8 +190,15 @@ void AnalyticalEngine::ProcessEnv()
     if(us < 12 /* inches */)
     {
         RevelesIO::instance()->SetMotorDirection(M_STOP);
-        delay(430);
-        RevelesIO::instance()->SetMotorDirection(M_REV);
+
+        if(motorDir == M_FWD)
+            motorDir = M_REV;
+        else if(motorDir == M_REV)
+            motorDir = M_FWD;
+
+        RevelesIO::instance()->SetMotorDirection(motorDir);
+
+        Logger::writeLine(instance(), QString("STAIRS FOUND! Backtracking.."));
     }
 
     // Simple path adjustment for now. Values are estimates.
@@ -161,41 +206,41 @@ void AnalyticalEngine::ProcessEnv()
     if(pir)
     {
         // Read ToF for right wall;
-        if (tof > 36) // inches
+        if (tof[3] > 36) // inches
         {
-            // Servo commands take ~340ms to send
-            // therefore, these command sequences
-            // need to be spaced apart more than
-            // the estimated time to send them.
+            // Timing between commands may need to be adjusted.
             RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+            servoDir = TURN_RIGHT;
             delay(350);
             RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+            servoDir = RET_NEUTRAL;
             delay(350);
             RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+            servoDir = TURN_LEFT;
             delay(350);
             RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+            servoDir = RET_NEUTRAL;
         }
         else
         {
             // Read ToF for left wall
-            if (tof > 36) // inches
+            if (tof[7] > 36) // inches
             {
-                // Servo commands take ~340ms to send
-                // therefore, these command sequences
-                // need to be spaced apart more than
-                // the estimated time to send them.
+                // Timing between commands may need to be adjusted
                 RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+                servoDir = TURN_LEFT;
                 delay(350);
                 RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+                servoDir = RET_NEUTRAL;
                 delay(350);
                 RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+                servoDir = TURN_RIGHT;
                 delay(350);
                 RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+                servoDir = RET_NEUTRAL;
             }
         }
     }
-
-
 
     // Determine if object exists
 
