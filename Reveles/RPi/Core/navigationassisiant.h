@@ -1,11 +1,13 @@
 #ifndef NAVIGATIONASSISIANT_H
 #define NAVIGATIONASSISIANT_H
 
+#include <Common/datatypes.h>
 #include <QObject>
 #include <QList>
-#include <Common/datatypes.h>
+#include <QSet>
 #include <Common/vector2f.h>
 #include <Common/vectorpolar2f.h>
+#include "revelesmap.h"
 #include "revelescore.h"
 
 /*
@@ -38,16 +40,21 @@ signals:
 private:
     // Functions
     void FindPath();
-    QList<GPSCoord> GetNeighbors(GPSCoord node);
+    QList<MapNode*> GetNeighbors(MapNode *node);
+    void RetracePath(MapNode *end);
 
     void Navigate();
 
     void DeadReckon();
 
     // Variables
-    QVector<GPSCoord> path;
+//    QVector<GPSCoord> path;
+    MapNode *path;
+    MapNode *nextNode;
+    MapNode *currentNode;
     GPSCoord currentLocation, destination;
     Direction heading;
+    double bearingAngle;
     double headingAngle;
 };
 

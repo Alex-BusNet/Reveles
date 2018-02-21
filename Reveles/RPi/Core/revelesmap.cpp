@@ -26,16 +26,18 @@ void RevelesMap::Init()
     {
         for(int y = 0; y < 63; y++)
         {
-            grid.push_back(Node
-                           {
-                               GPSCoord
-                               {
-                                   // Need to check accuracy of these values
-                                   offsetLat +  ((THRESHOLD_LATITUDE * 2) * (x + 1)),
-                                   offsetLong + ((THRESHOLD_LONGITUDE * 2) * (y +1))
-                               },
-                               UNKNOWN
-                           });
+            MapNode *n;
+            n->coord = GPSCoord
+                        {
+                            // Need to check accuracy of these values
+                            offsetLat +  ((THRESHOLD_LATITUDE * 2) * (x + 1)),
+                            offsetLong + ((THRESHOLD_LONGITUDE * 2) * (y +1))
+                        };
+            n->nt = UNKNOWN;
+            n->mapX = x;
+            n->mapY = y;
+
+            grid.push_back(n);
         }
     }
 }
@@ -55,6 +57,21 @@ double RevelesMap::GetLongitudeThreshold()
     return THRESHOLD_LONGITUDE;
 }
 
+MapNode* RevelesMap::GetNodeFromCoord(GPSCoord gpsc)
+{
+    int tileX, tileY;
+
+    tileX = (gpsc.longitude - offsetLong) / 120;
+    tileY = (gpsc.latitude - offsetLat) / 63;
+
+    return grid.at(tileX + (120 * tileY));
+}
+
+MapNode *RevelesMap::GetNodeFromPoint(int x, int y)
+{
+    return grid.at(x + (120 * y));
+}
+
 /**
  * @brief Updates the NodeType of the selected node
  * @param x The x coordinate of the tile
@@ -64,7 +81,7 @@ double RevelesMap::GetLongitudeThreshold()
 void RevelesMap::UpdatePath(int x, int y, NodeType t)
 {
     // Need to double check this calculation
-    grid.at(x + (120 * y)).nt = t;
+    grid.at(x + (120 * y))->nt = t;
 }
 
 void RevelesMap::AddPoint(GPSCoord gpsc)
@@ -98,22 +115,6 @@ void RevelesMap::RegisterDestination(string name, GPSCoord gpsc)
 
 }
 
-//list<Node*> RevelesMap::FindPath(Node* end)
-//{
-//    list<Node*> path;
-
-//    //-------------------
-//    // Path Finding Algorithm goes here
-//    //-------------------
-
-//    //-------------------
-//    /* Retrace Path */
-
-//    //-------------------
-
-//    return path;
-//}
-
 ///*
 // * FindPaths(string) assumes that the destination
 // * passed to it exists.
@@ -139,13 +140,14 @@ void RevelesMap::saveMapData()
         QJsonDocument doc;
         QJsonArray mdArr;
 
-        foreach(Node n, grid)
+        foreach(MapNode *n, grid)
         {
             QJsonObject obj;
-            obj["latitude"] = n.coord.latitude;
-            obj["longitude"] = n.coord.longitude;
-            obj["nodetype"] = n.nt;
-
+            obj["latitude"] = n->coord.latitude;
+            obj["longitude"] = n->coord.longitude;
+            obj["nodetype"] = n->nt;
+            obj["mapx"] = n->mapX;
+            obj["mapy"] = n->mapY;
             mdArr.push_back(obj);
         }
 
@@ -177,13 +179,16 @@ void RevelesMap::LoadMapData()
         for(int i = 0; i < mdArr.size(); i++)
         {
             QJsonObject obj = mdArr[i].toObject();
-            Node n {
-                GPSCoord {
+            MapNode *n;
+
+            n->coord = GPSCoord {
                     obj["latitude"].toDouble(),
                     obj["longitude"].toDouble()
-                },
-                (NodeType)obj["nodetype"].toInt()
-            };
+                };
+
+            n->nt = (NodeType)obj["nodetype"].toInt();
+            n->mapX = obj["mapx"].toInt();
+            n->mapY = obj["mapy"].toInt();
 
             grid.push_back(n);
 
@@ -203,8 +208,8 @@ bool RevelesMap::gridHasPoint(GPSCoord gpsc)
     tileX = (gpsc.longitude - offsetLong) / 120;
     tileY = (gpsc.latitude - offsetLat) / 63;
 
-    double targetLat = grid.at(tileX + (120 * tileY)).coord.latitude;
-    double targetLong = grid.at(tileX + (120 * tileY)).coord.longitude;
+    double targetLat = grid.at(tileX + (120 * tileY))->coord.latitude;
+    double targetLong = grid.at(tileX + (120 * tileY))->coord.longitude;
 
     if((gpsc.latitude > (targetLat - THRESHOLD_LATITUDE))
             && (gpsc.latitude < (targetLat + THRESHOLD_LATITUDE)))

@@ -30,7 +30,6 @@ void ObjectDetector::Init()
         objects[i] = ObjContainer{ Point(0,0), false, -1, NO_STATE };
     }
 
-
     if(!lowerBody.load("Data/haarcascade_lowerbody.xml"))
     {
         Logger::writeLine(instance(), Reveles::HAAR_LOWER_BODY_LOAD_FAIL);

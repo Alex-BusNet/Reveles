@@ -136,49 +136,52 @@ void AnalyticalEngine::CheckEnv()
     {
         pir = RevelesIO::instance()->readPIR(false);
         us = RevelesIO::instance()->triggerUltrasonic(US_FRONT); // Stair US
-        tof[1] = RevelesIO::instance()->ReadTimeOfFlight();
+        tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
     }
     else if(motorDir == M_REV)
     {
         us = RevelesIO::instance()->triggerUltrasonic(US_BACK); // Stair US
         pir = RevelesIO::instance()->readPIR(true);
-        tof[5] = RevelesIO::instance()->ReadTimeOfFlight();
+        tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
     }
 
     if(servoDir == TURN_LEFT)
     {
         if(motorDir == M_FWD)
         {
-            tof[1] = RevelesIO::instance()->ReadTimeOfFlight();
-            tof[0] = RevelesIO::instance()->ReadTimeOfFlight();
+            tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
+            tof[0] = RevelesIO::instance()->ReadTimeOfFlight(0);
         }
         else if(motorDir == M_REV)
         {
-            tof[5] = RevelesIO::instance()->ReadTimeOfFlight();
-            tof[6] = RevelesIO::instance()->ReadTimeOfFlight();
+            tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
+            tof[6] = RevelesIO::instance()->ReadTimeOfFlight(6);
         }
     }
     else if(servoDir == TURN_RIGHT)
     {
         if(motorDir == M_FWD)
         {
-            tof[1] = RevelesIO::instance()->ReadTimeOfFlight();
-            tof[2] = RevelesIO::instance()->ReadTimeOfFlight();
+            tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
+            tof[2] = RevelesIO::instance()->ReadTimeOfFlight(2);
         }
         else if(motorDir == M_REV)
         {
-            tof[4] = RevelesIO::instance()->ReadTimeOfFlight();
-            tof[5] = RevelesIO::instance()->ReadTimeOfFlight();
+            tof[4] = RevelesIO::instance()->ReadTimeOfFlight(4);
+            tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
         }
     }
+
+    tof[3] = RevelesIO::instance()->ReadTimeOfFlight(3);
+    tof[7] = RevelesIO::instance()->ReadTimeOfFlight(7);
 
     Logger::writeLine(instance(), QString("ToF readings:"
                                   "             [0]: %1 [1]: %2 [2]: %3"
                                   "             [7]: %4         [3]: %5"
                                   "             [6]: %6 [5]: %7 [4]: %8")
-                      .arg(tof[0], tof[1], tof[2])
-                      .arg(tof[7], tof[3])
-                      .arg(tof[6], tof[5], tof[4]));
+                      .arg(tof[0], 2, DEC).arg(tof[1], 2, DEC).arg(tof[2], 2, DEC)
+                      .arg(tof[7], 2, DEC).arg(tof[3], 2, DEC)
+                      .arg(tof[6], 2, DEC).arg(tof[5], 2, DEC).arg(tof[4], 2, DEC));
 }
 
 /*!
@@ -202,44 +205,10 @@ void AnalyticalEngine::ProcessEnv()
     }
 
     // Simple path adjustment for now. Values are estimates.
-    // Person found (distance unknown)
-    if(pir)
+    // Person found (distance unknown) or ToF return distance less than max
+    if(pir || ((motorDir == M_FWD) && (tof[1] < 66)))
     {
-        // Read ToF for right wall;
-        if (tof[3] > 36) // inches
-        {
-            // Timing between commands may need to be adjusted.
-            RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
-            servoDir = TURN_RIGHT;
-            delay(350);
-            RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
-            servoDir = RET_NEUTRAL;
-            delay(350);
-            RevelesIO::instance()->SetServoDirection(TURN_LEFT);
-            servoDir = TURN_LEFT;
-            delay(350);
-            RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
-            servoDir = RET_NEUTRAL;
-        }
-        else
-        {
-            // Read ToF for left wall
-            if (tof[7] > 36) // inches
-            {
-                // Timing between commands may need to be adjusted
-                RevelesIO::instance()->SetServoDirection(TURN_LEFT);
-                servoDir = TURN_LEFT;
-                delay(350);
-                RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
-                servoDir = RET_NEUTRAL;
-                delay(350);
-                RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
-                servoDir = TURN_RIGHT;
-                delay(350);
-                RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
-                servoDir = RET_NEUTRAL;
-            }
-        }
+        AdjustPath_Inanimate();
     }
 
     // Determine if object exists
@@ -265,7 +234,41 @@ void AnalyticalEngine::ProcessEnv()
 
 void AnalyticalEngine::AdjustPath_Inanimate()
 {
-
+    // Read ToF for right wall;
+    if (tof[3] > 36) // inches
+    {
+        // Timing between commands may need to be adjusted.
+        RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+        servoDir = TURN_RIGHT;
+        delay(350);
+        RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+        servoDir = RET_NEUTRAL;
+        delay(350);
+        RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+        servoDir = TURN_LEFT;
+        delay(350);
+        RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+        servoDir = RET_NEUTRAL;
+    }
+    else
+    {
+        // Read ToF for left wall
+        if (tof[7] > 36) // inches
+        {
+            // Timing between commands may need to be adjusted
+            RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+            servoDir = TURN_LEFT;
+            delay(350);
+            RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+            servoDir = RET_NEUTRAL;
+            delay(350);
+            RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+            servoDir = TURN_RIGHT;
+            delay(350);
+            RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+            servoDir = RET_NEUTRAL;
+        }
+    }
 }
 
 /*!

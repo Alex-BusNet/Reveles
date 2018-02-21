@@ -22,16 +22,18 @@ void RevelesIO::initIO()
     pinMode(SEL_A, OUTPUT);
     pinMode(SEL_B, OUTPUT);
     pinMode(ECHO, INPUT);
-    pinMode(SIG_1, INPUT);
-    pinMode(SIG_2, INPUT);
+    pinMode(SIG, INPUT);
+//    pinMode(SIG_1, INPUT);
+//    pinMode(SIG_2, INPUT);
     pinMode(TRIG, OUTPUT);
-    /// TODO: Add pins for ToF
 
     // Need to play with this a bit. The ISR is triggering way too much.
 //    wiringPiISR(RECIEVE_READY, INT_EDGE_RISING, GPS_Response_Ready);
 
     arduinoFound = false;
     fdArduino = wiringPiI2CSetup(ARDUINO);
+    fdNucleo[0] = wiringPiI2CSetup(NUCLEO_FRONT);
+    fdNucleo[1] = wiringPiI2CSetup(NUCLEO_REAR);
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
     uint8_t res = wiringPiI2CRead(fdArduino);
@@ -65,28 +67,53 @@ RevelesIO::RevelesIO()
 
 }
 
-void RevelesIO::SendMotorUpdate()
-{
-//=========================================================================
-//                 I2C Command Structure (RPi -> Arduino):
-// <START> -> <M | G> -> <US reading> -> <F | S | R> -> <ToF reading> -> <END>
-// ----------------------------------------------------------------
+//================================================================================
+//                      I2C Command Structure (RPi -> Arduino):
+// <START> -> <Function>|-> <US reading> -> <Direction> -> <ToF reading> -> <END>
+//                      |-> <Servo Direction> -> <Servo value> -> <END>
+//                      |-> <END> (GPS Command)
+//--------------------------------------------------------------------------------
+//          [ ALL COMMANDS ARE SENT IN HEXADECIMAL, VALUES ARE IN DECIMAL ]
+//
 // Possible values
 //    Function:
-//      (M)otor - RPi is sending drive instructions.
-//      (G)PS - RPi is requesting GPS coordinates.
+//      CMD_M - RPi is sending drive instructions.
+//      CMD_G - RPi is requesting GPS coordinates.
+//      CMD_S - RPi is sending turning instructions.
 //    US Value: Floating Point value for PWM signal.
 //      (Motor command only)
 //      Value is in inches.
 //      Value is not adjusted to fit between 255 and 0.
 //    Direction: (Motor command only)
-//      (F)orward.
-//      (S)top.
-//      (R)everse.
+//      M_FWD  - Motors should drive forwards.
+//      M_STOP - Motors should stop driving.
+//      M_REV  - Motors should drive in reverse.
 //    ToF value: Floating point value from Time of Flight sensors.
 //      (Motor command only)
-//==========================================================================
+//      Value is in inches.
+//    Servo Direction: (Servo command only)
+//      TURN_RIGHT - Indicates Reveles should turn to the right. (Relative to self).
+//      TURN_LEFT  - Indicates Reveles shoudl turn to the left. (Relative to self).
+//    Servo Value: (Servo command only)
+//      Degrees servo should turn.
+//      Value is always positive.
+//      Value is not mapped to PWM output.
+//================================================================================
 
+//================================================================================
+//                      I2C Command Structure (RPi -> Nucleo):
+//                  <START> -> <Function> -> <ToF number> -> <END>
+//--------------------------------------------------------------------------------
+//                     [ ALL COMMANDS ARE SENT IN HEXADECIMAL ]
+// Possible values
+//    Function:
+//      CMD_T - RPi is requesting Time of Flight Sensor data.
+//    ToF number: (ToF command only)
+//      Index or I2C address of desired ToF sensor.
+//================================================================================
+
+void RevelesIO::SendMotorUpdate()
+{
     // Total time to transmit: 510ms
     wiringPiI2CWrite(fdArduino, START);
     delay(85);
@@ -101,12 +128,12 @@ void RevelesIO::SendMotorUpdate()
     wiringPiI2CWrite(fdArduino, END);
 //    delay(85);
 
-//    Logger::writeLine(instance(), QString("START:         0x%1").arg(START, 2, 16, QChar('0')));
-//    Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(CMD_M, 2, 16, QChar('0')));
-//    Logger::writeLine(instance(), QString("US Dist:       %1 in").arg(inch, 4, 10, QChar('0')));
+    Logger::writeLine(instance(), QString("START:         0x%1").arg(START, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(CMD_M, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), QString("US Dist:       %1 in").arg(inch, 4, 10, QChar('0')));
     Logger::writeLine(instance(), QString("Motor Dir:     0x%1").arg(motorDir, 2, 16, QChar('0')));
-//    Logger::writeLine(instance(), QString("ToF Dist:      %1 in").arg(tofDist, 4, 10, QChar('0')));
-//    Logger::writeLine(instance(), QString("END:           0x%1").arg(END, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), QString("ToF Dist:      %1 in").arg(tofDist, 4, 10, QChar('0')));
+    Logger::writeLine(instance(), QString("END:           0x%1").arg(END, 2, 16, QChar('0')));
 }
 
 void RevelesIO::SetMotorDirection(uint8_t dir)
@@ -251,19 +278,50 @@ int RevelesIO::triggerUltrasonic(uint8_t sel)
     return dist;
 }
 
-int RevelesIO::ReadTimeOfFlight()
+int RevelesIO::ReadTimeOfFlight(int sensorNum)
 {
-    // TODO: Add selector for proper ToF reading.
-    tofDist = 50;
+    if(sensorNum < 4)
+    {
+        wiringPiI2CWrite(fdNucleo[0], START);
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[0], CMD_T);
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[0], sensorNum);
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[0], END);
+        delay(85);
+
+        tofDist = wiringPiI2CRead(fdNucleo[0]);
+        Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_FRONT).arg(tofDist));
+    }
+    else
+    {
+        wiringPiI2CWrite(fdNucleo[1], START);
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[1], CMD_T);
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[1], (sensorNum - 4));
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[1], END);
+        delay(85);
+
+        tofDist = wiringPiI2CRead(fdNucleo[1]);
+        Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_REAR).arg(tofDist));
+    }
+
+    tofDist = 50; // Remove this line once we have I2C response with Nucleo working.
+
     return tofDist;
 }
 
-bool RevelesIO::readPIR(bool rear)
+bool RevelesIO::readPIR(uint8_t sel)
 {
-    if(rear)
-        return digitalRead(SIG_2) ? true : false;
-    else
-        return digitalRead(SIG_1) ? true : false;
+    // Check this, I don't believe it
+    // works the way I think it does. -Alex 1/21/18
+    digitalWrite(SEL_A, 0b1 & sel);         // Get the A select bit. This should already by in index 0
+    digitalWrite(SEL_B, (0b10 & sel) >> 1); // Get the B select bit and shift into index 0
+
+    return digitalRead(SIG) ? true : false;
 }
 
 MagDirection RevelesIO::ReadMagnetometer()

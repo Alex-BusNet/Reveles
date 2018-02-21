@@ -25,6 +25,9 @@
   <property name="windowTitle">
    <string>Settings</string>
   </property>
+  <property name="autoFillBackground">
+   <bool>true</bool>
+  </property>
   <widget class="QTabWidget" name="tabWidget">
    <property name="geometry">
     <rect>
@@ -35,7 +38,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="settingsTab">
     <attribute name="title">
@@ -89,6 +92,13 @@
         </item>
         <item>
          <widget class="QLabel" name="coordinateLabel">
+          <property name="text">
+           <string>TextLabel</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="ipLabel">
           <property name="text">
            <string>TextLabel</string>
           </property>

@@ -2,7 +2,8 @@
 #define SETTINGSSCREEN_H
 
 #include <QWidget>
-
+#include <QtNetwork/QHostAddress>
+#include <QtNetwork/QNetworkInterface>
 namespace Ui {
 class SettingsScreen;
 }

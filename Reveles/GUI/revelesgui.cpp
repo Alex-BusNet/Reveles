@@ -305,6 +305,9 @@ void RevelesGui::on_exitBtn_clicked()
 {
     this->saveLocations();
     emit aboutToQuit();
+
+    if(!hasComms)
+        this->close();
 }
 
 //=====================================================================

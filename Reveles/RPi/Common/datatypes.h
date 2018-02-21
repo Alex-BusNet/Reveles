@@ -10,6 +10,11 @@
 #define TUPD(a,b) (std::tuple<double, double>(a,b))
 #define TUPF(a,b) (std::tuple<float, float>(a,b))
 
+#define BIN  2
+#define HEX 16
+#define OCT  8
+#define DEC 10
+
 struct GPSCoord {
     double latitude;
     double longitude;
@@ -89,16 +94,31 @@ enum NodeType
 //    L_DEAD_END, R_DEAD_END, B_DEAD_END, T_DEAD_END
 };
 
-struct Node {
+struct MapNode
+{
     GPSCoord coord;
     NodeType nt;
+    MapNode* parent = NULL;
+    MapNode *child = NULL;
+    int mapX, mapY;
+    int gCost = 0, hCost = 0;
+    int fCost() { return gCost + hCost; }
+
+    bool operator==(MapNode &other)
+    {
+        return this->coord == other.coord;
+    }
+
+    bool operator!=(MapNode &other)
+    {
+        return this->coord != other.coord;
+    }
 };
 
 // This struct may be removed.
 struct Path {
-    GPSCoord coord;
-    Node *child;
-    Node *parent;
+    MapNode *child;
+    MapNode *parent;
 };
 
 enum Direction {
@@ -171,6 +191,7 @@ enum I2C_COMMANDS
     CMD_G       = 0x20,
     CMD_M       = 0x10,
 	CMD_S       = 0x30,
+    CMD_T       = 0x40,
     M_REV       = 0x12,
     M_STOP      = 0x13,
     LATITUDE    = 0x21,
@@ -178,7 +199,7 @@ enum I2C_COMMANDS
 	TURN_LEFT   = 0x31,
 	TURN_RIGHT  = 0x32,
 	RET_NEUTRAL = 0x33,
-    CMD_FLUSH   = 0x4C
+    CMD_FLUSH   = 0x44
 };
 
 static QMap<char, qulonglong> asciiMap =

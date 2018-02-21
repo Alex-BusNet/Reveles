@@ -28,6 +28,11 @@ namespace Reveles
     static const QString ACCEL_DATA = "Accel Data: X: %1 Y: %2 Z: %3 m/s/s";
     static const QString GYRO_DATA =  " Gyro Data: X: %1 Y: %2 Z: %3 rad/s";
 
+    static const QString TOF_I2C_RESPONSE = "Time of Flight reading from 0x%1: %2";
+
+    static const QString START_EQUAL_DEST = "Current location is the same as destination!";
+    static const QString END_OF_PATH = "End of path reached. Returning to idle mode.";
+
     static const QString I2C_MOTOR    = "I2C Motor command:  %1";
     static const QString I2C_GPS_SEND = "I2C GPS Command:  0x%1";
     static const QString I2C_GPS_RESP = "I2C GPS response: 0x%1";
@@ -52,7 +57,7 @@ namespace Reveles
     static const QString OD_STOPPING = "Stopping Object Detector...";
     static const QString FRAME_READ_FAIL = "No frame to read.";
 
-    static const QString REVELES_VERSION = "0.7.0215";
+    static const QString REVELES_VERSION = "0.7.0221";
     static const QString REVELES_CORE_INFO = "========================================\n"
                                              "RevelesCore            Version: %1\n"
                                              "                                        \n"

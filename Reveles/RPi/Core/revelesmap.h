@@ -29,6 +29,8 @@ public:
     GPSCoord GetOffset();
     double GetLatitudeThreshold();
     double GetLongitudeThreshold();
+    MapNode *GetNodeFromCoord(GPSCoord gpsc);
+    MapNode* GetNodeFromPoint(int x, int y);
 
     void UpdatePath(int x, int y, NodeType t);
 
@@ -40,7 +42,7 @@ public:
 
 private:
 //    map<string, Node> savedDestinations;
-    vector<Node> grid;
+    vector<MapNode*> grid;
     double offsetLat, offsetLong;
 
     void saveMapData();

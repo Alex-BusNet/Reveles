@@ -49,6 +49,7 @@
 #define CMD_G       0x20
 #define CMD_M       0x10
 #define CMD_S       0x30
+#define CMD_T	    0x40
 #define M_REV       0x12
 #define M_STOP      0x13
 #define LATITUDE    0x21
@@ -56,7 +57,7 @@
 #define TURN_LEFT   0x31
 #define TURN_RIGHT  0x32
 #define RET_NEUTRAL 0x33
-#define CMD_FLUSH   0x4C
+#define CMD_FLUSH   0x44
 
 //----------------------------------
 //        I2C Comm states
@@ -65,7 +66,7 @@
 #define WAITING_FOR_MOTOR_DIR  2
 #define WAITING_FOR_TOF_DATA   3
 #define WAITING_FOR_END        4
-#define WAITING_FOR_MGS        5 // Waiting for (M)otor, (G)PS, or (S)ervo.
+#define WAITING_FOR_MGST       5 // Waiting for (M)otor, (G)PS, or (S)ervo.
 #define WAITING_FOR_HELLO      6
 #define WAITING_FOR_SERVO_DIR  7
 #define WAITING_FOR_SERVO_VAL  8
@@ -107,15 +108,16 @@ int commState = WAITING_FOR_HELLO;
 bool respond = false;       // Send GPS info back to RPi
 String commStateStrings[] = {"WAITING_FOR_START", "WAITING_FOR_US_DATA",                    //
                              "WAITING_FOR_MOTOR_DIR", "WAITING_FOR_TOF_DATA",               // This is for debugging
-                             "WAITING_FOR_END\t", "WAITING_FOR_MG\t", "WAITING_FOR_HELLO",  // purposes.
+                             "WAITING_FOR_END\t", "WAITING_FOR_MGS\t", "WAITING_FOR_HELLO",  // purposes.
                              "WAITING_FOR_SERVO_DIR", "WAITING_FOR_SERVO_VAL"};             //
 
 //================================================================================
 //                      I2C Command Structure (RPi -> Arduino):
 // <START> -> <Function>|-> <US reading> -> <Direction> -> <ToF reading> -> <END>
 //                      |-> <Servo Direction> -> <Servo value> -> <END>
+//                      |-> <END> (GPS Command)
 //--------------------------------------------------------------------------------
-//            [ ALL COMMANDS ARE RECIEVED IN BINARY, VALUES ARE IN DECIMAL ]
+//          [ ALL COMMANDS ARE SENT IN HEXADECIMAL, VALUES ARE IN DECIMAL ]
 //
 // Possible values
 //    Function:
@@ -138,8 +140,8 @@ String commStateStrings[] = {"WAITING_FOR_START", "WAITING_FOR_US_DATA",        
 //      TURN_LEFT  - Indicates Reveles shoudl turn to the left. (Relative to self).
 //    Servo Value: (Servo command only)
 //      Degrees servo should turn.
-//      Value is always positive
-//      Value is not mapped to PWM output
+//      Value is always positive.
+//      Value is not mapped to PWM output.
 //================================================================================
 
 void recieveData(int byteCount)

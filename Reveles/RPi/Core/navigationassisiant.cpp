@@ -31,7 +31,7 @@ void NavigationAssisiant::Init()
 {
     instance()->setObjectName("NavigationAssistant");
     destination = GPSCoord{0,0};
-    path.push_back(destination);
+    path = NULL;
     Orient();
 }
 
@@ -47,8 +47,9 @@ void NavigationAssisiant::Start(GPSCoord dest)
     Logger::writeLine(instance(), Reveles::SET_TARGET_DEST.arg(dest.latitude).arg(dest.longitude));
     Logger::writeLine(instance(), QString("Straight-line distance to destination: ") +
                       QString::number(GetDistance(currentLocation, destination)) + " ft");
-    FindBearing();
-//    FindPath();
+
+    FindPath();
+    Navigate();
 }
 
 void NavigationAssisiant::updateLocation(GPSCoord loc)
@@ -61,17 +62,127 @@ void NavigationAssisiant::updateLocation(GPSCoord loc)
  */
 void NavigationAssisiant::FindPath()
 {
-    // Try to find a path to the destination
+    if(currentLocation == destination)
+    {
+        Logger::writeLine(instance(), Reveles::START_EQUAL_DEST);
+        return;
+    }
 
-    // If a path does not exist, then travel to point closest to the destination
-    //  then switch to blind navigation mode.
+    MapNode *endNode = RevelesMap::instance()->GetNodeFromCoord(destination);
 
-    emit PathReady(path);
+    QList<MapNode*> openSet;
+    QSet<MapNode*> closedSet;
+    MapNode *currentNode;
+
+    openSet.push_back(RevelesMap::instance()->GetNodeFromCoord(currentLocation));
+
+    while(openSet.count() > 0)
+    {
+        currentNode = openSet[0];
+
+        // Compare the fCost of the current node to the fCost of
+        // the node at index i of the openSet. CurrentNode is always
+        // the tile at index 0 of the openSet.
+        for(int i = 1; i < openSet.count(); i++)
+        {
+            if((openSet[i]->fCost() < currentNode->fCost()) || (openSet[i]->fCost() == currentNode->fCost()))
+            {
+                currentNode = openSet[i];
+            }
+        }
+    }
+
+    // Remove the node from the openSet
+    // and add it to the closed set
+    openSet.removeOne(currentNode);
+    closedSet.insert(currentNode);
+
+    // If we have reached our destination,
+    // quit searching and retrace the path
+    // back to the start.
+    if(currentNode == endNode)
+    {
+        RetracePath(endNode);
+        return;
+    }
+
+    QList<MapNode*> neighborsList = GetNeighbors(currentNode);
+
+    foreach(MapNode *n, neighborsList)
+    {
+        // Check if the tile is non-traversable
+        if((n->nt == WALL) || (n->nt == STAIRS) || closedSet.contains(n))
+           continue;
+
+        int newMoveCostToNeighbor = currentNode->gCost + GetDistance(currentNode->coord, n->coord);
+
+        if((newMoveCostToNeighbor < n->gCost) || (!openSet.contains(n)))
+        {
+            n->gCost = newMoveCostToNeighbor;
+            n->hCost = GetDistance(n->coord, endNode->coord);
+            n->parent = currentNode;
+
+            if(!openSet.contains(n))
+            {
+                openSet.push_back(n);
+            }
+
+        }
+    }
+
+//    emit PathReady(path);
 }
 
-QList<GPSCoord> NavigationAssisiant::GetNeighbors(GPSCoord node)
+QList<MapNode *> NavigationAssisiant::GetNeighbors(MapNode *node)
 {
+    QList<MapNode*> neighbors;
 
+    for(int x = -1; x <= 1; x++)
+    {
+        for(int y = -1; y <= 1; y++)
+        {
+            if((x == 0) && (y == 0))
+                continue;
+
+            int checkX = node->mapX + x;
+            int checkY = node->mapY + y;
+
+            if((checkX >= 0) && (checkX < 120) && (checkY >= 0) && (checkY < 63))
+                neighbors.push_back(RevelesMap::instance()->GetNodeFromPoint(checkX, checkY));
+        }
+    }
+
+    return neighbors;
+}
+
+void NavigationAssisiant::RetracePath(MapNode *end)
+{
+    MapNode *current = end;
+    QList<MapNode*> temp;
+
+    do
+    {
+        temp.push_back(current);
+        current = current->parent;
+    }
+    while(current->coord != currentLocation);
+
+    int i = 0, j = temp.size()/* - 1*/;
+
+    while(i < j)
+    {
+        current->parent->child = current;
+        current = current->parent;
+//        MapNode *n = temp[i];
+//        temp[i] = temp[j];
+//        temp[j] = n;
+        i++;
+//        j--;
+    }
+
+    // This should be a linked list from
+    // the currentLocation to the destination.
+    path = current;
 }
 
 /**
@@ -163,46 +274,34 @@ void NavigationAssisiant::Orient()
 
 void NavigationAssisiant::FindBearing()
 {
-    Vector2f locVec(currentLocation.latitude, currentLocation.longitude);
-    Vector2f destVec(destination.latitude, destination.longitude);
+    if(currentNode != NULL && nextNode != NULL)
+    {
+        Vector2f locVec(currentNode->coord.latitude, currentNode->coord.longitude);
+        Vector2f destVec(nextNode->coord.latitude, nextNode->coord.longitude);
 
-    double phi1 = locVec.x() * (M_PI / 180.0);
-    double phi2 = destVec.x() * (M_PI / 180.0);
-    double lambda1 = locVec.y() * (M_PI / 180.0);
-    double lambda2 = destVec.y() * (M_PI / 180.0);
+        double phi1 = locVec.x() * (M_PI / 180.0);
+        double phi2 = destVec.x() * (M_PI / 180.0);
+        double lambda1 = locVec.y() * (M_PI / 180.0);
+        double lambda2 = destVec.y() * (M_PI / 180.0);
 
-    double y = sin(lambda2 - lambda1) * cos(phi2);
-    double x = cos(phi1) * sin(phi2) - sin(phi1) * cos(phi2) * cos(lambda2 - lambda1);
+        double y = sin(lambda2 - lambda1) * cos(phi2);
+        double x = cos(phi1) * sin(phi2) - sin(phi1) * cos(phi2) * cos(lambda2 - lambda1);
 
-    // Bearing (in degrees)
-    double b = atan2(y, x) * (180.0 / M_PI);
+        // Bearing (in degrees)
+        double b = atan2(y, x) * (180.0 / M_PI);
 
-    // Convert bearing to compass bearing
-    double cb = fmod(b + 360.0,  360.0);
+        // Convert bearing to compass bearing
+        double cb = fmod(b + 360.0,  360.0);
 
-    //Final bearing
-    double fb = fmod(b + 180.0, 360.0);
+        //Final bearing
+        double fb = fmod(b + 180.0, 360.0);
 
-    Logger::writeLine(instance(), QString("        Bearing: %1 deg.").arg(b));
-    Logger::writeLine(instance(), QString("Compass Bearing: %1 deg.").arg(cb));
-    Logger::writeLine(instance(), QString("  Final Bearing: %1 deg.").arg(fb));
+        Logger::writeLine(instance(), QString("        Bearing: %1 deg.").arg(b));
+        Logger::writeLine(instance(), QString("Compass Bearing: %1 deg.").arg(cb));
+        Logger::writeLine(instance(), QString("  Final Bearing: %1 deg.").arg(fb));
 
-//    if(destVec != TUPF(0.0, 0.0))
-//    {
-//        VectorPolar2f resultant = toPolar(destVec - locVec);
-
-//        // Adjust vector angle to compass angle
-//        float rAng = resultant.degrees() + 90;
-
-//        if(rAng < headingAngle)
-//        {
-//            // Turn right
-//        }
-//        else
-//        {
-//            // Turn left
-//        }
-//    }
+        bearingAngle = b;
+    }
 }
 
 /*
@@ -212,9 +311,62 @@ void NavigationAssisiant::FindBearing()
  */
 void NavigationAssisiant::Navigate()
 {
+    if(path != NULL)
+    {
+        currentNode = path;
+        nextNode = path->child;
+
+        if(currentNode == NULL)
+        {
+            Logger::writeLine(instance(), Reveles::END_OF_PATH);
+            return;
+        }
+
+        FindBearing();
+        Vector2f locVec(currentNode->coord.latitude, currentNode->coord.longitude);
+        Vector2f destVec(nextNode->coord.latitude, nextNode->coord.longitude);
+
+        // if angle is not about 0 degrees,
+        // then Reveles needs to turn.
+        //
+        //  angle < 180 => turn right
+        //  angle > 180 => turn left
+        //
+        // Remember to back up slowly! Don't floor it!
+
+        if(destVec != TUPF(0.0, 0.0))
+        {
+            VectorPolar2f resultant = toPolar(destVec - locVec);
+
+            // Adjust vector angle to compass angle
+            float rAng = resultant.degrees() + 90;
+
+            if(rAng < 350 && rAng > 10)
+            {
+                if(rAng < headingAngle)
+                {
+                    // Turn right
+                    RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+                }
+                else
+                {
+                    // Turn left
+                    RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+                }
+
+                RevelesIO::instance()->SetMotorDirection(M_REV);
+            }
+            else
+            {
+                RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+                RevelesIO::instance()->SetMotorDirection(M_FWD);
+            }
+        }
+    }
+
     // Wander mode:
     //      Find node in map data that is adjacent to an UNKNOWN
-    //      node type.
+    //      MapNode type.
     //          If no node is found, return.
     //          If a node is found, go to it. Continue until no
     //           UNKNOWN nodes are left on map.

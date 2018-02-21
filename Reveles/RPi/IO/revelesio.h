@@ -23,8 +23,8 @@
 #define SEL_A    0 // GPIO-17
 #define SEL_B    2 // GPIO-27
 #define  ECHO    3 // GPIO-22
-#define SIG_1   12 // GPIO-10
-#define SIG_2   13 // GPIO-9
+#define   SIG   12 // GPIO-10
+//#define SIG_2   13 // GPIO-9
 #define  TRIG    7 // GPIO-4
 //---------------------------
 
@@ -35,10 +35,31 @@
 
 //-----------------------
 //  I2C Device Addresses
-//#define  XG_ADDR  0x6B <-- moved to lsm9ds1.h
-//#define MAG_ADDR  0x1E <-|
-#define  ARDUINO  0x04
+#define ARDUINO             0x04
+#define NUCLEO_FRONT        0x0A
+#define NUCLEO_REAR         0x0B
 
+// The TOF addresses may need to be bit shifted;
+// if we use them from here at all.
+
+// NOTE: Left and Right are what the
+//       ToF board treats as Left and Right.
+//       NOT what left and right are relative to
+//       Reveles.
+
+#define TOF_F_CENTER        0x54
+#define TOF_F_LEFT          0x56
+#define TOF_F_RIGHT         0x58
+#define TOF_R_CENTER        0x60
+#define TOF_R_RIGHT         0x62
+#define TOF_R_LEFT          0x64
+#define TOF_RIGHT           0x66
+#define TOF_LEFT            0x68
+// GPIO expanders connect to the Seven-Seg displays
+// on the ToF breakout board. Each controls 2 of the
+// 4 displays.
+#define GPIO_EXPANDER_U19   0x42
+#define GPIO_EXPANDER_U21   0x43
 /// TODO: Add ToF I2C addresses
 //-----------------------
 
@@ -65,8 +86,8 @@ public:
     void ReadGPS();
 
     int triggerUltrasonic(uint8_t sel);
-    int ReadTimeOfFlight();
-    bool readPIR(bool rear);
+    int ReadTimeOfFlight(int sensorNum);
+    bool readPIR(uint8_t sel);
 
     MagDirection ReadMagnetometer();
     AccelDirection ReadAccelerometer();
@@ -79,8 +100,9 @@ private:
     bool isrWait, arduinoFound;
     bool XGAvailable, MagAvailable;
 
-    int fdArduino; // File descriptor for Arduino
-    int fdToF[6];  // Array of file desriptors for Time of Flight sensors.
+    int fdNucleo[2];  // Array of file descriptors for Nucleo-F401RE (2)
+    int fdArduino;    // File descriptor for Arduino
+    int fdToF[6];     // Array of file desriptors for Time of Flight sensors.
 
     int dist, inch, tofDist;
     int8_t motorDir;

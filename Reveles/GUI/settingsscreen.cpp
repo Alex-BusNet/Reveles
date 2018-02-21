@@ -12,8 +12,23 @@ SettingsScreen::SettingsScreen(QWidget *parent) :
 
     ui->usDistLabel->setText(QChar(0x221E));
     ui->tabWidget->setCurrentIndex(0);
+    ui->coordinateLabel->setText("Latitude: ? \nLongitude: ? \n");
 
-    this->setStyleSheet("QLabel { background-color: red; }");
+    QNetworkInterface wlan0 = QNetworkInterface::interfaceFromName("wlan0");
+    QNetworkInterface eth0 = QNetworkInterface::interfaceFromName("eth0");
+    QString wirelessIP, eth0IP;
+
+    QList<QNetworkAddressEntry> entries = wlan0.addressEntries();
+    if(!entries.isEmpty())
+        wirelessIP = entries.first().ip().toString();
+
+    entries = eth0.addressEntries();
+    if(!entries.empty())
+        eth0IP = entries.first().ip().toString();
+
+    ui->ipLabel->setText(QString("wlan0: %1\neth0: %2").arg(wirelessIP).arg(eth0IP));
+
+    this->setStyleSheet("QWidget:active { background-color: #787878; } QLabel { background-color: red; } QLabel#ipLabel { background-color: transparent; }");
 }
 
 SettingsScreen::~SettingsScreen()
