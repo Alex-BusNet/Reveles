@@ -42,6 +42,9 @@ void NavigationAssisiant::Init()
 void NavigationAssisiant::Start(GPSCoord dest)
 {
     destination = dest;
+    locVec.set(currentLocation);
+    destVec.set(dest);
+
     Orient();
 
     Logger::writeLine(instance(), Reveles::SET_TARGET_DEST.arg(dest.latitude).arg(dest.longitude));
@@ -49,7 +52,7 @@ void NavigationAssisiant::Start(GPSCoord dest)
                       QString::number(GetDistance(currentLocation, destination)) + " ft");
 
     FindPath();
-    Navigate();
+    QtConcurrent::run([=]() { Navigate(); });
 }
 
 void NavigationAssisiant::updateLocation(GPSCoord loc)
@@ -276,9 +279,6 @@ void NavigationAssisiant::FindBearing()
 {
     if(currentNode != NULL && nextNode != NULL)
     {
-        Vector2f locVec(currentNode->coord.latitude, currentNode->coord.longitude);
-        Vector2f destVec(nextNode->coord.latitude, nextNode->coord.longitude);
-
         double phi1 = locVec.x() * (M_PI / 180.0);
         double phi2 = destVec.x() * (M_PI / 180.0);
         double lambda1 = locVec.y() * (M_PI / 180.0);
@@ -311,7 +311,7 @@ void NavigationAssisiant::FindBearing()
  */
 void NavigationAssisiant::Navigate()
 {
-    if(path != NULL)
+    while(path != NULL)
     {
         currentNode = path;
         nextNode = path->child;
@@ -323,8 +323,8 @@ void NavigationAssisiant::Navigate()
         }
 
         FindBearing();
-        Vector2f locVec(currentNode->coord.latitude, currentNode->coord.longitude);
-        Vector2f destVec(nextNode->coord.latitude, nextNode->coord.longitude);
+
+        locVec.set(currentNode->coord);
 
         // if angle is not about 0 degrees,
         // then Reveles needs to turn.
@@ -341,27 +341,29 @@ void NavigationAssisiant::Navigate()
             // Adjust vector angle to compass angle
             float rAng = resultant.degrees() + 90;
 
-            if(rAng < 350 && rAng > 10)
+            if(rAng < 355 && rAng > 5)
             {
                 if(rAng < headingAngle)
                 {
                     // Turn right
-                    RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_RIGHT});
                 }
                 else
                 {
                     // Turn left
-                    RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_LEFT});
                 }
 
-                RevelesIO::instance()->SetMotorDirection(M_REV);
+                RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_REV});
             }
             else
             {
-                RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
-                RevelesIO::instance()->SetMotorDirection(M_FWD);
+                RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, RET_NEUTRAL});
+                RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, M_FWD});
             }
         }
+
+        delay(500);
     }
 
     // Wander mode:

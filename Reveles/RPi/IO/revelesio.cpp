@@ -4,6 +4,7 @@
 #include <math.h>
 #include "Common/logger.h"
 #include "Common/messages.h"
+#include <QtConcurrent>
 #include <cstdlib>
 
 Q_GLOBAL_STATIC(RevelesIO, rio)
@@ -45,6 +46,11 @@ void RevelesIO::initIO()
 
     Logger::writeLine(instance(), QString("Arduino found at 0x%1: %2").arg(ARDUINO, 2, 16, QChar('0')).arg(B2STR(arduinoFound)));
 
+    for(int i = 0; i < 8; i++)
+    {
+        tofDist[i] = 66;
+    }
+
     lastKnownCoord = GPSCoord{0, 0};
     agm = new LSM9DS1();
     agm->setup();
@@ -53,13 +59,42 @@ void RevelesIO::initIO()
     MagAvailable = agm->MagFound();
 
     isrWait = false;
+    stop = false;
     dist = 0;
     inch = 156;
     motorDir = M_FWD;
 	servoDir = RET_NEUTRAL;
 
      // Placeholder, any value less than 48 will trigger E-Stop on the Arduino
-    tofDist = 50; // inches
+//    tofDist = 50; // inches
+}
+
+void RevelesIO::EnqueueRequest(RIOData riod)
+{
+    ioRequestQueue.enqueue(riod);
+}
+
+void RevelesIO::StartNav()
+{
+    QtConcurrent::run([=]() { ParseQueue(); } );
+
+    QtConcurrent::run([=]()
+    {
+        while(!stop)
+        {
+            for(int i = 0; i < 8; i++)
+            {
+                ReadTimeOfFlight(i);
+            }
+
+            delay(500);
+        }
+    });
+}
+
+void RevelesIO::StopNav()
+{
+    stop = true;
 }
 
 RevelesIO::RevelesIO()
@@ -123,7 +158,8 @@ void RevelesIO::SendMotorUpdate()
     delay(85);
     wiringPiI2CWrite(fdArduino, motorDir);
     delay(85);
-    wiringPiI2CWrite(fdArduino, tofDist);
+    /// NOTE: We need to update this part based ontravel direction.
+    wiringPiI2CWrite(fdArduino, tofDist[1]);
     delay(85);
     wiringPiI2CWrite(fdArduino, END);
 //    delay(85);
@@ -132,7 +168,7 @@ void RevelesIO::SendMotorUpdate()
     Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(CMD_M, 2, 16, QChar('0')));
     Logger::writeLine(instance(), QString("US Dist:       %1 in").arg(inch, 4, 10, QChar('0')));
     Logger::writeLine(instance(), QString("Motor Dir:     0x%1").arg(motorDir, 2, 16, QChar('0')));
-    Logger::writeLine(instance(), QString("ToF Dist:      %1 in").arg(tofDist, 4, 10, QChar('0')));
+    Logger::writeLine(instance(), QString("ToF Dist:      %1 in").arg(tofDist[1], 4, 10, QChar('0')));
     Logger::writeLine(instance(), QString("END:           0x%1").arg(END, 2, 16, QChar('0')));
 }
 
@@ -166,7 +202,7 @@ void RevelesIO::SendServoUpdate()
 	wiringPiI2CWrite(fdArduino, CMD_S);
 	delay(85);
 	wiringPiI2CWrite(fdArduino, servoDir);
-//	delay(85);
+    delay(85);
 	
 	if(servoDir == TURN_LEFT)
         angle = 180;
@@ -280,38 +316,7 @@ int RevelesIO::triggerUltrasonic(uint8_t sel)
 
 int RevelesIO::ReadTimeOfFlight(int sensorNum)
 {
-    if(sensorNum < 4)
-    {
-        wiringPiI2CWrite(fdNucleo[0], START);
-        delay(85);
-        wiringPiI2CWrite(fdNucleo[0], CMD_T);
-        delay(85);
-        wiringPiI2CWrite(fdNucleo[0], sensorNum);
-        delay(85);
-        wiringPiI2CWrite(fdNucleo[0], END);
-        delay(85);
-
-        tofDist = wiringPiI2CRead(fdNucleo[0]);
-        Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_FRONT).arg(tofDist));
-    }
-    else
-    {
-        wiringPiI2CWrite(fdNucleo[1], START);
-        delay(85);
-        wiringPiI2CWrite(fdNucleo[1], CMD_T);
-        delay(85);
-        wiringPiI2CWrite(fdNucleo[1], (sensorNum - 4));
-        delay(85);
-        wiringPiI2CWrite(fdNucleo[1], END);
-        delay(85);
-
-        tofDist = wiringPiI2CRead(fdNucleo[1]);
-        Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_REAR).arg(tofDist));
-    }
-
-    tofDist = 50; // Remove this line once we have I2C response with Nucleo working.
-
-    return tofDist;
+    return tofDist[sensorNum];
 }
 
 bool RevelesIO::readPIR(uint8_t sel)
@@ -353,6 +358,65 @@ bool RevelesIO::hasXG()
 bool RevelesIO::hasMag()
 {
     return this->MagAvailable;
+}
+
+void RevelesIO::ParseQueue()
+{
+    while(!stop)
+    {
+        if(!ioRequestQueue.isEmpty())
+        {
+            RIOData riod = ioRequestQueue.dequeue();
+            if(riod.cmd == IO_MOTOR)
+            {
+                SetMotorDirection(riod.data);
+            }
+            else if (riod.cmd == IO_GPS)
+            {
+                SendGPSRequest();
+            }
+            else if(riod.cmd == IO_SERVO)
+            {
+                SetServoDirection(riod.data);
+            }
+            else if(riod.cmd == IO_TOF)
+            {
+                ReadTimeOfFlight(riod.data);
+            }
+        }
+    }
+}
+
+void RevelesIO::SendToFRequest(int sensorNum)
+{
+    if(sensorNum < 4)
+    {
+        wiringPiI2CWrite(fdNucleo[0], START);
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[0], CMD_T);
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[0], sensorNum);
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[0], END);
+        delay(85);
+
+        tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[0]);
+        Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_FRONT).arg(tofDist[sensorNum]));
+    }
+    else
+    {
+        wiringPiI2CWrite(fdNucleo[1], START);
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[1], CMD_T);
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[1], (sensorNum - 4));
+        delay(85);
+        wiringPiI2CWrite(fdNucleo[1], END);
+        delay(85);
+
+        tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[1]);
+        Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_REAR).arg(tofDist[sensorNum]));
+    }
 }
 
 void GPS_Response_Ready()

@@ -8,6 +8,7 @@
  */
 
 #include <QObject>
+#include <QQueue>
 #include <stdint.h>
 #include <chrono>
 
@@ -75,6 +76,10 @@ public:
     static RevelesIO *instance();
     void initIO();
 
+    void EnqueueRequest(RIOData riod);
+    void StartNav();
+    void StopNav();
+
     void SendMotorUpdate();
     void SetMotorDirection(uint8_t dir);
     void SendGPSRequest();
@@ -102,18 +107,23 @@ private:
 
     int fdNucleo[2];  // Array of file descriptors for Nucleo-F401RE (2)
     int fdArduino;    // File descriptor for Arduino
-    int fdToF[6];     // Array of file desriptors for Time of Flight sensors.
+    int fdToF[8];     // Array of file desriptors for Time of Flight sensors.
 
-    int dist, inch, tofDist;
+    int dist, inch, tofDist[8];
     int8_t motorDir;
     int8_t servoDir;
     long durat;
 
+    QQueue<RIOData> ioRequestQueue;
+    bool stop;
+
     GPSCoord lastKnownCoord;
-
     LSM9DS1 *agm;
-
     std::chrono::steady_clock::time_point begin, end;
+
+    // Functions
+    void ParseQueue();
+    void SendToFRequest(int sensorNum);
 
 signals:
     void echoReady(float dist, QString unit);

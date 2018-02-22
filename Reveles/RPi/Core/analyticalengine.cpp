@@ -98,6 +98,7 @@ void AnalyticalEngine::Start()
         {
             CheckEnv();
             ProcessEnv();
+            delay(500);
         }
     });
 }
@@ -192,14 +193,14 @@ void AnalyticalEngine::ProcessEnv()
     // DON'T GO DOWN THE STAIRS!!!
     if(us < 12 /* inches */)
     {
-        RevelesIO::instance()->SetMotorDirection(M_STOP);
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP });
 
         if(motorDir == M_FWD)
             motorDir = M_REV;
         else if(motorDir == M_REV)
             motorDir = M_FWD;
 
-        RevelesIO::instance()->SetMotorDirection(motorDir);
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir });
 
         Logger::writeLine(instance(), QString("STAIRS FOUND! Backtracking.."));
     }
@@ -238,16 +239,16 @@ void AnalyticalEngine::AdjustPath_Inanimate()
     if (tof[3] > 36) // inches
     {
         // Timing between commands may need to be adjusted.
-        RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT });
         servoDir = TURN_RIGHT;
         delay(350);
-        RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL });
         servoDir = RET_NEUTRAL;
         delay(350);
-        RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT });
         servoDir = TURN_LEFT;
         delay(350);
-        RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL });
         servoDir = RET_NEUTRAL;
     }
     else
@@ -256,16 +257,16 @@ void AnalyticalEngine::AdjustPath_Inanimate()
         if (tof[7] > 36) // inches
         {
             // Timing between commands may need to be adjusted
-            RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT });
             servoDir = TURN_LEFT;
             delay(350);
-            RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL });
             servoDir = RET_NEUTRAL;
             delay(350);
-            RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT });
             servoDir = TURN_RIGHT;
             delay(350);
-            RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL });
             servoDir = RET_NEUTRAL;
         }
     }

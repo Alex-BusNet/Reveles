@@ -3,6 +3,7 @@
 
 #include <tuple>
 #include <cmath>
+#include "datatypes.h"
 
 using namespace std;
 
@@ -11,6 +12,9 @@ class Vector2f
 public:
     Vector2f();
     Vector2f(float i, float j);
+
+    void set(float i, float j) { this->i = i; this->j = j; }
+    void set(GPSCoord gpsc) { this->i = gpsc.longitude; this->j = gpsc.latitude; }
 
     bool operator==(const Vector2f &other)
     {

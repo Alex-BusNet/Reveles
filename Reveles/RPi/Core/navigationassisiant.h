@@ -53,6 +53,7 @@ private:
     MapNode *nextNode;
     MapNode *currentNode;
     GPSCoord currentLocation, destination;
+    Vector2f destVec, locVec;
     Direction heading;
     double bearingAngle;
     double headingAngle;

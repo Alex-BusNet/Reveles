@@ -223,4 +223,8 @@ static QMap<char, qulonglong> asciiMap =
     {'S', 0x53}  //83
 };
 
+enum IOCommand {IO_MOTOR, IO_SERVO, IO_GPS, IO_TOF};
+
+struct RIOData{ IOCommand cmd; uint8_t data; };
+
 #endif // DATATYPES_H
