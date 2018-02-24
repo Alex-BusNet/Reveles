@@ -15,6 +15,12 @@
 #define OCT  8
 #define DEC 10
 
+#define MOTOR_MAX_SPEED  156
+#define MOTOR_HALF_SPEED  78
+
+#define THRESHOLD_LATITUDE  (0.0000103651 / 2)
+#define THRESHOLD_LONGITUDE (0.0000038167 / 2)
+
 struct GPSCoord {
     double latitude;
     double longitude;
@@ -202,6 +208,12 @@ enum I2C_COMMANDS
     CMD_FLUSH   = 0x44
 };
 
+enum IOSelectBits
+{
+    FRONT_US_PIR = 0x00,
+    REAR_US_PIR  = 0x01,
+};
+
 static QMap<char, qulonglong> asciiMap =
 {
     {'.', 0x2E}, //46
@@ -225,6 +237,6 @@ static QMap<char, qulonglong> asciiMap =
 
 enum IOCommand {IO_MOTOR, IO_SERVO, IO_GPS, IO_TOF};
 
-struct RIOData{ IOCommand cmd; uint8_t data; };
+struct RIOData{ IOCommand cmd; uint8_t data; int specData; };
 
 #endif // DATATYPES_H

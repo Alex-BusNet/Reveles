@@ -1,17 +1,16 @@
 #ifndef REVELESCORE_H
 #define REVELESCORE_H
 
-#include <QObject>
+#include "rpi.h"
 #include <QTimer>
+#include <QtGui/QKeyEvent>
 #include <iostream>
 #include <iomanip>
-#include <QtGui/QKeyEvent>
+
 #include "revelesmap.h"
 #include "reveles_dbus_adaptor.h"
 #include "reveles_dbus_interface.h"
-#include "Common/datatypes.h"
-#include "Common/logger.h"
-#include "Common/messages.h"
+
 #include "Core/analyticalengine.h"
 #include "Core/navigationassisiant.h"
 #include "Core/objectdetector.h"

@@ -50,7 +50,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 #endif
     connect(rci, &RevelesDBusInterface::aboutToQuit, this, &RevelesCore::closeCore);
 
-    // Loop the aboutToQuit() signal from the /GUI object to the aboutToQuit() signal from the /Core object
+    // Loop the aboutToQuit() signal from the '/GUI' object to the aboutToQuit() signal from the '/Core' object
     connect(rci, &RevelesDBusInterface::aboutToQuit, rdba, &RevelesDBusAdaptor::aboutToQuit);
 
     // Outbound comms (CORE -> GUI)
@@ -64,7 +64,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     // Additional comms (CORE -> CORE)
     connect(this, &RevelesCore::currentLocation, NavigationAssisiant::instance(), &NavigationAssisiant::updateLocation);
     connect(RevelesIO::instance(), &RevelesIO::motorDirectionUpdate, AnalyticalEngine::instance(), &AnalyticalEngine::SetMotorDirection);
-
+    connect(AnalyticalEngine::instance(), &AnalyticalEngine::StairsDetected, NavigationAssisiant::instance(), &NavigationAssisiant::EStop);
 #ifdef USE_OBJ_DETECT
     XInitThreads();
     ObjectDetector::instance()->Init();
@@ -83,11 +83,11 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     emit sendMagStatus(RevelesIO::instance()->hasMag());
 
     commsGood = false;
-    updateInterval = 1000;
+    updateInterval = 250; // ms
 
     /// TODO: Change this to ping GPS module for current location
-    dest = GPSCoord{0, 0};
     loc = FA_SE_CORNER;
+    dest = loc; //GPSCoord{0, 0};
 
 #ifdef USE_OBJ_DETECT
 #ifdef OBJ_DETECT_DEBUG
@@ -117,6 +117,9 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     delay(1000);
     GPSCoord g = RevelesIO::instance()->GetLastGPSCoord();
     Logger::writeLine(this, QString("Response: %1, %2").arg(g.latitude).arg(g.longitude));
+
+    Logger::writeLine(this, QString("Orienting Reveles..."));
+    NavigationAssisiant::instance()->Orient();
 
     coreTimer = new QTimer();
     coreTimer->setInterval(updateInterval);
@@ -176,13 +179,13 @@ void RevelesCore::updateOrientation()
 void RevelesCore::readAGM()
 {
     MagDirection md = RevelesIO::instance()->ReadMagnetometer();
-//    Logger::writeLine(this, Reveles::MAG_DATA.arg(md.x, 5, 10).arg(md.y, 5, 10).arg(md.z, 5, 10));
+    Logger::writeLine(this, Reveles::MAG_DATA.arg(md.x, 5, 'g', 10).arg(md.y, 5, 'g', 10).arg(md.z, 5, 'g', 10));
 
     AccelDirection ad = RevelesIO::instance()->ReadAccelerometer();
-//    Logger::writeLine(this, Reveles::ACCEL_DATA.arg(ad.x, 5, 10).arg(ad.y, 5, 10).arg(ad.z, 5, 10));
+    Logger::writeLine(this, Reveles::ACCEL_DATA.arg(ad.x, 5, 'g', 10).arg(ad.y, 5, 'g', 10).arg(ad.z, 5, 'g', 10));
 
     GyroDirection gd = RevelesIO::instance()->ReadGyroscope();
-//    Logger::writeLine(this, Reveles::GYRO_DATA.arg(gd.x, 5, 10).arg(gd.y, 5, 10).arg(gd.z, 5, 10));
+    Logger::writeLine(this, Reveles::GYRO_DATA.arg(gd.x, 5, 'g', 10).arg(gd.y, 5, 'g', 10).arg(gd.z, 5, 'g', 10));
 }
 
 void RevelesCore::readSensor()
@@ -194,7 +197,7 @@ void RevelesCore::readSensor()
 
 void RevelesCore::updateMapData()
 {
-    RevelesIO::instance()->SendGPSRequest();
+    RevelesIO::instance()->EnqueueRequest(RIOData{IO_GPS, 0, 0});
     loc = RevelesIO::instance()->GetLastGPSCoord();
     emit currentLocation(loc);
 }
@@ -203,8 +206,9 @@ void RevelesCore::coreLoop()
 {
 //    static int directionCount = 0;
 
-    NavigationAssisiant::instance()->Orient();
+//    NavigationAssisiant::instance()->Orient();
     updateMapData();
+    readAGM();
 
     //=========================
     // I2C motor and servo drive testing
@@ -235,7 +239,6 @@ void RevelesCore::coreLoop()
 //    directionCount++;
     //=========================
 
-    readAGM();
 }
 
 void RevelesCore::closeCore()

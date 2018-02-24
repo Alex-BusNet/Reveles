@@ -62,6 +62,7 @@ void RevelesIO::initIO()
     stop = false;
     dist = 0;
     inch = 156;
+    angle = 90;
     motorDir = M_FWD;
 	servoDir = RET_NEUTRAL;
 
@@ -195,7 +196,6 @@ void RevelesIO::SendGPSRequest()
 
 void RevelesIO::SendServoUpdate()
 {
-    int angle = 90;
     // Total time to transmit: 425ms
 	wiringPiI2CWrite(fdArduino, START);
 	delay(85);
@@ -369,6 +369,7 @@ void RevelesIO::ParseQueue()
             RIOData riod = ioRequestQueue.dequeue();
             if(riod.cmd == IO_MOTOR)
             {
+                inch = riod.specData;
                 SetMotorDirection(riod.data);
             }
             else if (riod.cmd == IO_GPS)
@@ -377,6 +378,7 @@ void RevelesIO::ParseQueue()
             }
             else if(riod.cmd == IO_SERVO)
             {
+                angle = riod.specData;
                 SetServoDirection(riod.data);
             }
             else if(riod.cmd == IO_TOF)

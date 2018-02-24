@@ -1,13 +1,10 @@
 #include "analyticalengine.h"
-#include <QtConcurrent/QtConcurrent>
 #include <iostream>
 #include <QByteArray>
 #include <QString>
 #include <QStringList>
 #include <vector>
 #include "Common/detectionqueue.h"
-#include "Common/logger.h"
-#include "Common/messages.h"
 
 using namespace  std;
 
@@ -193,16 +190,18 @@ void AnalyticalEngine::ProcessEnv()
     // DON'T GO DOWN THE STAIRS!!!
     if(us < 12 /* inches */)
     {
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP });
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
 
         if(motorDir == M_FWD)
             motorDir = M_REV;
         else if(motorDir == M_REV)
             motorDir = M_FWD;
 
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir });
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_HALF_SPEED });
 
         Logger::writeLine(instance(), QString("STAIRS FOUND! Backtracking.."));
+        emit StairsDetected();
+        return;
     }
 
     // Simple path adjustment for now. Values are estimates.
@@ -212,19 +211,19 @@ void AnalyticalEngine::ProcessEnv()
         AdjustPath_Inanimate();
     }
 
-    // Determine if object exists
-
+#ifdef USE_OBJ_DETECT
     // Check the ObjectDetector for any objects.
-//    if(!DetectionQueue::isEmpty())
-//    {
-//        ObjectTracking ot = DetectionQueue::dequeue();
-//        if(ot.dir != NO_STATE)
-//            zoneCount[ot.zone]++;
-//        else
-//            zoneCount[ot.zone]--;
+    if(!DetectionQueue::isEmpty())
+    {
+        ObjectTracking ot = DetectionQueue::dequeue();
+        if(ot.dir != NO_STATE)
+            zoneCount[ot.zone]++;
+        else
+            zoneCount[ot.zone]--;
 
-//        cout << "{NL}[ AnalyticalEngine ] Dir: " << ot.dir << " Index: " << ot.index << " Zone: " << ot.zone << endl;
-//    }
+        cout << "{NL}[ AnalyticalEngine ] Dir: " << ot.dir << " Index: " << ot.index << " Zone: " << ot.zone << endl;
+    }
+#endif
 
     /// TODO: Multi obstacle avoidance handling.
     ///     Note: Some of this handling will
@@ -235,38 +234,38 @@ void AnalyticalEngine::ProcessEnv()
 
 void AnalyticalEngine::AdjustPath_Inanimate()
 {
-    // Read ToF for right wall;
+    // Read ToF for right side
     if (tof[3] > 36) // inches
     {
         // Timing between commands may need to be adjusted.
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT });
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
         servoDir = TURN_RIGHT;
         delay(350);
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL });
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
         servoDir = RET_NEUTRAL;
         delay(350);
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT });
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
         servoDir = TURN_LEFT;
         delay(350);
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL });
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
         servoDir = RET_NEUTRAL;
     }
     else
     {
-        // Read ToF for left wall
+        // Read ToF for left side
         if (tof[7] > 36) // inches
         {
             // Timing between commands may need to be adjusted
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT });
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
             servoDir = TURN_LEFT;
             delay(350);
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL });
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
             servoDir = RET_NEUTRAL;
             delay(350);
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT });
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
             servoDir = TURN_RIGHT;
             delay(350);
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL });
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
             servoDir = RET_NEUTRAL;
         }
     }

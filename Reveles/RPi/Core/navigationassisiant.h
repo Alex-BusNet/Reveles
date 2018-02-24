@@ -1,12 +1,12 @@
 #ifndef NAVIGATIONASSISIANT_H
 #define NAVIGATIONASSISIANT_H
 
-#include <Common/datatypes.h>
-#include <QObject>
-#include <QList>
+#include "rpi.h"
+
 #include <QSet>
 #include <Common/vector2f.h>
 #include <Common/vectorpolar2f.h>
+
 #include "revelesmap.h"
 #include "revelescore.h"
 
@@ -32,6 +32,7 @@ public:
 
 public slots:
     void updateLocation(GPSCoord loc);
+    void EStop();
 
 signals:
     void PathReady(QVector<GPSCoord> path);
@@ -44,7 +45,7 @@ private:
     void RetracePath(MapNode *end);
 
     void Navigate();
-
+    bool VerifyLocation();
     void DeadReckon();
 
     // Variables
@@ -55,6 +56,7 @@ private:
     GPSCoord currentLocation, destination;
     Vector2f destVec, locVec;
     Direction heading;
+    QFuture<void> future;
     double bearingAngle;
     double headingAngle;
 };

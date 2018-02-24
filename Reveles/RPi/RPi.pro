@@ -57,6 +57,7 @@ HEADERS += \
     reveles_dbus_interface.h \
 #    Common/tile.h \
 #    Common/noderenders.h
+    rpi.h
 
 DISTFILES += \
     Data/haarcascade_fullbody.xml \

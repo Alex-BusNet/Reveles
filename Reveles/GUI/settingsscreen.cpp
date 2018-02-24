@@ -28,7 +28,10 @@ SettingsScreen::SettingsScreen(QWidget *parent) :
 
     ui->ipLabel->setText(QString("wlan0: %1\neth0: %2").arg(wirelessIP).arg(eth0IP));
 
-    this->setStyleSheet("QWidget:active { background-color: #787878; } QLabel { background-color: red; } QLabel#ipLabel { background-color: transparent; }");
+    QString settingsStyle = "QWidget { background-color: #787878; }";
+    settingsStyle += "QLabel { background-color: red; } QLabel#ipLabel { background-color: transparent; }";
+
+    this->setStyleSheet(settingsStyle);
 }
 
 SettingsScreen::~SettingsScreen()

@@ -56,7 +56,7 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     ui->addLocationPB->setIcon(*nLoc);
     ui->settingsScreenPB->setIcon(*settings);
 
-    ss = new SettingsScreen(this);
+    ss = new SettingsScreen();
     ss->setGeometry(0,0, this->width(), this->height());
     ss->hide();
 
@@ -122,6 +122,9 @@ void RevelesGui::setLocation(LocationPushButton *pb)
 
     if(hasComms)
         emit SendDestination(dest);
+
+    // Switch the Screen to show the map
+    ui->tabWidget->setCurrentIndex(1);
 }
 
 void RevelesGui::updateLocation(GPSCoord gpsc)

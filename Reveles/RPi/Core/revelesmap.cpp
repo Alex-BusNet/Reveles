@@ -1,8 +1,5 @@
 #include "revelesmap.h"
 
-#define THRESHOLD_LATITUDE  (0.0000103651 / 2)
-#define THRESHOLD_LONGITUDE (0.0000038167 / 2)
-
 Q_GLOBAL_STATIC(RevelesMap, rm)
 
 RevelesMap::RevelesMap()
@@ -64,7 +61,15 @@ MapNode* RevelesMap::GetNodeFromCoord(GPSCoord gpsc)
     tileX = (gpsc.longitude - offsetLong) / 120;
     tileY = (gpsc.latitude - offsetLat) / 63;
 
-    return grid.at(tileX + (120 * tileY));
+    int idx = tileX + (120 * tileY);
+
+    if (idx > grid.size())
+    {
+        Logger::writeLine(instance(), Reveles::IOR);
+        return NULL;
+    }
+
+    return grid.at(idx);
 }
 
 MapNode *RevelesMap::GetNodeFromPoint(int x, int y)

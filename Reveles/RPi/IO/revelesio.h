@@ -109,7 +109,7 @@ private:
     int fdArduino;    // File descriptor for Arduino
     int fdToF[8];     // Array of file desriptors for Time of Flight sensors.
 
-    int dist, inch, tofDist[8];
+    int dist, inch, angle, tofDist[8];
     int8_t motorDir;
     int8_t servoDir;
     long durat;

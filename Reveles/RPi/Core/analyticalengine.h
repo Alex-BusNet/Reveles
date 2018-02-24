@@ -1,11 +1,8 @@
 #ifndef REVELES_ANALYTICALENGINE_H
 #define REVELES_ANALYTICALENGINE_H
-#include <QObject>
-#include <QList>
-#include <QFuture>
-#include <QtConcurrent>
 
-#include "Common/datatypes.h"
+#include "rpi.h"
+
 #include "revelescore.h"
 
 // Passive Infrared Select bits
@@ -57,6 +54,9 @@ public slots:
     void aboutToQuit();
     void stop();
     void SetMotorDirection(uint8_t dir);
+
+signals:
+    void StairsDetected();
 
 private:
     // Variables

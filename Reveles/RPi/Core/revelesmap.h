@@ -1,8 +1,8 @@
 #ifndef REVELESMAP_H
 #define REVELESMAP_H
 
-#include <QObject>
-#include "Common/datatypes.h"
+#include "rpi.h"
+
 #include <vector>
 #include <list>
 #include <string>
@@ -12,8 +12,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include "Common/messages.h"
-#include "Common/logger.h"
 
 using namespace std;
 

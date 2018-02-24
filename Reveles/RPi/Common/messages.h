@@ -32,6 +32,8 @@ namespace Reveles
 
     static const QString START_EQUAL_DEST = "Current location is the same as destination!";
     static const QString END_OF_PATH = "End of path reached. Returning to idle mode.";
+    static const QString COORD_MISMATCH = "Current Node does not match current GPS location.";
+    static const QString IOR = "Index out of range.";
 
     static const QString I2C_MOTOR    = "I2C Motor command:  %1";
     static const QString I2C_GPS_SEND = "I2C GPS Command:  0x%1";

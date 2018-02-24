@@ -1,8 +1,6 @@
 #include "navigationassisiant.h"
-#include <QtConcurrent>
 #include <tuple>
 #include "Common/vectorutils.h"
-#include "Common/logger.h"
 
 //#define TUPI(a,b) (std::tuple<int, int>(a, b))
 //#define TUPD(a,b) (std::tuple<double, double>(a,b))
@@ -52,12 +50,28 @@ void NavigationAssisiant::Start(GPSCoord dest)
                       QString::number(GetDistance(currentLocation, destination)) + " ft");
 
     FindPath();
-    QtConcurrent::run([=]() { Navigate(); });
+    future = QtConcurrent::run([=]() { Navigate(); });
 }
 
 void NavigationAssisiant::updateLocation(GPSCoord loc)
 {
     currentLocation = loc;
+}
+
+/**
+ * @brief NavigationAssisiant::EStop Stops all navigation and restarts.
+ * Used when stairs are detected. This will update the map data clear the current path, abort the
+ * navigation thread, and restart the navigation process.
+ *
+ */
+void NavigationAssisiant::EStop()
+{
+    RevelesMap::instance()->UpdatePath(path->child->mapX, path->child->mapY, STAIRS);
+    path = NULL;
+    if(future.isRunning())
+        future.cancel();
+
+    Start(destination);
 }
 
 /*
@@ -316,10 +330,38 @@ void NavigationAssisiant::Navigate()
         currentNode = path;
         nextNode = path->child;
 
+        if(!VerifyLocation())
+        {
+            Logger::writeLine(instance(), Reveles::COORD_MISMATCH);
+            RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});
+            // Reveles is not moving at the same pace that the path is updating.
+            // Therefore, Reveles should stop and recalculate its path.
+            FindPath();
+            continue;
+        }
+
         if(currentNode == NULL)
         {
             Logger::writeLine(instance(), Reveles::END_OF_PATH);
             return;
+        }
+
+        if(currentNode->nt == UNKNOWN)
+        {
+            int tofDist = RevelesIO::instance()->ReadTimeOfFlight(1);
+            if(tofDist < 24 && !RevelesIO::instance()->readPIR(FRONT_US_PIR))
+            {
+                RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});
+                RevelesMap::instance()->UpdatePath(currentNode->mapX, currentNode->mapY, WALL);
+                FindPath();
+                // We are telling the loop to start over
+                // because we have changed the path.
+                continue;
+            }
+            else
+            {
+                RevelesMap::instance()->UpdatePath(currentNode->mapX, currentNode->mapY, PATH);
+            }
         }
 
         FindBearing();
@@ -339,27 +381,36 @@ void NavigationAssisiant::Navigate()
             VectorPolar2f resultant = toPolar(destVec - locVec);
 
             // Adjust vector angle to compass angle
-            float rAng = resultant.degrees() + 90;
-
-            if(rAng < 355 && rAng > 5)
+            float rAng = 90 - resultant.degrees();
+            Logger::writeLine(instance(), QString("rAng: %1\t headingAngle: %2").arg(rAng, 5, 'g', 10).arg(headingAngle, 5, 'g', 10));
+            if(rAng < -5 && rAng > 5)
             {
                 if(rAng < headingAngle)
                 {
                     // Turn right
-                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_RIGHT});
+                    if(rAng > 90)
+                        RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_RIGHT, 90});
+                    else
+                        RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_RIGHT, rAng});
                 }
                 else
                 {
                     // Turn left
-                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_LEFT});
+                    if(rAng < -90)
+                        RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_LEFT, -90});
+                    else
+                        RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_LEFT, rAng});
                 }
 
-                RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_REV});
+                if((rAng < -90 && rAng >= -180) || (rAng > 90 && rAng <= 180))
+                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_REV, MOTOR_HALF_SPEED});
+                else if((rAng > -90 && rAng <= 180))
+                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_FWD, MOTOR_MAX_SPEED});
             }
             else
             {
-                RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, RET_NEUTRAL});
-                RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, M_FWD});
+                RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, RET_NEUTRAL, 0});
+                RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, M_FWD, MOTOR_MAX_SPEED});
             }
         }
 
@@ -372,6 +423,30 @@ void NavigationAssisiant::Navigate()
     //          If no node is found, return.
     //          If a node is found, go to it. Continue until no
     //           UNKNOWN nodes are left on map.
+}
+
+bool NavigationAssisiant::VerifyLocation()
+{
+//    RevelesIO::instance()->SendGPSRequest();
+//    GPSCoord gpsc = RevelesIO::instance()->GetLastGPSCoord();
+    MapNode *mn = RevelesMap::instance()->GetNodeFromCoord(currentLocation);
+
+    if(mn != NULL)
+    {
+        if(currentNode->mapX = mn->mapX)
+        {
+            if(currentNode->mapY == mn->mapY)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    return false;
 }
 
 void NavigationAssisiant::DeadReckon()

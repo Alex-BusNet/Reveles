@@ -24,7 +24,7 @@ void MapView::setScreenSize(int w, int h)
     {
         for(int y = 0; y < 63; y++)
         {
-            map.push_back(new Tile(posX, posY, ((NodeType)(rand() % 4))));
+            map.push_back(new Tile(posX, posY, UNKNOWN));
             map.last()->SetDim(tileWidth, tileHeight);
 
             posY += tileHeight;
