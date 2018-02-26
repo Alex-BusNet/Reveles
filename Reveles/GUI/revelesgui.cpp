@@ -1,5 +1,6 @@
 #include "revelesgui.h"
 #include "ui_revelesgui.h"
+#include "../RPi/Common/messages.h"
 #include <iostream>
 
 Q_GLOBAL_STATIC(RevelesGui, rGui)
@@ -69,6 +70,12 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     commTimer = new QTimer();
     commTimer->setInterval(500);
     connect(commTimer, &QTimer::timeout, this, &RevelesGui::commTimeout);
+
+    updateTimer = new QTimer();
+    updateTimer->setInterval(2000);
+    connect(updateTimer, &QTimer::timeout, this, &RevelesGui::draw);
+
+    updateTimer->start();
     commTimer->start();
 }
 
@@ -131,7 +138,7 @@ void RevelesGui::updateLocation(GPSCoord gpsc)
 {
     currentLoc = gpsc;
     if(ss != NULL)
-        ss->setCoordText(QString::number(gpsc.latitude) + ", " + QString::number(gpsc.longitude));
+        ss->setCoordText(Reveles::GPS_DATA.arg((gpsc.latitude)).arg(QString::number(gpsc.longitude)));
 
     TrigDispToggle();
 
@@ -155,6 +162,24 @@ void RevelesGui::logMessage(QString msg)
 {
     if(ss != NULL)
         ss->addToLog(msg);
+}
+
+void RevelesGui::magUpdate(MagDirection md)
+{
+    if(ss != NULL)
+        ss->MagReading(md);
+}
+
+void RevelesGui::accelUpdate(AccelDirection ad)
+{
+    if(ss != NULL)
+        ss->AccelReading(ad);
+}
+
+void RevelesGui::gyroUpdate(GyroDirection gd)
+{
+    if(ss != NULL)
+        ss->GyroReading(gd);
 }
 
 void RevelesGui::setupLocations()
@@ -278,6 +303,9 @@ void RevelesGui::setDBusInterface(com::reveles::RevelesCoreInterface *iface)
     connect(rci, &RevelesDBusInterface::getMagStatus, this, &RevelesGui::magStatus);
     connect(rci, &RevelesDBusInterface::sendLogMessage, this, &RevelesGui::logMessage);
     connect(rci, &RevelesDBusInterface::sendPathInfo, mapView, &MapView::SetPathInfo);
+    connect(rci, &RevelesDBusInterface::AccelUpdate, this, &RevelesGui::accelUpdate);
+    connect(rci, &RevelesDBusInterface::MagUpdate, this, &RevelesGui::magUpdate);
+    connect(rci, &RevelesDBusInterface::GyroUpdate, this, &RevelesGui::gyroUpdate);
 }
 
 void RevelesGui::setDBusAdaptor(RevelesDBusAdaptor *rda)
@@ -369,4 +397,9 @@ void RevelesGui::commTimeout()
 void RevelesGui::on_locationsScreenPB_clicked()
 {
     ui->tabWidget->setCurrentIndex(0);
+}
+
+void RevelesGui::draw()
+{
+    this->update();
 }

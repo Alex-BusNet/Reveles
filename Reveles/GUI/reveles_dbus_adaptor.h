@@ -55,6 +55,27 @@ class RevelesDBusAdaptor: public QDBusAbstractAdaptor
 "      <annotation value=\"GPSCoord\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
 "      <arg direction=\"out\" type=\"(dd)\" name=\"loc\"/>\n"
 "    </signal>\n"
+"    <signal name=\"setAGStatus\">\n"
+"      <arg direction=\"out\" type=\"b\" name=\"good\"/>\n"
+"    </signal>\n"
+"    <signal name=\"setMagStatus\">\n"
+"      <arg direction=\"out\" type=\"b\" name=\"good\"/>\n"
+"    </signal>\n"
+"    <signal name=\"sendLogMessage\">\n"
+"      <arg direction=\"out\" type=\"s\" name=\"msg\"/>\n"
+"    </signal>\n"
+"    <signal name=\"MagUpdate\">\n"
+"      <annotation value=\"MagDirection\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
+"      <arg direction=\"out\" type=\"(ddd)\" name=\"md\"/>\n"
+"    </signal>\n"
+"    <signal name=\"AccelUpdate\">\n"
+"      <annotation value=\"AccelDirection\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
+"      <arg direction=\"out\" type=\"(ddd)\" name=\"ad\"/>\n"
+"    </signal>\n"
+"    <signal name=\"GyroUpdate\">\n"
+"      <annotation value=\"GyroDirection\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
+"      <arg direction=\"out\" type=\"(ddd)\" name=\"gd\"/>\n"
+"    </signal>\n"
 "  </interface>\n"
         "")
 public:
@@ -71,8 +92,15 @@ Q_SIGNALS: // SIGNALS
     void locationUpdate(GPSCoord loc);
     void requestCurrentLocation();
     void requestMapUpdate();
+    void setAGStatus(bool good);
     void setDestination(GPSCoord gpsc);
+    void setMagStatus(bool good);
     void setMapUpdateInterval(int milliseconds);
+    void sendLogMessage(QString msg);
+    void sendPathInfo(QVector<GPSCoord> path);
+    void MagUpdate(MagDirection md);
+    void AccelUpdate(AccelDirection ad);
+    void GyroUpdate(GyroDirection gd);
 };
 
 #endif

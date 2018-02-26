@@ -32,19 +32,32 @@ void RevelesIO::initIO()
 //    wiringPiISR(RECIEVE_READY, INT_EDGE_RISING, GPS_Response_Ready);
 
     arduinoFound = false;
+
+    agm = new LSM9DS1();
+    agm->setup();
+
     fdArduino = wiringPiI2CSetup(ARDUINO);
     fdNucleo[0] = wiringPiI2CSetup(NUCLEO_FRONT);
     fdNucleo[1] = wiringPiI2CSetup(NUCLEO_REAR);
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
     uint8_t res = wiringPiI2CRead(fdArduino);
-
+    Logger::writeLine(instance(), QString("Arduino response: 0x%1").arg(res, 2, 16, QChar('0')));
     if((res & COM_CHECK) == COM_CHECK)
         arduinoFound = true;
     else
         arduinoFound = false;
 
-    Logger::writeLine(instance(), QString("Arduino found at 0x%1: %2").arg(ARDUINO, 2, 16, QChar('0')).arg(B2STR(arduinoFound)));
+    if(fdNucleo[0] == -1)
+        cout << "Error at " << NUCLEO_FRONT << ": " << errno << " " << strerror(errno) <<  endl;
+
+    if(fdNucleo[1] == -1)
+        cout << "Error at " << NUCLEO_REAR << ": " << errno << " " << strerror(errno) <<  endl;
+
+    Logger::writeLine(instance(), Reveles::ARDUINO_FOUND.arg(ARDUINO, 2, 16, QChar('0')).arg(B2STR(arduinoFound)));
+    Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_FRONT, 2, 16, QChar('0')).arg((fdNucleo[0] != -1) ? "True":"False"));
+    Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_REAR, 2, 16, QChar('0')).arg((fdNucleo[1] != -1) ? "True":"False"));
+    Logger::writeLine(instance(), Reveles::FILE_DESCRIPTORS.arg(agm->XGFD()).arg(agm->MagFD()).arg(fdArduino).arg(fdNucleo[0]).arg(fdNucleo[1]));
 
     for(int i = 0; i < 8; i++)
     {
@@ -52,19 +65,23 @@ void RevelesIO::initIO()
     }
 
     lastKnownCoord = GPSCoord{0, 0};
-    agm = new LSM9DS1();
-    agm->setup();
 
     XGAvailable = agm->AccelGyroFound();
     MagAvailable = agm->MagFound();
 
     isrWait = false;
-    stop = false;
+    stopParser = false;
+    stopToF = false;
     dist = 0;
     inch = 156;
     angle = 90;
     motorDir = M_FWD;
 	servoDir = RET_NEUTRAL;
+
+    parser = QtConcurrent::run([=]()
+    {
+        ParseQueue();
+    });
 
      // Placeholder, any value less than 48 will trigger E-Stop on the Arduino
 //    tofDist = 50; // inches
@@ -77,11 +94,11 @@ void RevelesIO::EnqueueRequest(RIOData riod)
 
 void RevelesIO::StartNav()
 {
-    QtConcurrent::run([=]() { ParseQueue(); } );
+    if(stopToF) stopToF = false;
 
-    QtConcurrent::run([=]()
+    tofReader = QtConcurrent::run([=]()
     {
-        while(!stop)
+        while(!stopToF)
         {
             for(int i = 0; i < 8; i++)
             {
@@ -95,12 +112,37 @@ void RevelesIO::StartNav()
 
 void RevelesIO::StopNav()
 {
-    stop = true;
+    stopToF = true;
+    if(tofReader.isRunning())
+        tofReader.waitForFinished();
+}
+
+void RevelesIO::CloseIO()
+{
+    Logger::writeLine(instance(), QString("Closing IO..."));
+    stopParser = true;
+    stopToF = true;
+
+    Logger::writeLine(instance(), QString("Exiting IO Queue parser.."));
+    if(parser.isRunning())
+        parser.cancel();
+
+    Logger::writeLine(instance(), QString("Exiting ToF reader..."));
+    if(tofReader.isRunning())
+        tofReader.waitForFinished();
+
+    Logger::writeLine(instance(), QString("Done."));
 }
 
 RevelesIO::RevelesIO()
 {
 
+}
+
+RevelesIO::~RevelesIO()
+{
+    if(agm != NULL)
+        delete agm;
 }
 
 //================================================================================
@@ -331,21 +373,21 @@ bool RevelesIO::readPIR(uint8_t sel)
 
 MagDirection RevelesIO::ReadMagnetometer()
 {
-    if(!MagAvailable) { return MagDirection{0.0f, 0.0f, 0.0f}; }
+    if(!MagAvailable) { return MagDirection{0.0, 0.0, 0.0}; }
 
     return agm->ReadMag();
 }
 
 AccelDirection RevelesIO::ReadAccelerometer()
 {
-    if(!XGAvailable) { return AccelDirection{0.0f, 0.0f, 0.0f}; }
+    if(!XGAvailable) { return AccelDirection{0.0, 0.0, 0.0}; }
 
     return agm->ReadAccel();
 }
 
 GyroDirection RevelesIO::ReadGyroscope()
 {
-    if(!XGAvailable) { return GyroDirection{0.0f, 0.0f, 0.0f}; }
+    if(!XGAvailable) { return GyroDirection{0.0, 0.0, 0.0}; }
 
     return agm->ReadGyro();
 }
@@ -362,7 +404,7 @@ bool RevelesIO::hasMag()
 
 void RevelesIO::ParseQueue()
 {
-    while(!stop)
+    while(!stopParser)
     {
         if(!ioRequestQueue.isEmpty())
         {
@@ -387,6 +429,36 @@ void RevelesIO::ParseQueue()
             }
         }
     }
+
+    Logger::writeLine(instance(), QString("Clearing queue."));
+    // Clear the queue if there are still requests to be processed.
+    if(!ioRequestQueue.isEmpty())
+    {
+        while(!ioRequestQueue.isEmpty())
+        {
+            RIOData riod = ioRequestQueue.dequeue();
+            if(riod.cmd == IO_MOTOR)
+            {
+                inch = riod.specData;
+                SetMotorDirection(riod.data);
+            }
+            else if (riod.cmd == IO_GPS)
+            {
+                SendGPSRequest();
+            }
+            else if(riod.cmd == IO_SERVO)
+            {
+                angle = riod.specData;
+                SetServoDirection(riod.data);
+            }
+            else if(riod.cmd == IO_TOF)
+            {
+                ReadTimeOfFlight(riod.data);
+            }
+        }
+    }
+
+    Logger::writeLine(instance(), QString("Done."));
 }
 
 void RevelesIO::SendToFRequest(int sensorNum)

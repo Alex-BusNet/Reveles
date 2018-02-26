@@ -30,6 +30,10 @@ struct GPSCoord {
         return ((this->latitude == other.latitude)
                && (this->longitude == other.longitude));
     }
+    bool operator==(std::tuple<double, double> td)
+    {
+        return((this->latitude == std::get<0>(td)) && (this->longitude == std::get<1>(td)));
+    }
 
     bool operator!=(GPSCoord& other)
     {
@@ -52,7 +56,16 @@ struct GPSCoord {
     }
 };
 
+struct AccelDirection { double x, y, z; };
+
+struct MagDirection { double x, y, z; };
+
+struct GyroDirection { double x, y, z; };
+
 Q_DECLARE_METATYPE(GPSCoord)
+Q_DECLARE_METATYPE(AccelDirection)
+Q_DECLARE_METATYPE(MagDirection)
+Q_DECLARE_METATYPE(GyroDirection)
 
 //====================================================
 // D-Bus Custom-type marshall and demarshall operator overloads.
@@ -76,14 +89,69 @@ inline const QDBusArgument &operator>>(const QDBusArgument &argument, GPSCoord &
     return argument;
 }
 
+
+inline QDBusArgument &operator<<(QDBusArgument &argument, const AccelDirection& ad)
+{
+    argument.beginStructure();
+    argument << ad.x;
+    argument << ad.y;
+    argument << ad.z;
+    argument.endStructure();
+    return argument;
+}
+
+inline const QDBusArgument &operator>>(const QDBusArgument &argument, AccelDirection &ad)
+{
+    argument.beginStructure();
+    argument >> ad.x;
+    argument >> ad.y;
+    argument >> ad.z;
+    argument.endStructure();
+    return argument;
+}
+
+inline QDBusArgument &operator<<(QDBusArgument &argument, const MagDirection& md)
+{
+    argument.beginStructure();
+    argument << md.x;
+    argument << md.y;
+    argument << md.z;
+    argument.endStructure();
+    return argument;
+}
+
+inline const QDBusArgument &operator>>(const QDBusArgument &argument, MagDirection &md)
+{
+    argument.beginStructure();
+    argument >> md.x;
+    argument >> md.y;
+    argument >> md.z;
+    argument.endStructure();
+    return argument;
+}
+
+inline QDBusArgument &operator<<(QDBusArgument &argument, const GyroDirection& gd)
+{
+    argument.beginStructure();
+    argument << gd.x;
+    argument << gd.y;
+    argument << gd.z;
+    argument.endStructure();
+    return argument;
+}
+
+inline const QDBusArgument &operator>>(const QDBusArgument &argument, GyroDirection &gd)
+{
+    argument.beginStructure();
+    argument >> gd.x;
+    argument >> gd.y;
+    argument >> gd.z;
+    argument.endStructure();
+    return argument;
+}
+
 QT_END_NAMESPACE
 //====================================================
-
-struct AccelDirection { float x, y, z; };
-
-struct MagDirection { float x, y, z; };
-
-struct GyroDirection { float x, y, z; };
 
 struct DecisionPoint {
     MagDirection face;

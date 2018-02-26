@@ -29,7 +29,8 @@ SettingsScreen::SettingsScreen(QWidget *parent) :
     ui->ipLabel->setText(QString("wlan0: %1\neth0: %2").arg(wirelessIP).arg(eth0IP));
 
     QString settingsStyle = "QWidget { background-color: #787878; }";
-    settingsStyle += "QLabel { background-color: red; } QLabel#ipLabel { background-color: transparent; }";
+    settingsStyle += "QLabel { background-color: transparent; }";
+    //{ background-color: red; } QLabel#ipLabel,#accelReadingLabel,#magReadingLabel,#gyroReadingLabel,#infoLabel
 
     this->setStyleSheet(settingsStyle);
 }
@@ -42,9 +43,15 @@ SettingsScreen::~SettingsScreen()
 void SettingsScreen::setAGStatus(bool stat)
 {
     if(stat)
-        ui->agStatusLabel->setStyleSheet("QLabel { background-color: green; }");
+    {
+        ui->accelStatusLabel->setStyleSheet("QLabel { background-color: green; }");
+        ui->gyroStatusLabel->setStyleSheet("QLabel { background-color: green; }");
+    }
     else
-        ui->agStatusLabel->setStyleSheet("QLabel { background-color: red; }");
+    {
+        ui->accelStatusLabel->setStyleSheet("QLabel { background-color: red; }");
+        ui->gyroStatusLabel->setStyleSheet("QLabel { background-color: red; }");
+    }
 }
 
 void SettingsScreen::setMagStatus(bool stat)
@@ -60,7 +67,7 @@ void SettingsScreen::setLocUpdateStatus(bool stat)
     if(stat)
         ui->locationUpdateLabel->setStyleSheet("QLabel { background-color: green; }");
     else
-        ui->locationUpdateLabel->setStyleSheet("QLabel { background-color: red; }");
+        ui->locationUpdateLabel->setStyleSheet("QLabel { background-color: transparent; }");
 }
 
 void SettingsScreen::setDBusStatus(bool stat)
@@ -98,4 +105,22 @@ void SettingsScreen::on_buttonBox_accepted()
 {
     /// TODO: Save setting changes (Once settings are added)
     this->close();
+}
+
+void SettingsScreen::MagReading(MagDirection md)
+{
+//    addToLog(QString("MagUpdate"));
+    ui->magReadingLabel->setText(Reveles::MAG_GUI_DATA.arg(md.x, 5, 'g', 5, QChar('0')).arg(md.y, 5, 'g', 5, QChar('0')).arg(md.z, 5, 'g', 5, QChar('0')));
+}
+
+void SettingsScreen::AccelReading(AccelDirection ad)
+{
+//    addToLog(QString("AccelUpdate"));
+    ui->accelReadingLabel->setText(Reveles::ACCEL_GUI_DATA.arg(ad.x, 5, 'g', 5, QChar('0')).arg(ad.y, 5, 'g', 5, QChar('0')).arg(ad.z, 5, 'g', 5, QChar('0')));
+}
+
+void SettingsScreen::GyroReading(GyroDirection gd)
+{
+//    addToLog(QString("GyroUpdate"));
+    ui->gyroReadingLabel->setText(Reveles::GYRO_GUI_DATA.arg(gd.x, 5, 'g', 5, QChar('0')).arg(gd.y, 5, 'g', 5, QChar('0')).arg(gd.z, 5, 'g', 5, QChar('0')));
 }

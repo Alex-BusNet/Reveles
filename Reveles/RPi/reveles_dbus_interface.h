@@ -48,6 +48,9 @@ Q_SIGNALS: // SIGNALS
     void setDestination(GPSCoord gpsc);
     void setMapUpdateInterval(int milliseconds);
     void sendLogMessage(QString msg);
+    void MagUpdate(MagDirection md);
+    void AccelUpdate(AccelDirection ad);
+    void GyroUpdate(GyroDirection gd);
 };
 
 namespace com {

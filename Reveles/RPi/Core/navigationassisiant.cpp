@@ -29,6 +29,7 @@ void NavigationAssisiant::Init()
 {
     instance()->setObjectName("NavigationAssistant");
     destination = GPSCoord{0,0};
+    currentLocation = GPSCoord{41.632559, -85.005982};
     path = NULL;
     Orient();
 }
@@ -48,8 +49,16 @@ void NavigationAssisiant::Start(GPSCoord dest)
     Logger::writeLine(instance(), Reveles::SET_TARGET_DEST.arg(dest.latitude).arg(dest.longitude));
     Logger::writeLine(instance(), QString("Straight-line distance to destination: ") +
                       QString::number(GetDistance(currentLocation, destination)) + " ft");
+    MapNode *mn = RevelesMap::instance()->GetNodeFromCoord(currentLocation);
+    QString nodeStr = QString("%1, %2").arg(mn->mapX).arg(mn->mapY);
+    Logger::writeLine(instance(), QString("CurrentNode: %1").arg(nodeStr));
+
+    mn = RevelesMap::instance()->GetNodeFromCoord(dest);
+    nodeStr = QString("%1, %2").arg(mn->mapX).arg(mn->mapY);
+    Logger::writeLine(instance(), QString("Dest node: %1").arg(nodeStr));
 
     FindPath();
+    AnalyticalEngine::instance()->Start();
     future = QtConcurrent::run([=]() { Navigate(); });
 }
 
@@ -67,9 +76,13 @@ void NavigationAssisiant::updateLocation(GPSCoord loc)
 void NavigationAssisiant::EStop()
 {
     RevelesMap::instance()->UpdatePath(path->child->mapX, path->child->mapY, STAIRS);
+    RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});
     path = NULL;
+
     if(future.isRunning())
         future.cancel();
+
+    AnalyticalEngine::instance()->stop();
 
     Start(destination);
 }
@@ -79,75 +92,79 @@ void NavigationAssisiant::EStop()
  */
 void NavigationAssisiant::FindPath()
 {
-    if(currentLocation == destination)
+    if(destination == TUPD(0.0, 0.0))
+    {
+        Logger::writeLine(instance(), Reveles::INVALID_DESTINATION);
+        return;
+    }
+    MapNode *endNode = RevelesMap::instance()->GetNodeFromCoord(destination);
+    currentNode = RevelesMap::instance()->GetNodeFromCoord(currentLocation);
+
+    if(endNode == currentNode)
     {
         Logger::writeLine(instance(), Reveles::START_EQUAL_DEST);
         return;
     }
 
-    MapNode *endNode = RevelesMap::instance()->GetNodeFromCoord(destination);
-
     QList<MapNode*> openSet;
     QSet<MapNode*> closedSet;
-    MapNode *currentNode;
+    MapNode *mn;
 
     openSet.push_back(RevelesMap::instance()->GetNodeFromCoord(currentLocation));
 
     while(openSet.count() > 0)
     {
-        currentNode = openSet[0];
+        mn = openSet[0];
 
         // Compare the fCost of the current node to the fCost of
         // the node at index i of the openSet. CurrentNode is always
         // the tile at index 0 of the openSet.
         for(int i = 1; i < openSet.count(); i++)
         {
-            if((openSet[i]->fCost() < currentNode->fCost()) || (openSet[i]->fCost() == currentNode->fCost()))
+            if((openSet[i]->fCost() < mn->fCost()) || (openSet[i]->fCost() == mn->fCost()))
             {
-                currentNode = openSet[i];
+                mn = openSet[i];
             }
         }
-    }
 
-    // Remove the node from the openSet
-    // and add it to the closed set
-    openSet.removeOne(currentNode);
-    closedSet.insert(currentNode);
+        // Remove the node from the openSet
+        // and add it to the closed set
+        openSet.removeOne(mn);
+        closedSet.insert(mn);
 
-    // If we have reached our destination,
-    // quit searching and retrace the path
-    // back to the start.
-    if(currentNode == endNode)
-    {
-        RetracePath(endNode);
-        return;
-    }
-
-    QList<MapNode*> neighborsList = GetNeighbors(currentNode);
-
-    foreach(MapNode *n, neighborsList)
-    {
-        // Check if the tile is non-traversable
-        if((n->nt == WALL) || (n->nt == STAIRS) || closedSet.contains(n))
-           continue;
-
-        int newMoveCostToNeighbor = currentNode->gCost + GetDistance(currentNode->coord, n->coord);
-
-        if((newMoveCostToNeighbor < n->gCost) || (!openSet.contains(n)))
+        // If we have reached our destination,
+        // quit searching and retrace the path
+        // back to the start.
+        if(mn == endNode)
         {
-            n->gCost = newMoveCostToNeighbor;
-            n->hCost = GetDistance(n->coord, endNode->coord);
-            n->parent = currentNode;
+            RetracePath(endNode);
+            return;
+        }
 
-            if(!openSet.contains(n))
+        QList<MapNode*> neighborsList = GetNeighbors(mn);
+
+        foreach(MapNode *n, neighborsList)
+        {
+            // Check if the tile is non-traversable
+            if((n->nt == WALL) || (n->nt == STAIRS) || closedSet.contains(n))
+               continue;
+
+            int newMoveCostToNeighbor = mn->gCost + GetDistance(mn->coord, n->coord);
+
+            if((newMoveCostToNeighbor < n->gCost) || (!openSet.contains(n)))
             {
-                openSet.push_back(n);
-            }
+                n->gCost = newMoveCostToNeighbor;
+                n->hCost = GetDistance(n->coord, endNode->coord);
+                n->parent = mn;
 
+                if(!openSet.contains(n))
+                {
+                    openSet.push_back(n);
+                }
+
+            }
         }
     }
-
-//    emit PathReady(path);
 }
 
 QList<MapNode *> NavigationAssisiant::GetNeighbors(MapNode *node)
@@ -174,6 +191,7 @@ QList<MapNode *> NavigationAssisiant::GetNeighbors(MapNode *node)
 
 void NavigationAssisiant::RetracePath(MapNode *end)
 {
+    Logger::writeLine(instance(), QString("RetracePath()"));
     MapNode *current = end;
     QList<MapNode*> temp;
 
@@ -182,7 +200,7 @@ void NavigationAssisiant::RetracePath(MapNode *end)
         temp.push_back(current);
         current = current->parent;
     }
-    while(current->coord != currentLocation);
+    while(current != currentNode);
 
     int i = 0, j = temp.size()/* - 1*/;
 
@@ -200,6 +218,7 @@ void NavigationAssisiant::RetracePath(MapNode *end)
     // This should be a linked list from
     // the currentLocation to the destination.
     path = current;
+    Logger::writeLine(instance(), QString("Done"));
 }
 
 /**
@@ -318,6 +337,15 @@ void NavigationAssisiant::FindBearing()
     }
 }
 
+void NavigationAssisiant::End()
+{
+    path = NULL;
+    if(future.isRunning())
+        future.cancel();
+
+    RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});
+}
+
 /*
  * Navigate is used to travel when we do not know
  * how to fully reach the destination (Blind mode)
@@ -330,6 +358,7 @@ void NavigationAssisiant::Navigate()
         currentNode = path;
         nextNode = path->child;
 
+        /// TODO: Need to test how this behaves with the AnalyticalEngine adjusting the path.
         if(!VerifyLocation())
         {
             Logger::writeLine(instance(), Reveles::COORD_MISMATCH);
@@ -416,6 +445,10 @@ void NavigationAssisiant::Navigate()
 
         delay(500);
     }
+
+    Logger::writeLine(instance(), Reveles::END_OF_PATH);
+    AnalyticalEngine::instance()->stop();
+    RevelesIO::instance()->StopNav();
 
     // Wander mode:
     //      Find node in map data that is adjacent to an UNKNOWN

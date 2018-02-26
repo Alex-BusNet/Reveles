@@ -54,6 +54,9 @@ public slots:
     void magStatus(bool good);
     void agStatus(bool good);
     void logMessage(QString msg);
+    void magUpdate(MagDirection md);
+    void accelUpdate(AccelDirection ad);
+    void gyroUpdate(GyroDirection gd);
 
 private slots:
 
@@ -74,6 +77,7 @@ private slots:
     void commTimeout();
 
     void on_locationsScreenPB_clicked();
+    void draw();
 
 private:
     Ui::RevelesGui *ui;
@@ -84,7 +88,7 @@ private:
     SettingsScreen *ss;
     AddLocationDialog *ald;
 
-    QTimer *commTimer;
+    QTimer *commTimer, *updateTimer;
 
     GPSCoord currentLoc;
 

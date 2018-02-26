@@ -51,6 +51,9 @@ Q_SIGNALS: // SIGNALS
     void setMapUpdateInterval(int milliseconds);
     void sendLogMessage(QString msg);
     void sendPathInfo(QVector<GPSCoord> path);
+    void MagUpdate(MagDirection md);
+    void AccelUpdate(AccelDirection ad);
+    void GyroUpdate(GyroDirection gd);
 };
 
 namespace com {

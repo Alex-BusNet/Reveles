@@ -64,6 +64,18 @@ class RevelesDBusAdaptor: public QDBusAbstractAdaptor
 "    <signal name=\"sendLogMessage\">\n"
 "      <arg direction=\"out\" type=\"s\" name=\"msg\"/>\n"
 "    </signal>\n"
+"    <signal name=\"MagUpdate\">\n"
+"      <annotation value=\"MagDirection\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
+"      <arg direction=\"out\" type=\"(ddd)\" name=\"md\"/>\n"
+"    </signal>\n"
+"    <signal name=\"AccelUpdate\">\n"
+"      <annotation value=\"AccelDirection\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
+"      <arg direction=\"out\" type=\"(ddd)\" name=\"ad\"/>\n"
+"    </signal>\n"
+"    <signal name=\"GyroUpdate\">\n"
+"      <annotation value=\"GyroDirection\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
+"      <arg direction=\"out\" type=\"(ddd)\" name=\"gd\"/>\n"
+"    </signal>\n"
 "  </interface>\n"
         "")
 public:
@@ -86,6 +98,9 @@ Q_SIGNALS: // SIGNALS
     void setMapUpdateInterval(int milliseconds);
     void sendLogMessage(QString msg);
     void sendPathInfo(QVector<GPSCoord> path);
+    void MagUpdate(MagDirection md);
+    void AccelUpdate(AccelDirection ad);
+    void GyroUpdate(GyroDirection gd);
 };
 
 #endif

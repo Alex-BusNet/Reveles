@@ -53,6 +53,9 @@ public:
     bool AccelGyroFound();
     bool MagFound();
 
+    int MagFD();
+    int XGFD();
+
 private:
     // Variables
     bool hasXG, hasMag;

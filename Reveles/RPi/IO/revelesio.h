@@ -14,6 +14,7 @@
 
 #include "Common/datatypes.h"
 #include "lsm9ds1.h"
+#include <QFuture>
 
 #include <wiringPi.h>
 #include <wiringPiI2C.h>
@@ -73,12 +74,15 @@ class RevelesIO : public QObject
     Q_OBJECT
 public:
     RevelesIO();
+    ~RevelesIO();
     static RevelesIO *instance();
     void initIO();
 
     void EnqueueRequest(RIOData riod);
     void StartNav();
     void StopNav();
+
+    void CloseIO();
 
     void SendMotorUpdate();
     void SetMotorDirection(uint8_t dir);
@@ -115,7 +119,9 @@ private:
     long durat;
 
     QQueue<RIOData> ioRequestQueue;
-    bool stop;
+    bool stopParser, stopToF;
+
+    QFuture<void> parser, tofReader;
 
     GPSCoord lastKnownCoord;
     LSM9DS1 *agm;

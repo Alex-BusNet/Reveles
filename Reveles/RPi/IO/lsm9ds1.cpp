@@ -26,6 +26,16 @@ bool LSM9DS1::MagFound()
     return hasMag;
 }
 
+int LSM9DS1::MagFD()
+{
+    return fdMag;
+}
+
+int LSM9DS1::XGFD()
+{
+    return fdXG;
+}
+
 void LSM9DS1::setup()
 {
     // Setup the I2C line for the Accel/Gyro.

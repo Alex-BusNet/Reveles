@@ -14,11 +14,15 @@ namespace Reveles
     static const QString CORE_COMM_RECIEVED = "Comm check recieved from RevelesGUI.";
     static const QString GUI_COMM_RECIEVED = "Comm repsonse recieved from RevelesCore.";
 
+    static const QString NUCLEO_FOUND = "Nucleo found at 0x%1: %2";
+    static const QString ARDUINO_FOUND = "Arduino found at 0x%1: %2";
     static const QString XG_FOUND = "Accelerometer/Gyroscope found: %1";
     static const QString MAG_FOUND = "Magnetometer found: %1";
 
     static const QString XG_ID_STR =  "XG id:  0x%1";
     static const QString MAG_ID_STR = "Mag id: 0x%1";
+
+    static const QString FILE_DESCRIPTORS = "fdXG: %1, fdMag: %2, fdArduino: %3, fdNucleo[0]: %4, fdNucleo[1]: %5";
 
     static const QString CORE_INIT_COMPLETE = "Initialization complete";
     static const QString SET_TARGET_DEST = "Setting Target Destination to %1, %2";
@@ -27,12 +31,17 @@ namespace Reveles
     static const QString MAG_DATA =   "  Mag Data: X: %1 Y: %2 Z: %3 gauss";
     static const QString ACCEL_DATA = "Accel Data: X: %1 Y: %2 Z: %3 m/s/s";
     static const QString GYRO_DATA =  " Gyro Data: X: %1 Y: %2 Z: %3 rad/s";
+    static const QString MAG_GUI_DATA = "X: %1 Y: %2 Z: %3 gauss";
+    static const QString ACCEL_GUI_DATA = "X: %1 Y: %2 Z: %3 m/s/s";
+    static const QString GYRO_GUI_DATA = "X: %1 Y: %2 Z: %3 rad/s";
+    static const QString GPS_DATA =   "Latitude: %1 Longitude: %2";
 
     static const QString TOF_I2C_RESPONSE = "Time of Flight reading from 0x%1: %2";
 
     static const QString START_EQUAL_DEST = "Current location is the same as destination!";
     static const QString END_OF_PATH = "End of path reached. Returning to idle mode.";
     static const QString COORD_MISMATCH = "Current Node does not match current GPS location.";
+    static const QString INVALID_DESTINATION = "Destination is an invalid Coordinate";
     static const QString IOR = "Index out of range.";
 
     static const QString I2C_MOTOR    = "I2C Motor command:  %1";
@@ -59,7 +68,7 @@ namespace Reveles
     static const QString OD_STOPPING = "Stopping Object Detector...";
     static const QString FRAME_READ_FAIL = "No frame to read.";
 
-    static const QString REVELES_VERSION = "0.7.0221";
+    static const QString REVELES_VERSION = "0.7.0225";
     static const QString REVELES_CORE_INFO = "========================================\n"
                                              "RevelesCore            Version: %1\n"
                                              "                                        \n"

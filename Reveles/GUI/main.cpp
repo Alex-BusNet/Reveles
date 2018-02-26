@@ -13,6 +13,14 @@ int main(int argc, char *argv[])
 
     qRegisterMetaType<GPSCoord>("GPSCoord");
     qDBusRegisterMetaType<GPSCoord>();
+    qRegisterMetaType<uint8_t>("uint8_t");
+    qRegisterMetaType<MagDirection>("MagDirection");
+    qRegisterMetaType<AccelDirection>("AccelDirection");
+    qRegisterMetaType<GyroDirection>("GyroDirection");
+    qDBusRegisterMetaType<uint8_t>();
+    qDBusRegisterMetaType<MagDirection>();
+    qDBusRegisterMetaType<AccelDirection>();
+    qDBusRegisterMetaType<GyroDirection>();
 
     RevelesDBusAdaptor *rda = new RevelesDBusAdaptor(&a);
     RevelesCoreInterface *iface = new RevelesCoreInterface("com.reveles.core", "/Core",

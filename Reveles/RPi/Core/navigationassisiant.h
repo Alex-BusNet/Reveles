@@ -28,6 +28,8 @@ public:
     void Orient();
     void FindBearing();
 
+    void End();
+
     double GetDistance(GPSCoord pt1, GPSCoord pt2);
 
 public slots:

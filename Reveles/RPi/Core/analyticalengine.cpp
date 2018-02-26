@@ -130,6 +130,7 @@ AnalyticalEngine::AnalyticalEngine()
  */
 void AnalyticalEngine::CheckEnv()
 {
+    Logger::writeLine(instance(), QString("CheckEnv()"));
     if(motorDir == M_FWD)
     {
         pir = RevelesIO::instance()->readPIR(false);
@@ -173,9 +174,9 @@ void AnalyticalEngine::CheckEnv()
     tof[3] = RevelesIO::instance()->ReadTimeOfFlight(3);
     tof[7] = RevelesIO::instance()->ReadTimeOfFlight(7);
 
-    Logger::writeLine(instance(), QString("ToF readings:"
-                                  "             [0]: %1 [1]: %2 [2]: %3"
-                                  "             [7]: %4         [3]: %5"
+    Logger::writeLine(instance(), QString("ToF readings:\n"
+                                  "             [0]: %1 [1]: %2 [2]: %3\n"
+                                  "             [7]: %4         [3]: %5\n"
                                   "             [6]: %6 [5]: %7 [4]: %8")
                       .arg(tof[0], 2, DEC).arg(tof[1], 2, DEC).arg(tof[2], 2, DEC)
                       .arg(tof[7], 2, DEC).arg(tof[3], 2, DEC)
@@ -187,6 +188,7 @@ void AnalyticalEngine::CheckEnv()
  */
 void AnalyticalEngine::ProcessEnv()
 {
+    Logger::writeLine(instance(), QString("ProcessEnv()"));
     // DON'T GO DOWN THE STAIRS!!!
     if(us < 12 /* inches */)
     {
@@ -234,6 +236,7 @@ void AnalyticalEngine::ProcessEnv()
 
 void AnalyticalEngine::AdjustPath_Inanimate()
 {
+    Logger::writeLine(instance(), QString("AdjustPath_Inanimate()"));
     // Read ToF for right side
     if (tof[3] > 36) // inches
     {

@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QNetworkInterface>
+#include <../RPi/Common/datatypes.h>
 namespace Ui {
 class SettingsScreen;
 }
@@ -16,8 +17,6 @@ public:
     explicit SettingsScreen(QWidget *parent = 0);
     ~SettingsScreen();
 
-    void setAGStatus(bool stat);
-    void setMagStatus(bool stat);
     void setLocUpdateStatus(bool stat);
     void setDBusStatus(bool stat);
     void setCoordText(QString coord);
@@ -29,6 +28,13 @@ private slots:
     void on_buttonBox_rejected();
 
     void on_buttonBox_accepted();
+
+public slots:
+    void setAGStatus(bool stat);
+    void setMagStatus(bool stat);
+    void MagReading(MagDirection md);
+    void AccelReading(AccelDirection ad);
+    void GyroReading(GyroDirection gd);
 
 private:
     Ui::SettingsScreen *ui;

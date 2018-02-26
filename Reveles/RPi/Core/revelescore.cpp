@@ -36,7 +36,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 
     cout << Reveles::REVELES_CORE_INFO.arg(Reveles::REVELES_VERSION).toStdString() << endl;
 
-    this->installEventFilter(new RevelesEventFilter(this));
+//    this->installEventFilter(new RevelesEventFilter(this));
 
     // Inbound comms (GUI -> CORE)
     connect(rci, &RevelesDBusInterface::commQuery, this, &RevelesCore::commCheck);
@@ -60,6 +60,9 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     connect(this, &RevelesCore::sendMagStatus, rdba, &RevelesDBusAdaptor::setMagStatus);
     connect(Logger::instance(), &Logger::newMessage, rdba, &RevelesDBusAdaptor::sendLogMessage);
     connect(NavigationAssisiant::instance(), &NavigationAssisiant::PathReady, rdba, &RevelesDBusAdaptor::sendPathInfo);
+    connect(this, &RevelesCore::sendAccelReading, rdba, &RevelesDBusAdaptor::AccelUpdate);
+    connect(this, &RevelesCore::sendMagReading, rdba, &RevelesDBusAdaptor::MagUpdate);
+    connect(this, &RevelesCore::sendGyroReading, rdba, &RevelesDBusAdaptor::GyroUpdate);
 
     // Additional comms (CORE -> CORE)
     connect(this, &RevelesCore::currentLocation, NavigationAssisiant::instance(), &NavigationAssisiant::updateLocation);
@@ -72,13 +75,14 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 #endif
 
     // Variable Init
-    AnalyticalEngine::instance()->Init();
-    NavigationAssisiant::instance()->Init();
     RevelesIO::instance()->initIO();
     RevelesMap::instance()->Init();
+    AnalyticalEngine::instance()->Init();
+    NavigationAssisiant::instance()->Init();
 
     Logger::writeLine(this, Reveles::XG_FOUND.arg(B2STR(RevelesIO::instance()->hasXG())));
     Logger::writeLine(this, Reveles::MAG_FOUND.arg(B2STR(RevelesIO::instance()->hasMag())));
+
     emit sendAGStatus(RevelesIO::instance()->hasXG());
     emit sendMagStatus(RevelesIO::instance()->hasMag());
 
@@ -128,6 +132,8 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 
     active = true;
     Logger::writeLine(this, Reveles::CORE_INIT_COMPLETE);
+
+    getCurrentLocation();
 }
 
 RevelesCore::~RevelesCore()
@@ -140,6 +146,8 @@ RevelesCore::~RevelesCore()
         coreTimer->stop();
         delete coreTimer;
     }
+
+    RevelesIO::instance()->StopNav();
 }
 
 void RevelesCore::commCheck()
@@ -179,19 +187,22 @@ void RevelesCore::updateOrientation()
 void RevelesCore::readAGM()
 {
     MagDirection md = RevelesIO::instance()->ReadMagnetometer();
-    Logger::writeLine(this, Reveles::MAG_DATA.arg(md.x, 5, 'g', 10).arg(md.y, 5, 'g', 10).arg(md.z, 5, 'g', 10));
+//    Logger::writeLine(this, Reveles::MAG_DATA.arg(md.x, 5, 'g', 5, QChar('0')).arg(md.y, 5, 'g', 5, QChar('0')).arg(md.z, 5, 'g', 5, QChar('0')));
+    emit sendMagReading(md);
 
     AccelDirection ad = RevelesIO::instance()->ReadAccelerometer();
-    Logger::writeLine(this, Reveles::ACCEL_DATA.arg(ad.x, 5, 'g', 10).arg(ad.y, 5, 'g', 10).arg(ad.z, 5, 'g', 10));
+//    Logger::writeLine(this, Reveles::ACCEL_DATA.arg(ad.x, 5, 'g', 5, QChar('0')).arg(ad.y, 5, 'g', 5, QChar('0')).arg(ad.z, 5, 'g', 5, QChar('0')));
+    emit sendAccelReading(ad);
 
     GyroDirection gd = RevelesIO::instance()->ReadGyroscope();
-    Logger::writeLine(this, Reveles::GYRO_DATA.arg(gd.x, 5, 'g', 10).arg(gd.y, 5, 'g', 10).arg(gd.z, 5, 'g', 10));
+//    Logger::writeLine(this, Reveles::GYRO_DATA.arg(gd.x, 5, 'g', 5, QChar('0')).arg(gd.y, 5, 'g', 5, QChar('0')).arg(gd.z, 5, 'g', 5, QChar('0')));
+    emit sendGyroReading(gd);
 }
 
 void RevelesCore::readSensor()
 {
     float us = RevelesIO::instance()->triggerUltrasonic(0b001);
-    RevelesIO::instance()->SendMotorUpdate();
+//    RevelesIO::instance()->SendMotorUpdate();
 //    emit usTriggered();
 }
 
@@ -247,6 +258,10 @@ void RevelesCore::closeCore()
     {
         coreTimer->stop();
     }
+
+//    RevelesIO::instance()->StopNav();
+    RevelesIO::instance()->CloseIO();
+    NavigationAssisiant::instance()->End();
 
     Logger::writeLine(this, QString("Closing..."));
     Logger::ClearLogFlags();

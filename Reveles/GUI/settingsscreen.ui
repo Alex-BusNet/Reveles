@@ -38,7 +38,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="settingsTab">
     <attribute name="title">
@@ -107,20 +107,70 @@
        </layout>
       </item>
       <item>
+       <widget class="QFrame" name="frame">
+        <property name="frameShape">
+         <enum>QFrame::VLine</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QLabel" name="agStatusLabel">
-          <property name="text">
-           <string>Accelerometer / Gyroscope</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QLabel" name="accelStatusLabel">
+            <property name="text">
+             <string>Accelerometer</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="accelReadingLabel">
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
-         <widget class="QLabel" name="magStatusLabel">
-          <property name="text">
-           <string>Magnetometer</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLabel" name="gyroStatusLabel">
+            <property name="text">
+             <string>Gyroscope</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="gyroReadingLabel">
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QLabel" name="magStatusLabel">
+            <property name="text">
+             <string>Magnetometer</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="magReadingLabel">
+            <property name="text">
+             <string>TextLabel</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <widget class="QLabel" name="usDistLabel">

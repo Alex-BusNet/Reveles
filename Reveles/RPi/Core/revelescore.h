@@ -57,6 +57,9 @@ signals:
     void commResponse(bool good);
     void sendAGStatus(bool good);
     void sendMagStatus(bool good);
+    void sendAccelReading(AccelDirection ad);
+    void sendMagReading(MagDirection md);
+    void sendGyroReading(GyroDirection gd);
 };
 
 class RevelesEventFilter : public QObject
