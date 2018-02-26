@@ -66,7 +66,7 @@
 #define WAITING_FOR_MOTOR_DIR  2
 #define WAITING_FOR_TOF_DATA   3
 #define WAITING_FOR_END        4
-#define WAITING_FOR_MGST       5 // Waiting for (M)otor, (G)PS, or (S)ervo.
+#define WAITING_FOR_MGS        5 // Waiting for (M)otor, (G)PS, or (S)ervo.
 #define WAITING_FOR_HELLO      6
 #define WAITING_FOR_SERVO_DIR  7
 #define WAITING_FOR_SERVO_VAL  8
@@ -180,7 +180,7 @@ void recieveData(int byteCount)
     else if(commState == WAITING_FOR_US_DATA)
     {
         // Are we going to need additional conversion code here? -Alex
-        inch = cmd;
+        inch = data;
         commState = WAITING_FOR_MOTOR_DIR;
     }
     else if (commState == WAITING_FOR_MOTOR_DIR)
@@ -194,7 +194,7 @@ void recieveData(int byteCount)
     else if (commState == WAITING_FOR_TOF_DATA)
     {
         // Are we going to need additional conversion code here? -Alex
-        tofDistance = cmd;
+        tofDistance = data;
         commState = WAITING_FOR_END;
     }
     else if (commState == WAITING_FOR_SERVO_DIR)
@@ -252,6 +252,9 @@ void readGPS()
         latitude = gps.latitude;
         longitude = gps.longitude;
     }
+
+    Serial.println("Latitude: " + String(latitude));
+    Serial.println("Longitude: " + String(longitude));
     
     digitalWrite(GPS_READY_PIN, LOW);
     delay(5);
