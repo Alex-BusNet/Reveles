@@ -212,6 +212,10 @@ void AnalyticalEngine::ProcessEnv()
     {
         AdjustPath_Inanimate();
     }
+    
+    // if we get a signal from the PIR and the corresponding ToF 
+    // sensor reads more than E-Stop distance, then we know we still
+    // have space to move out of the way of person.
 
 #ifdef USE_OBJ_DETECT
     // Check the ObjectDetector for any objects.
