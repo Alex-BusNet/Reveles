@@ -137,7 +137,7 @@ String commStateStrings[] = {"WAITING_FOR_START", "WAITING_FOR_US_DATA",        
 //      Value is in inches.
 //    Servo Direction: (Servo command only)
 //      TURN_RIGHT - Indicates Reveles should turn to the right. (Relative to self).
-//      TURN_LEFT  - Indicates Reveles shoudl turn to the left. (Relative to self).
+//      TURN_LEFT  - Indicates Reveles should turn to the left. (Relative to self).
 //    Servo Value: (Servo command only)
 //      Degrees servo should turn.
 //      Value is always positive.
@@ -165,43 +165,41 @@ void recieveData(int byteCount)
 
     if(commState == WAITING_FOR_HELLO)
     {
-        if((cmd & COM_CHECK) == COM_CHECK) { commState = WAITING_FOR_START; Wire.write(COM_CHECK); }
+        if(cmd == COM_CHECK) { commState = WAITING_FOR_START; Wire.write(COM_CHECK); }
     }
     else if (commState == WAITING_FOR_START)
     {
-        if((cmd & START_CMD) == START_CMD) { commState = WAITING_FOR_MGS; }
+        if(cmd == START_CMD) { commState = WAITING_FOR_MGS; }
     }
     else if (commState == WAITING_FOR_MGS)
     {
-        if((cmd & CMD_M) == CMD_M) { commState = WAITING_FOR_US_DATA; }
-        else if((cmd & CMD_G) == CMD_G) { respond = true; commState = WAITING_FOR_END; }
-        else if((cmd & CMD_S) == CMD_S) { commState = WAITING_FOR_SERVO_DIR; }
+        if(cmd == CMD_M) { commState = WAITING_FOR_US_DATA; }
+        else if(cmd == CMD_G) { respond = true; commState = WAITING_FOR_END; }
+        else if(cmd == CMD_S) { commState = WAITING_FOR_SERVO_DIR; }
     }
     else if(commState == WAITING_FOR_US_DATA)
     {
-        // Are we going to need additional conversion code here? -Alex
         inch = data;
         commState = WAITING_FOR_MOTOR_DIR;
     }
     else if (commState == WAITING_FOR_MOTOR_DIR)
     {
-        if((cmd & M_STOP) == M_STOP)      { mState = STOP_STATE; updateMotorState = true; }
-        else if((cmd & M_FWD) == M_FWD)   { mState = FORWARD_STATE; updateMotorState = true; }
-        else if((cmd & M_REV) == M_REV)   { mState = REVERSE_STATE; updateMotorState = true; }
+        if(cmd == M_STOP)      { mState = STOP_STATE; updateMotorState = true; }
+        else if(cmd == M_FWD)   { mState = FORWARD_STATE; updateMotorState = true; }
+        else if(cmd == M_REV)   { mState = REVERSE_STATE; updateMotorState = true; }
       
         commState = WAITING_FOR_TOF_DATA;
     }
     else if (commState == WAITING_FOR_TOF_DATA)
     {
-        // Are we going to need additional conversion code here? -Alex
         tofDistance = data;
         commState = WAITING_FOR_END;
     }
     else if (commState == WAITING_FOR_SERVO_DIR)
     {
-        if((cmd & TURN_LEFT) == TURN_LEFT)          { sState = LEFT_STATE; updateServoState = true; }
-        else if((cmd & TURN_RIGHT) == TURN_RIGHT)   { sState = RIGHT_STATE; updateServoState = true; }
-        else if((cmd & RET_NEUTRAL) == RET_NEUTRAL) { sState = NEUTRAL_STATE; updateServoState = true; }
+        if(cmd == TURN_LEFT)        { sState = LEFT_STATE; updateServoState = true; }
+        else if(cmd == TURN_RIGHT)  { sState = RIGHT_STATE; updateServoState = true; }
+        else if(cmd == RET_NEUTRAL) { sState = NEUTRAL_STATE; updateServoState = true; }
 
         commState = WAITING_FOR_SERVO_VAL;
     }
@@ -213,7 +211,7 @@ void recieveData(int byteCount)
     }
     else if (commState == WAITING_FOR_END)
     {
-        if((cmd & END_CMD) == END_CMD) { commState = WAITING_FOR_START; }
+        if(cmd == END_CMD) { commState = WAITING_FOR_START; }
     } 
 
     Serial.println("\tNew Comm state: " + commStateStrings[commState]);
@@ -261,6 +259,7 @@ void readGPS()
     digitalWrite(GPS_READY_PIN, HIGH);
     delay(5);
     digitalWrite(GPS_READY_PIN, LOW);
+    respond = false;
 }
 
 /*This function is designed for use in the initial boot-up of the robot. The motors will be turned on if not already and begin moving forward,
