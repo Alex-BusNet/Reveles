@@ -47,6 +47,7 @@ signals:
     void SendDestination(GPSCoord dest);
     void SendMapUpdateInterval(int interval);
     void RequestLocation();
+    void NavigationAbort();
 
 public slots:
     void commCheck(bool good);
@@ -79,6 +80,14 @@ private slots:
     void on_locationsScreenPB_clicked();
     void draw();
 
+    void on_endNavigationPB_clicked();
+
+    void on_removeLocationPB_clicked();
+
+    void on_editLocationPB_clicked();
+
+    void on_startNavigationPB_clicked();
+
 private:
     Ui::RevelesGui *ui;
     QScrollArea *sa;
@@ -95,11 +104,12 @@ private:
     com::reveles::RevelesCoreInterface *rci;
     RevelesDBusAdaptor *rdba;
     bool trigOn, hasComms;
+    int selectedPBIdx;
 
     void setupLocations();
     void saveLocations();
 
-    vector<LocationPushButton*> lpbs;
+    QVector<LocationPushButton*> lpbs;
 
 };
 

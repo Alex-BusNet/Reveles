@@ -113,7 +113,12 @@ void AnalyticalEngine::aboutToQuit()
 void AnalyticalEngine::stop()
 {
     endAnalyze = true;
+
+    if(future.isRunning())
+        future.cancel();
+
     this->Save();
+
 }
 
 AnalyticalEngine::AnalyticalEngine()

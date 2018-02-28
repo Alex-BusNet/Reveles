@@ -39,7 +39,7 @@ public slots:
     void setDestination(GPSCoord gpsc);
     void setMapUpdateInterval(int milliseconds);
     void getCurrentLocation();
-
+    void ForceEndNav();
 
 private:
     void updateOrientation();

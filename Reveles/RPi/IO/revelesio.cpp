@@ -40,10 +40,11 @@ void RevelesIO::initIO()
     fdNucleo[1] = wiringPiI2CSetup(NUCLEO_REAR);
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
+    delay(50);
     uint8_t res = wiringPiI2CRead(fdArduino);
     Logger::writeLine(instance(), QString("Arduino response: 0x%1").arg(res, 2, 16, QChar('0')));
 
-    if((res != 0xFF) && (res & COM_CHECK) == COM_CHECK)
+    if(/*(res != 0xFF) && */(res == COM_CHECK))
         arduinoFound = true;
     else
         arduinoFound = false;
@@ -409,6 +410,8 @@ void RevelesIO::ParseQueue()
         if(!ioRequestQueue.isEmpty())
         {
             RIOData riod = ioRequestQueue.dequeue();
+            Logger::writeLine(instance(), QString("IO Request found: %1").arg(riod.cmd));
+
             if(riod.cmd == IO_MOTOR)
             {
                 inch = riod.specData;

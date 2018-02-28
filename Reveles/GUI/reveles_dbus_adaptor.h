@@ -76,6 +76,8 @@ class RevelesDBusAdaptor: public QDBusAbstractAdaptor
 "      <annotation value=\"GyroDirection\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
 "      <arg direction=\"out\" type=\"(ddd)\" name=\"gd\"/>\n"
 "    </signal>\n"
+"    <signal name=\"EndNavigation\">\n"
+"    </signal>"
 "  </interface>\n"
         "")
 public:
@@ -101,6 +103,7 @@ Q_SIGNALS: // SIGNALS
     void MagUpdate(MagDirection md);
     void AccelUpdate(AccelDirection ad);
     void GyroUpdate(GyroDirection gd);
+    void EndNavigation();
 };
 
 #endif

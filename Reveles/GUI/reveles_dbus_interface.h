@@ -54,6 +54,7 @@ Q_SIGNALS: // SIGNALS
     void MagUpdate(MagDirection md);
     void AccelUpdate(AccelDirection ad);
     void GyroUpdate(GyroDirection gd);
+    void EndNavigation();
 };
 
 namespace com {

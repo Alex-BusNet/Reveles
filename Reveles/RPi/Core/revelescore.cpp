@@ -48,6 +48,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 #ifdef USE_OBJ_DETECT
     connect(rci, SIGNAL(aboutToQuit()), ObjectDetector::instance(), SLOT(aboutToQuit()));
 #endif
+    connect(rci, &RevelesDBusInterface::EndNavigation, this, &RevelesCore::ForceEndNav);
     connect(rci, &RevelesDBusInterface::aboutToQuit, this, &RevelesCore::closeCore);
 
     // Loop the aboutToQuit() signal from the '/GUI' object to the aboutToQuit() signal from the '/Core' object
@@ -177,6 +178,14 @@ void RevelesCore::getCurrentLocation()
 {
     // location is temporary
     emit currentLocation(FA_NW_CORNER);
+}
+
+void RevelesCore::ForceEndNav()
+{
+    Logger::writeLine(this, Reveles::NAV_ABORT);
+    NavigationAssisiant::instance()->End();
+    AnalyticalEngine::instance()->stop();
+    RevelesIO::instance()->StopNav();
 }
 
 void RevelesCore::updateOrientation()

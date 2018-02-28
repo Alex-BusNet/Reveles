@@ -43,6 +43,7 @@ namespace Reveles
     static const QString COORD_MISMATCH = "Current Node does not match current GPS location.";
     static const QString INVALID_DESTINATION = "Destination is an invalid Coordinate";
     static const QString IOR = "Index out of range.";
+    static const QString NAV_ABORT = "Navigation mode stopped by user.";
 
     static const QString I2C_MOTOR    = "I2C Motor command:  %1";
     static const QString I2C_GPS_SEND = "I2C GPS Command:  0x%1";

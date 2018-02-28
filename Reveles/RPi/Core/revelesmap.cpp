@@ -85,6 +85,7 @@ MapNode *RevelesMap::GetNodeFromPoint(int x, int y)
  */
 void RevelesMap::UpdatePath(int x, int y, NodeType t)
 {
+    Logger::writeLine(instance(), QString("Map Node updated"));
     // Need to double check this calculation
     grid.at(x + (120 * y))->nt = t;
 }

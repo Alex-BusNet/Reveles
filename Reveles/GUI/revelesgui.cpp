@@ -22,8 +22,9 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     qDBusRegisterMetaType<GPSCoord>();
 
     QString menuStyle = "QWidget { background-color: #0d0d0d; color: white; }";
-    menuStyle += "QToolButton, QPushButton { background-color: #0d0d0d; border-radius: 4px; border: 2px solid #5ac5cc; color: white; }";
+    menuStyle += "QToolButton:enabled, QPushButton:enabled { background-color: #0d0d0d; border-radius: 4px; border: 2px solid #5ac5cc; color: white; }";
     menuStyle += "QToolButton:checked { background-color: #bdfd96 }";
+    menuStyle += "QToolButton:disabled, QPushButton:disabled { color: black; background-color: #bde0e3; }";
 
     ui->setupUi(this);
     ss = NULL;
@@ -31,6 +32,7 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     trigOn = false;
     currentLoc = GPSCoord{0,0};
     hasComms = false;
+    selectedPBIdx = -1;
 
     scrollWidget = new QWidget();
     sa = new QScrollArea();
@@ -56,6 +58,10 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     ui->locationsScreenPB->setIcon(*loc);
     ui->addLocationPB->setIcon(*nLoc);
     ui->settingsScreenPB->setIcon(*settings);
+    ui->startNavigationPB->setEnabled(false);
+    ui->editLocationPB->setEnabled(false);
+    ui->endNavigationPB->setEnabled(false);
+    ui->removeLocationPB->setEnabled(false);
 
     ss = new SettingsScreen();
     ss->setGeometry(0,0, this->width(), this->height());
@@ -113,8 +119,7 @@ RevelesGui::~RevelesGui()
 
 void RevelesGui::setLocation(LocationPushButton *pb)
 {
-    GPSCoord dest{pb->GetIndex().latitude, pb->GetIndex().longitude};
-
+    int deselectCount = 0;
     // Deselect any other active buttons.
     for(int j = 0; j < lpbs.size(); j++)
     {
@@ -122,16 +127,26 @@ void RevelesGui::setLocation(LocationPushButton *pb)
         {
             if(lpbs[j]->isChecked())
                 lpbs[j]->setChecked(false);
+
+            deselectCount++;
         }
+        else if(lpbs[j] == pb && pb != NULL) { selectedPBIdx = j; }
     }
 
-    /// TODO: Add Confirm selection dialog box.
+    if(deselectCount == lpbs.size())
+    {
+        ui->removeLocationPB->setEnabled(false);
+        ui->editLocationPB->setEnabled(false);
+        ui->startNavigationPB->setEnabled(false);
+        selectedPBIdx = -1;
+    }
+    else
+    {
+        ui->removeLocationPB->setEnabled(true);
+        ui->editLocationPB->setEnabled(true);
+        ui->startNavigationPB->setEnabled(true);
+    }
 
-    if(hasComms)
-        emit SendDestination(dest);
-
-    // Switch the Screen to show the map
-    ui->tabWidget->setCurrentIndex(1);
 }
 
 void RevelesGui::updateLocation(GPSCoord gpsc)
@@ -184,6 +199,16 @@ void RevelesGui::gyroUpdate(GyroDirection gd)
 
 void RevelesGui::setupLocations()
 {
+    if(lpbs.size() != 0)
+    {
+        foreach(LocationPushButton *lpb, lpbs)
+        {
+            gl->removeWidget(lpb);
+        }
+
+        lpbs.clear();
+    }
+
     QFile locSaveFile("Assets/Data/locations.json");
     if(!locSaveFile.open(QIODevice::ReadOnly))
     {
@@ -317,6 +342,7 @@ void RevelesGui::setDBusAdaptor(RevelesDBusAdaptor *rda)
     connect(this, &RevelesGui::RequestLocation, rdba, &RevelesDBusAdaptor::requestCurrentLocation);
     connect(this, &RevelesGui::SendDestination, rdba, &RevelesDBusAdaptor::setDestination);
     connect(this, &RevelesGui::SendMapUpdateInterval, rdba, &RevelesDBusAdaptor::setMapUpdateInterval);
+    connect(this, &RevelesGui::NavigationAbort, rdba, &RevelesDBusAdaptor::EndNavigation);
 }
 
 GPSCoord RevelesGui::getLocation()
@@ -402,4 +428,49 @@ void RevelesGui::on_locationsScreenPB_clicked()
 void RevelesGui::draw()
 {
     this->update();
+}
+
+void RevelesGui::on_endNavigationPB_clicked()
+{
+    emit NavigationAbort();
+    setLocation(NULL);
+    ui->endNavigationPB->setEnabled(false);
+}
+
+void RevelesGui::on_removeLocationPB_clicked()
+{
+    if(selectedPBIdx != -1)
+    {
+        LocationPushButton *lpb = lpbs.at(selectedPBIdx);
+        disconnect(lpb, SIGNAL(lpb_clicked(LocationPushButton*)), this, SLOT(setLocation(LocationPushButton*)));
+
+        gl->removeWidget(lpb);
+        lpbs.removeAt(selectedPBIdx);
+
+        saveLocations();
+        setupLocations();
+    }
+}
+
+void RevelesGui::on_editLocationPB_clicked()
+{
+
+}
+
+void RevelesGui::on_startNavigationPB_clicked()
+{
+    if(selectedPBIdx != -1)
+    {
+        GPSCoord dest{lpbs.at(selectedPBIdx)->GetIndex().latitude, lpbs.at(selectedPBIdx)->GetIndex().longitude};
+
+        if(hasComms)
+        {
+            emit SendDestination(dest);
+
+            // Switch the Screen to show the map
+            ui->tabWidget->setCurrentIndex(1);
+            ui->endNavigationPB->setEnabled(true);
+            ui->startNavigationPB->setEnabled(false);
+        }
+    }
 }

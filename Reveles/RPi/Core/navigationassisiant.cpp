@@ -57,8 +57,11 @@ void NavigationAssisiant::Start(GPSCoord dest)
     nodeStr = QString("%1, %2").arg(mn->mapX).arg(mn->mapY);
     Logger::writeLine(instance(), QString("Dest node: %1").arg(nodeStr));
 
+    Logger::writeLine(instance(), "Finding Path...");
     FindPath();
-    AnalyticalEngine::instance()->Start();
+
+    Logger::writeLine(instance(), "Starting Navigation");
+//    AnalyticalEngine::instance()->Start();
     future = QtConcurrent::run([=]() { Navigate(); });
 }
 
@@ -339,9 +342,10 @@ void NavigationAssisiant::FindBearing()
 
 void NavigationAssisiant::End()
 {
-    path = NULL;
     if(future.isRunning())
         future.cancel();
+
+    path = NULL;
 
     RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});
 }
