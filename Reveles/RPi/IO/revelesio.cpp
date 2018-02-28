@@ -24,8 +24,7 @@ void RevelesIO::initIO()
     pinMode(SEL_B, OUTPUT);
     pinMode(ECHO, INPUT);
     pinMode(SIG, INPUT);
-//    pinMode(SIG_1, INPUT);
-//    pinMode(SIG_2, INPUT);
+    pinMode(NUCLEO_ISR, OUTPUT);
     pinMode(TRIG, OUTPUT);
 
     // Need to play with this a bit. The ISR is triggering way too much.
@@ -43,7 +42,8 @@ void RevelesIO::initIO()
     wiringPiI2CWrite(fdArduino, COM_CHECK);
     uint8_t res = wiringPiI2CRead(fdArduino);
     Logger::writeLine(instance(), QString("Arduino response: 0x%1").arg(res, 2, 16, QChar('0')));
-    if((res & COM_CHECK) == COM_CHECK)
+
+    if((res != 0xFF) && (res & COM_CHECK) == COM_CHECK)
         arduinoFound = true;
     else
         arduinoFound = false;

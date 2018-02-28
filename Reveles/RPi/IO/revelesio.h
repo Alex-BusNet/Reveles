@@ -22,12 +22,12 @@
 //---------------------------
 //     Sensor GPIO pins
 //(use wiringPi's numbering)
-#define SEL_A    0 // GPIO-17
-#define SEL_B    2 // GPIO-27
-#define  ECHO    3 // GPIO-22
-#define   SIG   12 // GPIO-10
-//#define SIG_2   13 // GPIO-9
-#define  TRIG    7 // GPIO-4
+#define      SEL_A  0 // GPIO-17
+#define      SEL_B  2 // GPIO-27
+#define       ECHO  3 // GPIO-22
+#define        SIG 12 // GPIO-10
+#define NUCLEO_ISR 13 // GPIO-9
+#define       TRIG  7 // GPIO-4
 //---------------------------
 
 #define TIMEOUT 500000
@@ -62,7 +62,6 @@
 // 4 displays.
 #define GPIO_EXPANDER_U19   0x42
 #define GPIO_EXPANDER_U21   0x43
-/// TODO: Add ToF I2C addresses
 //-----------------------
 
 class LSM9DS1;
