@@ -40,11 +40,11 @@ void RevelesIO::initIO()
     fdNucleo[1] = wiringPiI2CSetup(NUCLEO_REAR);
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
-    delay(85);
+//    delay(85);
     uint8_t res = wiringPiI2CRead(fdArduino);
     Logger::writeLine(instance(), QString("Arduino response: 0x%1").arg(res, 2, 16, QChar('0')));
 
-    if(/*(res != 0xFF) && */(res == COM_CHECK))
+    if((res == COM_CHECK))
         arduinoFound = true;
     else
         arduinoFound = false;
@@ -130,7 +130,7 @@ void RevelesIO::CloseIO()
 
     Logger::writeLine(instance(), QString("Exiting ToF reader..."));
     if(tofReader.isRunning())
-        tofReader.waitForFinished();
+        tofReader.cancel();
 
     Logger::writeLine(instance(), QString("Done."));
 }
@@ -142,6 +142,7 @@ RevelesIO::RevelesIO()
 
 RevelesIO::~RevelesIO()
 {
+    CloseIO();
     if(agm != NULL)
         delete agm;
 }
@@ -202,7 +203,7 @@ void RevelesIO::SendMotorUpdate()
     delay(85);
     wiringPiI2CWrite(fdArduino, motorDir);
     delay(85);
-    /// NOTE: We need to update this part based ontravel direction.
+    /// NOTE: We need to update this part based on travel direction.
     wiringPiI2CWrite(fdArduino, tofDist[1]);
     delay(85);
     wiringPiI2CWrite(fdArduino, END);
@@ -320,17 +321,25 @@ void RevelesIO::ReadGPS()
  */
 int RevelesIO::triggerUltrasonic(uint8_t sel)
 {
+    // Check this, I don't believe it
+    // works the way I think it does. -Alex 1/21/18
+    if(sel == US_FRONT)
+    {
+        digitalWrite(SEL_A, HIGH);         // Get the A select bit. This should already by in index 0
+        digitalWrite(SEL_B, LOW);// >> 1); // Get the B select bit and shift into index 0
+    }
+    else if(sel == US_RIGHT)
+    {
+        digitalWrite(SEL_A, LOW);
+        digitalWrite(SEL_B, HIGH);
+    }
+
     digitalWrite(TRIG, LOW);
     delay(50);
 
     digitalWrite(TRIG, HIGH);
     delayMicroseconds(10);
     digitalWrite(TRIG, LOW);
-
-    // Check this, I don't believe it
-    // works the way I think it does. -Alex 1/21/18
-    digitalWrite(SEL_A, 0b1 & sel);         // Get the A select bit. This should already by in index 0
-    digitalWrite(SEL_B, (0b10 & sel) >> 1); // Get the B select bit and shift into index 0
 
     unsigned long ping, pong, trigStart;
 
@@ -365,9 +374,8 @@ int RevelesIO::ReadTimeOfFlight(int sensorNum)
 bool RevelesIO::readPIR(uint8_t sel)
 {
     // Check this, I don't believe it
-    // works the way I think it does. -Alex 1/21/18
-    digitalWrite(SEL_A, 0b1 & sel);         // Get the A select bit. This should already by in index 0
-    digitalWrite(SEL_B, (0b10 & sel) >> 1); // Get the B select bit and shift into index 0
+    digitalWrite(SEL_A, LOW);         // Get the A select bit. This should already by in index 0
+    digitalWrite(SEL_B, HIGH); // Get the B select bit and shift into index 0
 
     return digitalRead(SIG) ? true : false;
 }
@@ -431,37 +439,41 @@ void RevelesIO::ParseQueue()
                 ReadTimeOfFlight(riod.data);
             }
         }
+
+        delay(100);
     }
 
-    Logger::writeLine(instance(), QString("Clearing queue."));
-    // Clear the queue if there are still requests to be processed.
-    if(!ioRequestQueue.isEmpty())
-    {
-        while(!ioRequestQueue.isEmpty())
-        {
-            RIOData riod = ioRequestQueue.dequeue();
-            if(riod.cmd == IO_MOTOR)
-            {
-                inch = riod.specData;
-                SetMotorDirection(riod.data);
-            }
-            else if (riod.cmd == IO_GPS)
-            {
-                SendGPSRequest();
-            }
-            else if(riod.cmd == IO_SERVO)
-            {
-                angle = riod.specData;
-                SetServoDirection(riod.data);
-            }
-            else if(riod.cmd == IO_TOF)
-            {
-                ReadTimeOfFlight(riod.data);
-            }
-        }
-    }
+    SetMotorDirection(M_STOP);
 
-    Logger::writeLine(instance(), QString("Done."));
+//    Logger::writeLine(instance(), QString("Clearing queue."));
+//    // Clear the queue if there are still requests to be processed.
+//    if(!ioRequestQueue.isEmpty())
+//    {
+//        while(!ioRequestQueue.isEmpty())
+//        {
+//            RIOData riod = ioRequestQueue.dequeue();
+//            if(riod.cmd == IO_MOTOR)
+//            {
+//                inch = riod.specData;
+//                SetMotorDirection(riod.data);
+//            }
+//            else if (riod.cmd == IO_GPS)
+//            {
+//                SendGPSRequest();
+//            }
+//            else if(riod.cmd == IO_SERVO)
+//            {
+//                angle = riod.specData;
+//                SetServoDirection(riod.data);
+//            }
+//            else if(riod.cmd == IO_TOF)
+//            {
+//                ReadTimeOfFlight(riod.data);
+//            }
+//        }
+//    }
+
+//    Logger::writeLine(instance(), QString("Done."));
 }
 
 void RevelesIO::SendToFRequest(int sensorNum)

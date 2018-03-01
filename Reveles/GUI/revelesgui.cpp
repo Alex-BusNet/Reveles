@@ -437,7 +437,15 @@ void RevelesGui::on_endNavigationPB_clicked()
     emit NavigationAbort();
     setLocation(NULL);
     ui->endNavigationPB->setEnabled(false);
-    if(demoOn) { demoOn = false; }
+    ui->demoPB->setEnabled(true);
+
+    if(demoOn)
+    {
+        if(ss != NULL)
+            ss->addToLog(QString("Ending demo..."));
+
+        demoOn = false;
+    }
 }
 
 void RevelesGui::on_removeLocationPB_clicked()
@@ -474,6 +482,7 @@ void RevelesGui::on_startNavigationPB_clicked()
             ui->tabWidget->setCurrentIndex(1);
             ui->endNavigationPB->setEnabled(true);
             ui->startNavigationPB->setEnabled(false);
+            ui->demoPB->setEnabled(false);
         }
     }
 }
@@ -482,10 +491,16 @@ void RevelesGui::on_demoPB_clicked()
 {
     if(!demoOn)
     {
+        if(ss != NULL)
+        {
+            ss->addToLog(QString("Starting demo mode..."));
+        }
+
         demoOn = true;
         ui->tabWidget->setCurrentIndex(1);
         ui->endNavigationPB->setEnabled(true);
         ui->startNavigationPB->setEnabled(false);
+        ui->demoPB->setEnabled(false);
         emit StartDemoMode();
     }
 }

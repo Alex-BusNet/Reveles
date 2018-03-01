@@ -21,6 +21,21 @@
 #define THRESHOLD_LATITUDE  (0.0000103651 / 2)
 #define THRESHOLD_LONGITUDE (0.0000038167 / 2)
 
+// Passive Infrared Select bits
+#define PIR_FL 0b000 // Front-left
+#define PIR_FR 0b001 // Front-right
+#define PIR_BL 0b010 // Back-left
+#define PIR_BR 0b011 // Back-right
+
+// Ultrasonic Select bits
+#define US_LEFT  0b000
+#define US_FRONT 0b001
+#define US_RIGHT 0b010
+#define US_STAIR 0b011
+#define US_BACK  0b100
+
+#define B2STR( x ) (x ? "True" : "False")
+
 struct GPSCoord {
     double latitude;
     double longitude;

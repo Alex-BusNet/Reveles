@@ -235,7 +235,7 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>562</width>
+           <width>462</width>
            <height>477</height>
           </size>
          </property>
@@ -308,6 +308,18 @@ Location</string>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="sizeIncrement">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="text">
           <string>Demo</string>
          </property>
@@ -346,6 +358,11 @@ Location</string>
            <width>100</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>9</pointsize>
+          </font>
          </property>
          <property name="text">
           <string>End 

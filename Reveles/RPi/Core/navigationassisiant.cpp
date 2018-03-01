@@ -74,9 +74,10 @@ void NavigationAssisiant::DemoMode()
     Logger::writeLine(instance(), QString("Entering demo mode..."));
     destVec.set(FA_SW_CORNER);
     path = new MapNode(); // Navigate() stops if this is NULL
-    AnalyticalEngine::instance()->Start();
     RevelesIO::instance()->StartNav();
-    future = QtConcurrent::run([=]() { Navigate(true); });
+    AnalyticalEngine::instance()->SetMotorDirection(M_FWD);
+    AnalyticalEngine::instance()->Start();
+//    future = QtConcurrent::run([=]() { Navigate(true); });
 }
 
 void NavigationAssisiant::updateLocation(GPSCoord loc)
@@ -377,8 +378,11 @@ void NavigationAssisiant::Navigate(bool demoMode)
 {
     while(path != NULL)
     {
-        currentNode = path;
-        nextNode = path->child;
+        if(!demoMode)
+        {
+            currentNode = path;
+            nextNode = path->child;
+        }
 
         // The demoMode flag keeps this from triggering (since it is stationary for demos
         /// TODO: Need to test how this behaves with the AnalyticalEngine adjusting the path.
@@ -401,6 +405,8 @@ void NavigationAssisiant::Navigate(bool demoMode)
         if(currentNode->nt == UNKNOWN)
         {
             int tofDist = RevelesIO::instance()->ReadTimeOfFlight(1);
+            // If we are really  close to something, and the PIR didn't go off,
+            // it's probably a wall.
             if(tofDist < 24 && !RevelesIO::instance()->readPIR(FRONT_US_PIR))
             {
                 RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});

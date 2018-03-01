@@ -30,6 +30,7 @@ SettingsScreen::SettingsScreen(QWidget *parent) :
 
     QString settingsStyle = "QWidget { background-color: #787878; }";
     settingsStyle += "QLabel { background-color: transparent; }";
+    settingsStyle += "QPushButton:enabled { background-color: #0d0d0d; border-radius: 4px; border: 2px solid #5ac5cc; color: white; }";
     //{ background-color: red; } QLabel#ipLabel,#accelReadingLabel,#magReadingLabel,#gyroReadingLabel,#infoLabel
 
     this->setStyleSheet(settingsStyle);
@@ -123,4 +124,24 @@ void SettingsScreen::GyroReading(GyroDirection gd)
 {
 //    addToLog(QString("GyroUpdate"));
     ui->gyroReadingLabel->setText(Reveles::GYRO_GUI_DATA.arg(gd.x, 5, 'g', 5, QChar('0')).arg(gd.y, 5, 'g', 5, QChar('0')).arg(gd.z, 5, 'g', 5, QChar('0')));
+}
+
+void SettingsScreen::on_settingsPB_clicked()
+{
+    ui->tabWidget->setCurrentIndex(0);
+}
+
+void SettingsScreen::on_logPB_clicked()
+{
+    ui->tabWidget->setCurrentIndex(1);
+}
+
+void SettingsScreen::on_statusPB_clicked()
+{
+    ui->tabWidget->setCurrentIndex(2);
+}
+
+void SettingsScreen::on_aboutPB_clicked()
+{
+    ui->tabWidget->setCurrentIndex(3);
 }

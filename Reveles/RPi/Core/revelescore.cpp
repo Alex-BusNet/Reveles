@@ -4,10 +4,6 @@
 //#define USE_OBJ_DETECT
 //#define OBJ_DETECT_DEBUG
 
-
-
-#define B2STR( x ) (x ? "True" : "False")
-
 #if defined __linux__ && defined USE_OBJ_DETECT
 #include <X11/Xlib.h>
 #include <opencv2/core.hpp>
@@ -44,7 +40,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 #endif
     connect(rci, &RevelesDBusInterface::EndNavigation, this, &RevelesCore::ForceEndNav);
     connect(rci, &RevelesDBusInterface::aboutToQuit, this, &RevelesCore::closeCore);
-    connect(rci, &RevelesDBusInterface::StartDemo, NavigationAssisiant::instance(), &NavigationAssisiant::End);
+    connect(rci, &RevelesDBusInterface::StartDemo, NavigationAssisiant::instance(), &NavigationAssisiant::DemoMode);
 
     // Loop the aboutToQuit() signal from the '/GUI' object to the aboutToQuit() signal from the '/Core' object
     connect(rci, &RevelesDBusInterface::aboutToQuit, rdba, &RevelesDBusAdaptor::aboutToQuit);
@@ -206,7 +202,7 @@ void RevelesCore::readSensor()
 {
     float us = RevelesIO::instance()->triggerUltrasonic(0b001);
 //    RevelesIO::instance()->SendMotorUpdate();
-//    emit usTriggered();
+    emit usTriggered();
 }
 
 void RevelesCore::updateMapData()
@@ -219,9 +215,9 @@ void RevelesCore::updateMapData()
 void RevelesCore::coreLoop()
 {
 //    static int directionCount = 0;
-
+    readSensor();
 //    NavigationAssisiant::instance()->Orient();
-    updateMapData();
+//    updateMapData();
     readAGM();
 
     //=========================
@@ -257,16 +253,18 @@ void RevelesCore::coreLoop()
 
 void RevelesCore::closeCore()
 {
+    Logger::writeLine(this, QString("Closing..."));
+
     if(coreTimer->isActive())
     {
         coreTimer->stop();
     }
 
-//    RevelesIO::instance()->StopNav();
+    RevelesIO::instance()->StopNav();
     RevelesIO::instance()->CloseIO();
+    AnalyticalEngine::instance()->stop();
     NavigationAssisiant::instance()->End();
 
-    Logger::writeLine(this, QString("Closing..."));
     Logger::ClearLogFlags();
     Logger::CloseLog();
 

@@ -29,6 +29,14 @@ private slots:
 
     void on_buttonBox_accepted();
 
+    void on_settingsPB_clicked();
+
+    void on_logPB_clicked();
+
+    void on_statusPB_clicked();
+
+    void on_aboutPB_clicked();
+
 public slots:
     void setAGStatus(bool stat);
     void setMagStatus(bool stat);

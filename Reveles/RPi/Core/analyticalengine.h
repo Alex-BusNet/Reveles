@@ -5,18 +5,6 @@
 
 #include "revelescore.h"
 
-// Passive Infrared Select bits
-#define PIR_FL 0b000 // Front-left
-#define PIR_FR 0b001 // Front-right
-#define PIR_BL 0b010 // Back-left
-#define PIR_BR 0b011 // Back-right
-
-// Ultrasonic Select bits
-#define US_LEFT  0b000
-#define US_FRONT 0b001
-#define US_RIGHT 0b010
-#define US_STAIR 0b011
-#define US_BACK  0b100
 
 /*=================================
  * Time Of Flight sensor locations
