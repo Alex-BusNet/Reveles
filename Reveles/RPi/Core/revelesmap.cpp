@@ -23,7 +23,7 @@ void RevelesMap::Init()
     {
         for(int y = 0; y < 63; y++)
         {
-            MapNode *n;
+            MapNode *n = new MapNode();
             n->coord = GPSCoord
                         {
                             // Need to check accuracy of these values
@@ -54,12 +54,19 @@ double RevelesMap::GetLongitudeThreshold()
     return THRESHOLD_LONGITUDE;
 }
 
-MapNode* RevelesMap::GetNodeFromCoord(GPSCoord gpsc)
+MapNode* RevelesMap::GetNodeFromCoord(const GPSCoord &gpsc)
 {
-    int tileX, tileY;
+    double tileX, tileY;
 
-    tileX = (gpsc.longitude - offsetLong) / 120;
-    tileY = (gpsc.latitude - offsetLat) / 63;
+    Logger::writeLine(instance(), QString("%1, %2").arg(gpsc.latitude, 12, 'g', 10).arg(gpsc.longitude, 12, 'g', 10));
+
+    tileX = ((gpsc.longitude - offsetLong) * std::pow(10,5) );
+    tileY = ((gpsc.latitude - offsetLat) * std::pow(10,5) );
+
+    Logger::writeLine(instance(), QString("%1, %2").arg(tileX).arg(tileY));
+
+    tileX /= 120;
+    tileY /= 63;
 
     int idx = tileX + (120 * tileY);
 

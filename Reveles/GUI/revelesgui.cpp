@@ -32,6 +32,7 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     trigOn = false;
     currentLoc = GPSCoord{0,0};
     hasComms = false;
+    demoOn = false;
     selectedPBIdx = -1;
 
     scrollWidget = new QWidget();
@@ -343,6 +344,7 @@ void RevelesGui::setDBusAdaptor(RevelesDBusAdaptor *rda)
     connect(this, &RevelesGui::SendDestination, rdba, &RevelesDBusAdaptor::setDestination);
     connect(this, &RevelesGui::SendMapUpdateInterval, rdba, &RevelesDBusAdaptor::setMapUpdateInterval);
     connect(this, &RevelesGui::NavigationAbort, rdba, &RevelesDBusAdaptor::EndNavigation);
+    connect(this, &RevelesGui::StartDemoMode, rdba, &RevelesDBusAdaptor::StartDemo);
 }
 
 GPSCoord RevelesGui::getLocation()
@@ -435,6 +437,7 @@ void RevelesGui::on_endNavigationPB_clicked()
     emit NavigationAbort();
     setLocation(NULL);
     ui->endNavigationPB->setEnabled(false);
+    if(demoOn) { demoOn = false; }
 }
 
 void RevelesGui::on_removeLocationPB_clicked()
@@ -472,5 +475,17 @@ void RevelesGui::on_startNavigationPB_clicked()
             ui->endNavigationPB->setEnabled(true);
             ui->startNavigationPB->setEnabled(false);
         }
+    }
+}
+
+void RevelesGui::on_demoPB_clicked()
+{
+    if(!demoOn)
+    {
+        demoOn = true;
+        ui->tabWidget->setCurrentIndex(1);
+        ui->endNavigationPB->setEnabled(true);
+        ui->startNavigationPB->setEnabled(false);
+        emit StartDemoMode();
     }
 }

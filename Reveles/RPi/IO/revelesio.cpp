@@ -40,7 +40,7 @@ void RevelesIO::initIO()
     fdNucleo[1] = wiringPiI2CSetup(NUCLEO_REAR);
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
-    delay(50);
+    delay(85);
     uint8_t res = wiringPiI2CRead(fdArduino);
     Logger::writeLine(instance(), QString("Arduino response: 0x%1").arg(res, 2, 16, QChar('0')));
 

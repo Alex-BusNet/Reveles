@@ -48,6 +48,7 @@ signals:
     void SendMapUpdateInterval(int interval);
     void RequestLocation();
     void NavigationAbort();
+    void StartDemoMode();
 
 public slots:
     void commCheck(bool good);
@@ -88,6 +89,8 @@ private slots:
 
     void on_startNavigationPB_clicked();
 
+    void on_demoPB_clicked();
+
 private:
     Ui::RevelesGui *ui;
     QScrollArea *sa;
@@ -103,7 +106,7 @@ private:
 
     com::reveles::RevelesCoreInterface *rci;
     RevelesDBusAdaptor *rdba;
-    bool trigOn, hasComms;
+    bool trigOn, hasComms, demoOn;
     int selectedPBIdx;
 
     void setupLocations();

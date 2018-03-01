@@ -4,13 +4,7 @@
 //#define USE_OBJ_DETECT
 //#define OBJ_DETECT_DEBUG
 
-#define FA_SW_CORNER GPSCoord{41.631906, -85.006082}
-#define FA_SE_CORNER GPSCoord{41.631910, -85.005670}
-#define FA_NE_CORNER GPSCoord{41.632562, -85.005680}
-#define FA_NW_CORNER GPSCoord{41.632559, -85.005982}
-#define FA_MAP_NW 	 GPSCoord{41.632559, -85.006123}
-#define FA_MAP_SW 	 GPSCoord{41.631906, -85.006123}
-#define FA_MAP_SE 	 GPSCoord{41.631906, -85.005665}
+
 
 #define B2STR( x ) (x ? "True" : "False")
 
@@ -50,6 +44,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 #endif
     connect(rci, &RevelesDBusInterface::EndNavigation, this, &RevelesCore::ForceEndNav);
     connect(rci, &RevelesDBusInterface::aboutToQuit, this, &RevelesCore::closeCore);
+    connect(rci, &RevelesDBusInterface::StartDemo, NavigationAssisiant::instance(), &NavigationAssisiant::End);
 
     // Loop the aboutToQuit() signal from the '/GUI' object to the aboutToQuit() signal from the '/Core' object
     connect(rci, &RevelesDBusInterface::aboutToQuit, rdba, &RevelesDBusAdaptor::aboutToQuit);
@@ -91,8 +86,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     updateInterval = 250; // ms
 
     /// TODO: Change this to ping GPS module for current location
-    loc = FA_SE_CORNER;
-    dest = loc; //GPSCoord{0, 0};
+    loc = FA_NW_CORNER;;
 
 #ifdef USE_OBJ_DETECT
 #ifdef OBJ_DETECT_DEBUG
@@ -100,10 +94,9 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 #endif
     ObjectDetector::instance()->Run();
 #endif
-//    AnalyticalEngine::instance()->Start();
 
     // Test the GetDistance() function
-    NavigationAssisiant::instance()->updateLocation(RevelesMap::instance()->GetOffset());
+    NavigationAssisiant::instance()->updateLocation(FA_NW_CORNER);
     Logger::writeLine(this, QString("Testing GetDistance()..."));
     Logger::writeLine(this,
                       QString("SE corner to NE corner: %1 ft")
@@ -125,7 +118,8 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 
     Logger::writeLine(this, QString("Orienting Reveles..."));
     NavigationAssisiant::instance()->Orient();
-
+    MapNode *mn = RevelesMap::instance()->GetNodeFromCoord(FA_NW_CORNER);
+    Logger::writeLine(this, QString("Node from coord: %1, %2").arg(mn->coord.latitude).arg(mn->coord.longitude));
     coreTimer = new QTimer();
     coreTimer->setInterval(updateInterval);
     connect(coreTimer, SIGNAL(timeout()), this, SLOT(coreLoop()));

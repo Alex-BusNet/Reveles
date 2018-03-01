@@ -25,16 +25,17 @@ public:
 
     void Init();
     void Start(GPSCoord dest);
+    void DemoMode();
     void Orient();
     void FindBearing();
 
-    void End();
 
     double GetDistance(GPSCoord pt1, GPSCoord pt2);
 
 public slots:
     void updateLocation(GPSCoord loc);
     void EStop();
+    void End();
 
 signals:
     void PathReady(QVector<GPSCoord> path);
@@ -46,7 +47,7 @@ private:
     QList<MapNode*> GetNeighbors(MapNode *node);
     void RetracePath(MapNode *end);
 
-    void Navigate();
+    void Navigate(bool demoMode);
     bool VerifyLocation();
     void DeadReckon();
 

@@ -2,10 +2,6 @@
 #include <tuple>
 #include "Common/vectorutils.h"
 
-//#define TUPI(a,b) (std::tuple<int, int>(a, b))
-//#define TUPD(a,b) (std::tuple<double, double>(a,b))
-//#define TUPF(a,b) (std::tuple<float, float>(a,b))
-
 #define FEET_PER_METER 3.280839895013   // ft/m
 #define METER_PER_FOOT 1/3.280839895013 // m/ft
 
@@ -29,9 +25,8 @@ void NavigationAssisiant::Init()
 {
     instance()->setObjectName("NavigationAssistant");
     destination = GPSCoord{0,0};
-    currentLocation = GPSCoord{41.632559, -85.005982};
+    currentLocation = FA_NW_CORNER; //GPSCoord{41.632559, -85.005982};
     path = NULL;
-    Orient();
 }
 
 /*!
@@ -50,24 +45,44 @@ void NavigationAssisiant::Start(GPSCoord dest)
     Logger::writeLine(instance(), QString("Straight-line distance to destination: ") +
                       QString::number(GetDistance(currentLocation, destination)) + " ft");
     MapNode *mn = RevelesMap::instance()->GetNodeFromCoord(currentLocation);
-    QString nodeStr = QString("%1, %2").arg(mn->mapX).arg(mn->mapY);
-    Logger::writeLine(instance(), QString("CurrentNode: %1").arg(nodeStr));
+    QString nodeStr;
+
+    if(mn != NULL)
+    {
+        nodeStr = QString("%1, %2").arg(mn->mapX).arg(mn->mapY);
+        Logger::writeLine(instance(), QString("CurrentNode: %1").arg(nodeStr));
+    }
 
     mn = RevelesMap::instance()->GetNodeFromCoord(dest);
-    nodeStr = QString("%1, %2").arg(mn->mapX).arg(mn->mapY);
-    Logger::writeLine(instance(), QString("Dest node: %1").arg(nodeStr));
+    if(mn != NULL)
+    {
+        nodeStr = QString("%1, %2").arg(mn->mapX).arg(mn->mapY);
+        Logger::writeLine(instance(), QString("Dest node: %1").arg(nodeStr));
+    }
 
     Logger::writeLine(instance(), "Finding Path...");
     FindPath();
 
     Logger::writeLine(instance(), "Starting Navigation");
-//    AnalyticalEngine::instance()->Start();
-    future = QtConcurrent::run([=]() { Navigate(); });
+    AnalyticalEngine::instance()->Start();
+    RevelesIO::instance()->StartNav();
+    future = QtConcurrent::run([=]() { Navigate(false); });
+}
+
+void NavigationAssisiant::DemoMode()
+{
+    Logger::writeLine(instance(), QString("Entering demo mode..."));
+    destVec.set(FA_SW_CORNER);
+    path = new MapNode(); // Navigate() stops if this is NULL
+    AnalyticalEngine::instance()->Start();
+    RevelesIO::instance()->StartNav();
+    future = QtConcurrent::run([=]() { Navigate(true); });
 }
 
 void NavigationAssisiant::updateLocation(GPSCoord loc)
 {
     currentLocation = loc;
+
 }
 
 /**
@@ -100,6 +115,7 @@ void NavigationAssisiant::FindPath()
         Logger::writeLine(instance(), Reveles::INVALID_DESTINATION);
         return;
     }
+
     MapNode *endNode = RevelesMap::instance()->GetNodeFromCoord(destination);
     currentNode = RevelesMap::instance()->GetNodeFromCoord(currentLocation);
 
@@ -348,6 +364,8 @@ void NavigationAssisiant::End()
     path = NULL;
 
     RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});
+    AnalyticalEngine::instance()->stop();
+    RevelesIO::instance()->StopNav();
 }
 
 /*
@@ -355,15 +373,16 @@ void NavigationAssisiant::End()
  * how to fully reach the destination (Blind mode)
  * or have no destination at all (Wander mode)
  */
-void NavigationAssisiant::Navigate()
+void NavigationAssisiant::Navigate(bool demoMode)
 {
     while(path != NULL)
     {
         currentNode = path;
         nextNode = path->child;
 
+        // The demoMode flag keeps this from triggering (since it is stationary for demos
         /// TODO: Need to test how this behaves with the AnalyticalEngine adjusting the path.
-        if(!VerifyLocation())
+        if(!VerifyLocation() && !demoMode)
         {
             Logger::writeLine(instance(), Reveles::COORD_MISMATCH);
             RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});

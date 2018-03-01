@@ -104,6 +104,8 @@ Q_SIGNALS: // SIGNALS
     void AccelUpdate(AccelDirection ad);
     void GyroUpdate(GyroDirection gd);
     void EndNavigation();
+    void StartDemo();
+    void EndDemo();
 };
 
 #endif

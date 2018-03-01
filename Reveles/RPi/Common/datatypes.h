@@ -153,6 +153,14 @@ inline const QDBusArgument &operator>>(const QDBusArgument &argument, GyroDirect
 QT_END_NAMESPACE
 //====================================================
 
+#define FA_SW_CORNER GPSCoord{41.631906, -85.006082}
+#define FA_SE_CORNER GPSCoord{41.631910, -85.005670}
+#define FA_NE_CORNER GPSCoord{41.632562, -85.005680}
+#define FA_NW_CORNER GPSCoord{41.632559, -85.005982}
+#define FA_MAP_NW 	 GPSCoord{41.632559, -85.006123}
+#define FA_MAP_SW 	 GPSCoord{41.631906, -85.006123}
+#define FA_MAP_SE 	 GPSCoord{41.631906, -85.005665}
+
 struct DecisionPoint {
     MagDirection face;
     GPSCoord point;
@@ -168,8 +176,16 @@ enum NodeType
 //    L_DEAD_END, R_DEAD_END, B_DEAD_END, T_DEAD_END
 };
 
-struct MapNode
+class MapNode
 {
+public:
+    MapNode()
+    {
+        nt = UNKNOWN;
+        mapX = -1;
+        mapY = -1;
+    }
+
     GPSCoord coord;
     NodeType nt;
     MapNode* parent = NULL;
