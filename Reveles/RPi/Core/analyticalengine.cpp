@@ -146,7 +146,7 @@ void AnalyticalEngine::CheckEnv()
         us = RevelesIO::instance()->triggerUltrasonic(US_FRONT); // Stair US
         Logger::writeLine(instance(), QString("Front US Reading: %1").arg(us));
         /* overwritten for demo purposes */
-//        us = 13;
+        us = 13;
         tof[1] = 65;    // RevelesIO::instance()->ReadTimeOfFlight(1);
     }
     else if(motorDir == M_REV)
@@ -154,7 +154,7 @@ void AnalyticalEngine::CheckEnv()
         pir = RevelesIO::instance()->readPIR(true);
         us = RevelesIO::instance()->triggerUltrasonic(US_RIGHT); // Stair US
         Logger::writeLine(instance(), QString("Rear US reading: %1").arg(us));
-//        us = 13;
+        us = 13;
         //tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
         tof[5] = 65;
     }

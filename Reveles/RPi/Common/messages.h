@@ -31,10 +31,17 @@ namespace Reveles
     static const QString MAG_DATA =   "  Mag Data: X: %1 Y: %2 Z: %3 gauss";
     static const QString ACCEL_DATA = "Accel Data: X: %1 Y: %2 Z: %3 m/s/s";
     static const QString GYRO_DATA =  " Gyro Data: X: %1 Y: %2 Z: %3 rad/s";
-    static const QString MAG_GUI_DATA = "X: %1 Y: %2 Z: %3 gauss";
-    static const QString ACCEL_GUI_DATA = "X: %1 Y: %2 Z: %3 m/s/s";
-    static const QString GYRO_GUI_DATA = "X: %1 Y: %2 Z: %3 rad/s";
-    static const QString GPS_DATA =   "Latitude: %1 Longitude: %2";
+    static const QString MAG_GUI_DATA = "X: %1 gauss\n"
+                                        "Y: %2 gauss\n"
+                                        "Z: %3 gauss";
+    static const QString ACCEL_GUI_DATA = "X: %1 m/s/s\n"
+                                          "Y: %2 m/s/s\n"
+                                          "Z: %3 m/s/s";
+    static const QString GYRO_GUI_DATA = "X: %1 rad/s\n"
+                                         "Y: %2 rad/s\n"
+                                         "Z: %3 rad/s";
+    static const QString GPS_DATA =   "Latitude:  %1 \n"
+                                      "Longitude: %2";
 
     static const QString TOF_I2C_RESPONSE = "Time of Flight reading from 0x%1: %2";
 

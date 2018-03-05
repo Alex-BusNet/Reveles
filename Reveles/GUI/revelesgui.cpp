@@ -198,6 +198,24 @@ void RevelesGui::gyroUpdate(GyroDirection gd)
         ss->GyroReading(gd);
 }
 
+void RevelesGui::ArduinoStatus(bool good)
+{
+    if(ss != NULL)
+        ss->setArduino(good);
+}
+
+void RevelesGui::NucleoStatus(bool good, int idx)
+{
+    if(ss != NULL)
+        ss->setNucleo(good, idx);
+}
+
+void RevelesGui::PIRStatus(bool stat)
+{
+    if(ss != NULL)
+        ss->setPIR(stat);
+}
+
 void RevelesGui::setupLocations()
 {
     if(lpbs.size() != 0)
@@ -332,6 +350,9 @@ void RevelesGui::setDBusInterface(com::reveles::RevelesCoreInterface *iface)
     connect(rci, &RevelesDBusInterface::AccelUpdate, this, &RevelesGui::accelUpdate);
     connect(rci, &RevelesDBusInterface::MagUpdate, this, &RevelesGui::magUpdate);
     connect(rci, &RevelesDBusInterface::GyroUpdate, this, &RevelesGui::gyroUpdate);
+    connect(rci, &RevelesDBusInterface::ArduinoFound, this, &RevelesGui::ArduinoStatus);
+    connect(rci, &RevelesDBusInterface::NucleoFound, this, &RevelesGui::NucleoStatus);
+    connect(rci, &RevelesDBusInterface::PIRStatus, this, &RevelesGui::PIRStatus);
 }
 
 void RevelesGui::setDBusAdaptor(RevelesDBusAdaptor *rda)

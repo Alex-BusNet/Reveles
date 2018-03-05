@@ -44,6 +44,10 @@ public slots:
     void AccelReading(AccelDirection ad);
     void GyroReading(GyroDirection gd);
 
+    void setArduino(bool good);
+    void setNucleo(bool good, int idx);
+    void setPIR(bool stat);
+
 private:
     Ui::SettingsScreen *ui;
 };

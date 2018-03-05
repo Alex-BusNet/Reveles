@@ -59,6 +59,9 @@ public slots:
     void magUpdate(MagDirection md);
     void accelUpdate(AccelDirection ad);
     void gyroUpdate(GyroDirection gd);
+    void ArduinoStatus(bool good);
+    void NucleoStatus(bool good, int idx);
+    void PIRStatus(bool stat);
 
 private slots:
 

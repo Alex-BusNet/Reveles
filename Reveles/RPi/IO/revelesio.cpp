@@ -40,11 +40,22 @@ void RevelesIO::initIO()
     fdNucleo[1] = wiringPiI2CSetup(NUCLEO_REAR);
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
-//    delay(85);
-    uint8_t res = wiringPiI2CRead(fdArduino);
-    Logger::writeLine(instance(), QString("Arduino response: 0x%1").arg(res, 2, 16, QChar('0')));
+//    delay(100);
+    uint8_t res = 0xFF;
+    unsigned long waitTime = micros(), elapsedTime;
 
-    if((res == COM_CHECK))
+    while (res == 0xFF)
+    {
+        res = wiringPiI2CRead(fdArduino);
+        elapsedTime = micros() - waitTime;
+        // One second timeout;
+        if(elapsedTime > 1e6L) { break; }
+    }
+
+    Logger::writeLine(instance(), QString("Arduino response: 0x%1").arg(res, 2, HEX, QChar('0')));
+    Logger::writeLine(instance(), QString("Arduino Response time: %1 us").arg(elapsedTime,));
+
+    if(res == COM_CHECK)
         arduinoFound = true;
     else
         arduinoFound = false;
@@ -69,6 +80,10 @@ void RevelesIO::initIO()
 
     XGAvailable = agm->AccelGyroFound();
     MagAvailable = agm->MagFound();
+
+    emit arduinoStat(arduinoFound);
+    emit nucleoStat(fdNucleo[0] != -1, 0);
+    emit nucleoStat(fdNucleo[1] != -1, 1);
 
     isrWait = false;
     stopParser = false;
@@ -113,9 +128,16 @@ void RevelesIO::StartNav()
 
 void RevelesIO::StopNav()
 {
+    Logger::writeLine(instance(), QString("Ending Navigation..."));
+
     stopToF = true;
     if(tofReader.isRunning())
         tofReader.waitForFinished();
+
+    ioRequestQueue.clear();
+
+
+    Logger::writeLine(instance(), QString("Done."));
 }
 
 void RevelesIO::CloseIO()
@@ -207,7 +229,7 @@ void RevelesIO::SendMotorUpdate()
     wiringPiI2CWrite(fdArduino, tofDist[1]);
     delay(85);
     wiringPiI2CWrite(fdArduino, END);
-//    delay(85);
+    delay(85);
 
     Logger::writeLine(instance(), QString("START:         0x%1").arg(START, 2, 16, QChar('0')));
     Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(CMD_M, 2, 16, QChar('0')));
@@ -231,7 +253,7 @@ void RevelesIO::SendGPSRequest()
     wiringPiI2CWrite(fdArduino, CMD_G);
     delay(85);
     wiringPiI2CWrite(fdArduino, END);
-//    delay(85);
+    delay(85);
 
     Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(START, 2, 16, QChar('0')));
     Logger::writeLine(instance(), Reveles::I2C_GPS_SEND.arg(CMD_G, 2, 16, QChar('0')));
@@ -284,7 +306,7 @@ void RevelesIO::ReadGPS()
     // Format: <START> -> <LATITUDE> -> <latitude value> -> <LONGITUDE> -> <longitude value> -> <END>
 
     Logger::writeLine(instance(), "Reading Arduino...");
-    int response = wiringPiI2CRead(fdArduino);
+    uint8_t response = wiringPiI2CRead(fdArduino);
 
     if(response == START)
     {
@@ -371,13 +393,26 @@ int RevelesIO::ReadTimeOfFlight(int sensorNum)
     return tofDist[sensorNum];
 }
 
-bool RevelesIO::readPIR(uint8_t sel)
+bool RevelesIO::readPIR(bool rear)
 {
     // Check this, I don't believe it
-    digitalWrite(SEL_A, LOW);         // Get the A select bit. This should already by in index 0
-    digitalWrite(SEL_B, HIGH); // Get the B select bit and shift into index 0
+    if(rear)
+    {
+        digitalWrite(SEL_A, LOW);  // Get the A select bit. This should already by in index 0
+        digitalWrite(SEL_B, HIGH); // Get the B select bit and shift into index 0
+    }
+    else
+    {
+        digitalWrite(SEL_A, LOW);
+        digitalWrite(SEL_B, LOW);
+    }
 
-    return digitalRead(SIG) ? true : false;
+    int val = digitalRead(SIG);// ? true : false;
+
+    Logger::writeLine(instance(), QString("PIR: %1").arg(val));
+    emit pirStat(val ? true : false);
+
+    return val ? true : false;
 }
 
 MagDirection RevelesIO::ReadMagnetometer()

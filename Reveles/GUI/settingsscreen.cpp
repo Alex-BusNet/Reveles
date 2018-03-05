@@ -126,6 +126,40 @@ void SettingsScreen::GyroReading(GyroDirection gd)
     ui->gyroReadingLabel->setText(Reveles::GYRO_GUI_DATA.arg(gd.x, 5, 'g', 5, QChar('0')).arg(gd.y, 5, 'g', 5, QChar('0')).arg(gd.z, 5, 'g', 5, QChar('0')));
 }
 
+void SettingsScreen::setArduino(bool good)
+{
+    if(good)
+        ui->arduinoStatusLabel->setStyleSheet("QLabel { background-color: green; }");
+    else
+        ui->arduinoStatusLabel->setStyleSheet("QLabel { background-color: red; }");
+}
+
+void SettingsScreen::setNucleo(bool good, int idx)
+{
+    if(good)
+    {
+        if(idx == 0)
+            ui->frontNucleoStatusLabel->setStyleSheet("QLabel { background-color: green; }");
+        else if(idx == 1)
+            ui->rearNucleoStatusLabel->setStyleSheet("QLabel { background-color: green; }");
+    }
+    else
+    {
+        if(idx == 0)
+            ui->frontNucleoStatusLabel->setStyleSheet("QLabel { background-color: red; }");
+        else if(idx == 1)
+                ui->rearNucleoStatusLabel->setStyleSheet("QLabel { background-color: red; }");
+    }
+}
+
+void SettingsScreen::setPIR(bool stat)
+{
+    if(stat)
+        ui->pirStatusLabel->setStyleSheet("QLabel { background-color: red; }");
+    else
+        ui->pirStatusLabel->setStyleSheet("QLabel { background-color: green; }");
+}
+
 void SettingsScreen::on_settingsPB_clicked()
 {
     ui->tabWidget->setCurrentIndex(0);

@@ -55,6 +55,9 @@ Q_SIGNALS: // SIGNALS
     void AccelUpdate(AccelDirection ad);
     void GyroUpdate(GyroDirection gd);
     void EndNavigation();
+    void ArduinoFound(bool good);
+    void NucleoFound(bool good, int idx);
+    void PIRStatus(bool stat);
 };
 
 namespace com {

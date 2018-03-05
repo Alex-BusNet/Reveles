@@ -365,8 +365,8 @@ void NavigationAssisiant::End()
     path = NULL;
 
     RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});
-    AnalyticalEngine::instance()->stop();
-    RevelesIO::instance()->StopNav();
+//    AnalyticalEngine::instance()->stop();
+//    RevelesIO::instance()->StopNav();
 }
 
 /*

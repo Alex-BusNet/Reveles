@@ -55,10 +55,10 @@ class RevelesDBusAdaptor: public QDBusAbstractAdaptor
 "      <annotation value=\"GPSCoord\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
 "      <arg direction=\"out\" type=\"(dd)\" name=\"loc\"/>\n"
 "    </signal>\n"
-"    <signal name=\"setAGStatus\">\n"
+"    <signal name=\"getAGStatus\">\n"
 "      <arg direction=\"out\" type=\"b\" name=\"good\"/>\n"
 "    </signal>\n"
-"    <signal name=\"setMagStatus\">\n"
+"    <signal name=\"getMagStatus\">\n"
 "      <arg direction=\"out\" type=\"b\" name=\"good\"/>\n"
 "    </signal>\n"
 "    <signal name=\"sendLogMessage\">\n"
@@ -78,6 +78,16 @@ class RevelesDBusAdaptor: public QDBusAbstractAdaptor
 "    </signal>\n"
 "    <signal name=\"EndNavigation\">\n"
 "    </signal>"
+"   <signal name=\"ArduinoFound\">\n"
+"       <arg direction=\"out\" type=\"b\" name=\"good\" />\n"
+"   </signal>"
+"   <signal name=\"NucleoFound\">\n"
+"       <arg direction=\"out\" type=\"b\" name=\"good\" />\n"
+"       <arg direction=\"out\" type=\"i\" name=\"idx\" />\n"
+"   </signal>"
+"   <signal name=\"PIRStatus\">\n"
+"       <arg direction=\"out\" type=\"b\" name=\"stat\" />\n"
+"   </signal>"
 "  </interface>\n"
         "")
 public:
@@ -94,9 +104,9 @@ Q_SIGNALS: // SIGNALS
     void locationUpdate(GPSCoord loc);
     void requestCurrentLocation();
     void requestMapUpdate();
-    void setAGStatus(bool good);
+    void getAGStatus(bool good);
     void setDestination(GPSCoord gpsc);
-    void setMagStatus(bool good);
+    void getMagStatus(bool good);
     void setMapUpdateInterval(int milliseconds);
     void sendLogMessage(QString msg);
     void sendPathInfo(QVector<GPSCoord> path);
@@ -104,6 +114,9 @@ Q_SIGNALS: // SIGNALS
     void AccelUpdate(AccelDirection ad);
     void GyroUpdate(GyroDirection gd);
     void EndNavigation();
+    void ArduinoFound(bool good);
+    void NucleoFound(bool good, int idx);
+    void PIRStatus(bool stat);
 };
 
 #endif

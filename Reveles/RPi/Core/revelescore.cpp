@@ -48,13 +48,16 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     // Outbound comms (CORE -> GUI)
     connect(this, &RevelesCore::commResponse, rdba, &RevelesDBusAdaptor::commResponse);
     connect(this, &RevelesCore::currentLocation, rdba, &RevelesDBusAdaptor::locationUpdate);
-    connect(this, &RevelesCore::sendAGStatus, rdba, &RevelesDBusAdaptor::setAGStatus);
-    connect(this, &RevelesCore::sendMagStatus, rdba, &RevelesDBusAdaptor::setMagStatus);
+    connect(this, &RevelesCore::sendAGStatus, rdba, &RevelesDBusAdaptor::getAGStatus);
+    connect(this, &RevelesCore::sendMagStatus, rdba, &RevelesDBusAdaptor::getMagStatus);
     connect(Logger::instance(), &Logger::newMessage, rdba, &RevelesDBusAdaptor::sendLogMessage);
     connect(NavigationAssisiant::instance(), &NavigationAssisiant::PathReady, rdba, &RevelesDBusAdaptor::sendPathInfo);
     connect(this, &RevelesCore::sendAccelReading, rdba, &RevelesDBusAdaptor::AccelUpdate);
     connect(this, &RevelesCore::sendMagReading, rdba, &RevelesDBusAdaptor::MagUpdate);
     connect(this, &RevelesCore::sendGyroReading, rdba, &RevelesDBusAdaptor::GyroUpdate);
+    connect(RevelesIO::instance(), &RevelesIO::arduinoStat, rdba, &RevelesDBusAdaptor::ArduinoFound);
+    connect(RevelesIO::instance(), &RevelesIO::nucleoStat, rdba, &RevelesDBusAdaptor::NucleoFound);
+    connect(RevelesIO::instance(), &RevelesIO::pirStat, rdba, &RevelesDBusAdaptor::PIRStatus);
 
     // Additional comms (CORE -> CORE)
     connect(this, &RevelesCore::currentLocation, NavigationAssisiant::instance(), &NavigationAssisiant::updateLocation);
@@ -79,7 +82,7 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     emit sendMagStatus(RevelesIO::instance()->hasMag());
 
     commsGood = false;
-    updateInterval = 250; // ms
+    updateInterval = 1000; // ms
 
     /// TODO: Change this to ping GPS module for current location
     loc = FA_NW_CORNER;;
@@ -116,15 +119,17 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     NavigationAssisiant::instance()->Orient();
     MapNode *mn = RevelesMap::instance()->GetNodeFromCoord(FA_NW_CORNER);
     Logger::writeLine(this, QString("Node from coord: %1, %2").arg(mn->coord.latitude).arg(mn->coord.longitude));
+
     coreTimer = new QTimer();
     coreTimer->setInterval(updateInterval);
     connect(coreTimer, SIGNAL(timeout()), this, SLOT(coreLoop()));
     coreTimer->start();
 
+    getCurrentLocation();
+
     active = true;
     Logger::writeLine(this, Reveles::CORE_INIT_COMPLETE);
 
-    getCurrentLocation();
 }
 
 RevelesCore::~RevelesCore()
@@ -215,7 +220,7 @@ void RevelesCore::updateMapData()
 void RevelesCore::coreLoop()
 {
 //    static int directionCount = 0;
-    readSensor();
+//    readSensor();
 //    NavigationAssisiant::instance()->Orient();
 //    updateMapData();
     readAGM();

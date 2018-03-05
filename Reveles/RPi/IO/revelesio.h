@@ -95,7 +95,7 @@ public:
 
     int triggerUltrasonic(uint8_t sel);
     int ReadTimeOfFlight(int sensorNum);
-    bool readPIR(uint8_t sel);
+    bool readPIR(bool rear);
 
     MagDirection ReadMagnetometer();
     AccelDirection ReadAccelerometer();
@@ -133,6 +133,9 @@ private:
 signals:
     void echoReady(float dist, QString unit);
     void motorDirectionUpdate(uint8_t dir);
+    void arduinoStat(bool stat);
+    void nucleoStat(bool stat, int idx);
+    void pirStat(bool stat);
 };
 
 #endif // REVELESIO_H
