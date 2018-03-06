@@ -71,6 +71,10 @@
 #define WAITING_FOR_SERVO_DIR  7
 #define WAITING_FOR_SERVO_VAL  8
 
+#define READY_FOR_HELLO        9
+#define READY_FOR_GPS_RESPONSE 10
+#define NO_DATA_READY          11
+
 //----------------------------------
 //        Other defines
 #define INT_MAX 32767
@@ -105,6 +109,7 @@ Servo rearServo;
 //----------------------------------
 //          I2C variables
 int commState = WAITING_FOR_HELLO;
+int responseState = NO_DATA_READY;
 bool respond = false;       // Send GPS info back to RPi
 String commStateStrings[] = {"WAITING_FOR_START", "WAITING_FOR_US_DATA",                    //
                              "WAITING_FOR_MOTOR_DIR", "WAITING_FOR_TOF_DATA",               // This is for debugging
@@ -165,7 +170,7 @@ void recieveData(int byteCount)
 
     if(commState == WAITING_FOR_HELLO)
     {
-        if(cmd == COM_CHECK) { commState = WAITING_FOR_START; Wire.write(COM_CHECK); }
+        if(cmd == COM_CHECK) { commState = WAITING_FOR_START; responseState = READY_FOR_HELLO; }
     }
     else if (commState == WAITING_FOR_START)
     {
@@ -174,7 +179,7 @@ void recieveData(int byteCount)
     else if (commState == WAITING_FOR_MGS)
     {
         if(cmd == CMD_M) { commState = WAITING_FOR_US_DATA; }
-        else if(cmd == CMD_G) { respond = true; commState = WAITING_FOR_END; }
+        else if(cmd == CMD_G) { respond = true; commState = WAITING_FOR_END; responseState = READY_FOR_GPS_RESPONSE; }
         else if(cmd == CMD_S) { commState = WAITING_FOR_SERVO_DIR; }
     }
     else if(commState == WAITING_FOR_US_DATA)
@@ -226,33 +231,60 @@ void recieveData(int byteCount)
 
 void sendData()
 {
-    readGPS();
+    if(responseState = READY_FOR_HELLO)
+    {
+        Wire.write(COM_CHECK);
+        responseState = NO_DATA_READY;
+    }
+    else if(responseState = READY_FOR_GPS_RESPONSE)
+    {
+        responseState = NO_DATA_READY;
       
-    Wire.write(START_CMD);
-    delay(85);
-    Wire.write(LATITUDE);
-    delay(85);
-    Wire.write(latitude);
-    delay(85);
-    Wire.write(LONGITUDE);
-    delay(85);
-    Wire.write(longitude);
-    delay(85);
-    Wire.write(END_CMD);
+        Wire.write(START_CMD);
+        delay(85);
+        Wire.write(LATITUDE);
+        delay(85);
+        Wire.write(latitude);
+        delay(85);
+        Wire.write(LONGITUDE);
+        delay(85);
+        Wire.write(longitude);
+        delay(85);
+        Wire.write(END_CMD);
+    }
 }
 
 void readGPS()
 {
-    gps.read();
+    char c = gps.read();
+
+    if (c) { Serial.write(c); }
+
+    if(gps.newNMEAreceived())
+    {
+        Serial.println("New NMEA sententence");
+        if(!gps.parse(gps.lastNMEA()))
+        {
+            Serial.println("Failed to parse!");
+            return;
+        }
+    }
     
     if(gps.fix)
     {
         latitude = gps.latitude;
         longitude = gps.longitude;
+        
+        Serial.print("Latitude: ");
+        Serial.print(gps.latitude, 4);
+        Serial.println(gps.lat);
+        Serial.print("Longitude: ");
+        Serial.print(gps.longitude, 4);
+        Serial.println(gps.lon);
     }
+    else
+        Serial.println("No GPS Fix!");
 
-    Serial.println("Latitude: " + String(latitude));
-    Serial.println("Longitude: " + String(longitude));
     
     digitalWrite(GPS_READY_PIN, LOW);
     delay(5);
@@ -324,7 +356,7 @@ void motorSTOP()
 //    Serial.println("Stopping");
     digitalWrite(input1, HIGH);
     digitalWrite(input2, HIGH);
-    readGPS(); // Temporary; used for testing.
+//    readGPS(); // Temporary; used for testing.
 }
 
 /*This function is designed for use in the initial startup of the robot. When the robot is booted up, the enable pin on the motor
@@ -488,9 +520,9 @@ void returnToNeutral()
 
 void setup() {
     // Serial Settings for reading GPS
-//  Serial.begin(115200);
+//    Serial.begin(115200);
     Serial.begin(9600);
-//  delay(5000);
+//    delay(5000);
 
     // Start reading GPS with passed baud rate
     gps.begin(9600); 
@@ -499,7 +531,9 @@ void setup() {
     // Set update rate to 1Hz
     gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
     // Request updates on antenna status.
-//    gps.sendCommand(PGCMD_ANTENNA);
+    gps.sendCommand(PGCMD_ANTENNA);
+    delay(1000);
+    Serial.println(PMTK_Q_RELEASE);
 
     // Motor Control I/O
     pinMode(enableA, OUTPUT);
@@ -548,7 +582,7 @@ void loop()
         start();
     
         if(respond)
-            sendData();
+            readGPS();
     }
 }
 
