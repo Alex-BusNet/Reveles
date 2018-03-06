@@ -1,5 +1,6 @@
 #include "revelescore.h"
 #include <QCoreApplication>
+#include <chrono>
 
 //#define USE_OBJ_DETECT
 //#define OBJ_DETECT_DEBUG
@@ -18,6 +19,8 @@ LoggerFlags Logger::flags = NO_LOG_FLAGS;
 RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesCoreInterface *iface) :
     rdba(dbusAdaptor), rci(iface)
 {
+    std::chrono::steady_clock::time_point startTime, endTime;
+    startTime = std::chrono::steady_clock::now();
     this->setObjectName("RevelesCore");
 
     Logger::InitLog();
@@ -111,7 +114,10 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 
     Logger::writeLine(this, QString("Testing GPS..." ));
     RevelesIO::instance()->SendGPSRequest();
+
     delay(1000);
+
+    RevelesIO::instance()->ReadGPS();
     GPSCoord g = RevelesIO::instance()->GetLastGPSCoord();
     Logger::writeLine(this, QString("Response: %1, %2").arg(g.latitude).arg(g.longitude));
 
@@ -129,6 +135,8 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
 
     active = true;
     Logger::writeLine(this, Reveles::CORE_INIT_COMPLETE);
+    endTime = std::chrono::steady_clock::now();
+    Logger::writeLine(this, QString("Time to init: %1 ms").arg(chrono::duration_cast<chrono::milliseconds>(endTime - startTime).count()));
 
 }
 

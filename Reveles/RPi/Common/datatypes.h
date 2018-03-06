@@ -34,6 +34,8 @@
 #define US_STAIR 0b011
 #define US_BACK  0b100
 
+#define I2C_TRANSMIT_DELAY 100
+
 #define B2STR( x ) (x ? "True" : "False")
 
 struct GPSCoord {

@@ -76,7 +76,7 @@ namespace Reveles
     static const QString OD_STOPPING = "Stopping Object Detector...";
     static const QString FRAME_READ_FAIL = "No frame to read.";
 
-    static const QString REVELES_VERSION = "0.7.0225";
+    static const QString REVELES_VERSION = "0.8.0306";
     static const QString REVELES_CORE_INFO = "========================================\n"
                                              "RevelesCore            Version: %1\n"
                                              "                                        \n"

@@ -35,7 +35,7 @@ public:
     AnalyticalEngine();
 
     void Init();
-    void Start();
+    void Start(bool demo);
 
 
 public slots:
@@ -50,7 +50,7 @@ private:
     // Variables
     int us;
     int tof[8];
-    bool pir;
+    bool pir, demoMode;
 
 
     // The transition matrix is a 7x7 array

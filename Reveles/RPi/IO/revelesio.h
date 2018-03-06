@@ -66,8 +66,6 @@
 
 class LSM9DS1;
 
-void GPS_Response_Ready();
-
 class RevelesIO : public QObject
 {
     Q_OBJECT
@@ -124,7 +122,7 @@ private:
 
     GPSCoord lastKnownCoord;
     LSM9DS1 *agm;
-    std::chrono::steady_clock::time_point begin, end;
+//    std::chrono::steady_clock::time_point begin, end;
 
     // Functions
     void ParseQueue();

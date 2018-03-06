@@ -30,6 +30,7 @@ void AnalyticalEngine::Init()
     tof[0] = tof[1] = tof[2] = tof[3] = tof[4] = tof[5] = tof[6] = tof[7] = 66; // inches
     us = 160; // inches
     pir = false;
+    demoMode = false;
     motorDir = M_STOP;
     servoDir = RET_NEUTRAL;
 
@@ -88,8 +89,9 @@ void AnalyticalEngine::Init()
 
 }
 
-void AnalyticalEngine::Start()
+void AnalyticalEngine::Start(bool demo)
 {
+    demoMode = demo;
     future = QtConcurrent::run([=]() {
         while(!endAnalyze)
         {
@@ -117,6 +119,7 @@ void AnalyticalEngine::stop()
 {
     Logger::writeLine(instance(), QString("Ending environment analysis..."));
     endAnalyze = true;
+    demoMode = false;
 
     if(future.isRunning())
         future.cancel();
@@ -144,19 +147,16 @@ void AnalyticalEngine::CheckEnv()
     {
         pir = RevelesIO::instance()->readPIR(false);
         us = RevelesIO::instance()->triggerUltrasonic(US_FRONT); // Stair US
-        Logger::writeLine(instance(), QString("Front US Reading: %1").arg(us));
-        /* overwritten for demo purposes */
-        us = 13;
         tof[1] = 65;    // RevelesIO::instance()->ReadTimeOfFlight(1);
+        Logger::writeLine(instance(), QString("Front US Reading: %1").arg(us));
     }
     else if(motorDir == M_REV)
     {
         pir = RevelesIO::instance()->readPIR(true);
         us = RevelesIO::instance()->triggerUltrasonic(US_RIGHT); // Stair US
-        Logger::writeLine(instance(), QString("Rear US reading: %1").arg(us));
-        us = 13;
         //tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
         tof[5] = 65;
+        Logger::writeLine(instance(), QString("Rear US reading: %1").arg(us));
     }
 
     if(servoDir == TURN_LEFT)
@@ -208,6 +208,7 @@ void AnalyticalEngine::ProcessEnv()
     if(us < 12 /* inches */)
     {
         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
+//        delay(1000); // Give the stop command some time to be processed and take effect.
 
         if(motorDir == M_FWD)
             motorDir = M_REV;
@@ -217,23 +218,21 @@ void AnalyticalEngine::ProcessEnv()
         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
 
         Logger::writeLine(instance(), QString("STAIRS FOUND! Backtracking..."));
-//        emit StairsDetected();
+        if(!demoMode) { emit StairsDetected(); }
+
         return;
     }
     else
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us});
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us });
 
     // Simple path adjustment for now. Values are estimates.
     // Person found (distance unknown) or ToF return distance less than max
     if(pir || ((motorDir == M_FWD) && (tof[1] < 66)))
     {
-//        RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
         AdjustPath_Inanimate();
     }
     else if(pir || (motorDir == M_REV) && (tof[5] < 66))
     {
-
-//        RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
         AdjustPath_Inanimate();
     }
 

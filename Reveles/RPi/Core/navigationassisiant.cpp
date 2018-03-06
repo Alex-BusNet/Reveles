@@ -64,7 +64,7 @@ void NavigationAssisiant::Start(GPSCoord dest)
     FindPath();
 
     Logger::writeLine(instance(), "Starting Navigation");
-    AnalyticalEngine::instance()->Start();
+    AnalyticalEngine::instance()->Start(false);
     RevelesIO::instance()->StartNav();
     future = QtConcurrent::run([=]() { Navigate(false); });
 }
@@ -76,7 +76,7 @@ void NavigationAssisiant::DemoMode()
     path = new MapNode(); // Navigate() stops if this is NULL
     RevelesIO::instance()->StartNav();
     AnalyticalEngine::instance()->SetMotorDirection(M_FWD);
-    AnalyticalEngine::instance()->Start();
+    AnalyticalEngine::instance()->Start(true);
 //    future = QtConcurrent::run([=]() { Navigate(true); });
 }
 
