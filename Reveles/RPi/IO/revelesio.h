@@ -38,7 +38,7 @@
 //-----------------------
 //  I2C Device Addresses
 #define ARDUINO             0x04
-#define NUCLEO_FRONT        0x2B
+#define NUCLEO_FRONT        0x0A
 #define NUCLEO_REAR         0x0B
 
 // The TOF addresses may need to be bit shifted;
