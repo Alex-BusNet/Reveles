@@ -147,15 +147,14 @@ void AnalyticalEngine::CheckEnv()
     {
         pir = RevelesIO::instance()->readPIR(false);
         us = RevelesIO::instance()->triggerUltrasonic(US_FRONT); // Stair US
-        tof[1] = 65;    // RevelesIO::instance()->ReadTimeOfFlight(1);
+        tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
         Logger::writeLine(instance(), QString("Front US Reading: %1").arg(us));
     }
     else if(motorDir == M_REV)
     {
         pir = RevelesIO::instance()->readPIR(true);
         us = RevelesIO::instance()->triggerUltrasonic(US_RIGHT); // Stair US
-        //tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
-        tof[5] = 65;
+        tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
         Logger::writeLine(instance(), QString("Rear US reading: %1").arg(us));
     }
 
@@ -208,7 +207,7 @@ void AnalyticalEngine::ProcessEnv()
     if(us < 12 /* inches */)
     {
         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
-//        delay(1000); // Give the stop command some time to be processed and take effect.
+        delay(1000); // Give the stop command some time to be processed and take effect.
 
         if(motorDir == M_FWD)
             motorDir = M_REV;

@@ -2,23 +2,7 @@
 #define REVELES_ANALYTICALENGINE_H
 
 #include "rpi.h"
-
 #include "revelescore.h"
-
-
-/*=================================
- * Time Of Flight sensor locations
- *          0-----1-----2
- *          |   Front   |
- *          |           |
- *          |           |
- *          7           3
- *          |           |
- *          |           |
- *          |           |
- *          6-----5-----4
- *=================================
-*/
 
 /*
  * The AnalyticalEngine class is intended to process

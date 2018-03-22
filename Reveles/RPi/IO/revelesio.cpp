@@ -38,7 +38,7 @@ void RevelesIO::initIO()
     fdNucleo[1] = wiringPiI2CSetup(NUCLEO_REAR);
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
-    uint8_t res = 0xFF;
+    uint8_t res = CMD_FLUSH;
     chrono::steady_clock::time_point waitTime = chrono::steady_clock::now();
     chrono::steady_clock::time_point::rep elapsedTime;
 
@@ -54,20 +54,48 @@ void RevelesIO::initIO()
     Logger::writeLine(instance(), QString("Arduino response: 0x%1").arg(res, 2, HEX, QChar('0')));
     Logger::writeLine(instance(), QString("Arduino Response time: %1 ms").arg(elapsedTime));
 
-    if(res == COM_CHECK)
-        arduinoFound = true;
-    else
-        arduinoFound = false;
+    waitTime = chrono::steady_clock::now();
 
-    if(fdNucleo[0] == -1)
+    arduinoFound = (res == COM_CHECK);
+
+    emit arduinoStat(arduinoFound);
+
+    res = CMD_FLUSH;
+
+    while(true)
+    {
+        res = wiringPiI2CRead(fdNucleo[0]);
+        if(res == COM_CHECK) { break; }
+        elapsedTime = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - waitTime).count();
+        if(elapsedTime > 2000) { break; }
+    }
+
+    if(res != COM_CHECK)
         cout << "Error at " << NUCLEO_FRONT << ": " << errno << " " << strerror(errno) <<  endl;
+
+    emit nucleoStat(res == COM_CHECK, 0);
+    nucleoFound[0] = (res == COM_CHECK);
+    res = CMD_FLUSH;
+
+    waitTime = chrono::steady_clock::now();
+
+    while(true)
+    {
+        res = wiringPiI2CRead(fdNucleo[1]);
+        if(res == COM_CHECK) { break; }
+        elapsedTime = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - waitTime).count();
+        if(elapsedTime > 2000) { break; }
+    }
 
     if(fdNucleo[1] == -1)
         cout << "Error at " << NUCLEO_REAR << ": " << errno << " " << strerror(errno) <<  endl;
 
+    emit nucleoStat(res == COM_CHECK, 1);
+    nucleoFound[0] = (res == COM_CHECK);
+
     Logger::writeLine(instance(), Reveles::ARDUINO_FOUND.arg(ARDUINO, 2, 16, QChar('0')).arg(B2STR(arduinoFound)));
-    Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_FRONT, 2, 16, QChar('0')).arg((fdNucleo[0] != -1) ? "True":"False"));
-    Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_REAR, 2, 16, QChar('0')).arg((fdNucleo[1] != -1) ? "True":"False"));
+    Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_FRONT, 2, 16, QChar('0')).arg((nucleoFound[0]) ? "True":"False"));
+    Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_REAR, 2, 16, QChar('0')).arg((nucleoFound[1]) ? "True":"False"));
     Logger::writeLine(instance(), Reveles::FILE_DESCRIPTORS.arg(agm->XGFD()).arg(agm->MagFD()).arg(fdArduino).arg(fdNucleo[0]).arg(fdNucleo[1]));
 
     for(int i = 0; i < 8; i++)
@@ -80,11 +108,6 @@ void RevelesIO::initIO()
     XGAvailable = agm->AccelGyroFound();
     MagAvailable = agm->MagFound();
 
-    emit arduinoStat(arduinoFound);
-    emit nucleoStat(fdNucleo[0] != -1, 0);
-    emit nucleoStat(fdNucleo[1] != -1, 1);
-
-    isrWait = false;
     stopParser = false;
     stopToF = false;
     dist = 0;
@@ -114,6 +137,7 @@ void RevelesIO::StartNav()
         {
             for(int i = 0; i < 8; i++)
             {
+                Logger::writeLine(instance(), QString("Sending ToF Request for %1").arg(i));
                 ReadTimeOfFlight(i);
             }
 
@@ -234,9 +258,9 @@ void RevelesIO::SendMotorUpdate()
 
 //    Logger::writeLine(instance(), QString("START:         0x%1").arg(START, 2, 16, QChar('0')));
 //    Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(CMD_M, 2, 16, QChar('0')));
-    Logger::writeLine(instance(), QString("US Dist:       %1 in").arg(inch, 4, 10, QChar('0')));
-    Logger::writeLine(instance(), QString("Motor Dir:     0x%1").arg(motorDir, 2, 16, QChar('0')));
-    Logger::writeLine(instance(), QString("ToF Dist:      %1 in").arg(tofDist[1], 4, 10, QChar('0')));
+//    Logger::writeLine(instance(), QString("US Dist:       %1 in").arg(inch, 4, 10, QChar('0')));
+//    Logger::writeLine(instance(), QString("Motor Dir:     0x%1").arg(motorDir, 2, 16, QChar('0')));
+//    Logger::writeLine(instance(), QString("ToF Dist:      %1 in").arg(tofDist[1], 4, 10, QChar('0')));
 //    Logger::writeLine(instance(), QString("END:           0x%1").arg(END, 2, 16, QChar('0')));
 }
 
@@ -285,8 +309,8 @@ void RevelesIO::SendServoUpdate()
 
 //    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(START, 2, 16, QChar('0')));
 //    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(CMD_S, 2, 16, QChar('0')));
-    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(servoDir, 2, 16, QChar('0')));
-    Logger::writeLine(instance(), Reveles::I2C_SERVO_ANGLE.arg(angle, 3, 10, QChar('0')));
+//    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(servoDir, 2, 16, QChar('0')));
+//    Logger::writeLine(instance(), Reveles::I2C_SERVO_ANGLE.arg(angle, 3, 10, QChar('0')));
 //    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(END, 2, 16, QChar('0')));
 }
 
@@ -396,7 +420,6 @@ int RevelesIO::ReadTimeOfFlight(int sensorNum)
 
 bool RevelesIO::readPIR(bool rear)
 {
-    // Check this, I don't believe it
     if(rear)
     {
         digitalWrite(SEL_A, LOW);  // Get the A select bit. This should already by in index 0
@@ -482,7 +505,7 @@ void RevelesIO::ParseQueue()
 
 void RevelesIO::SendToFRequest(int sensorNum)
 {
-    if(sensorNum < 4)
+    if(nucleoFound[0] && sensorNum < 4)
     {
         wiringPiI2CWrite(fdNucleo[0], START);
         delay(I2C_TRANSMIT_DELAY);
@@ -496,7 +519,7 @@ void RevelesIO::SendToFRequest(int sensorNum)
         tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[0]);
         Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_FRONT).arg(tofDist[sensorNum]));
     }
-    else
+    else if(nucleoFound[1])
     {
         wiringPiI2CWrite(fdNucleo[1], START);
         delay(I2C_TRANSMIT_DELAY);

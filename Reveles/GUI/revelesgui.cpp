@@ -518,7 +518,7 @@ void RevelesGui::on_demoPB_clicked()
         }
 
         demoOn = true;
-        ui->tabWidget->setCurrentIndex(1);
+        ui->tabWidget->setCurrentIndex(0);
         ui->endNavigationPB->setEnabled(true);
         ui->startNavigationPB->setEnabled(false);
         ui->demoPB->setEnabled(false);

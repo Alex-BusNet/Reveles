@@ -227,16 +227,13 @@ void RevelesCore::updateMapData()
 
 void RevelesCore::coreLoop()
 {
-//    static int directionCount = 0;
-//    readSensor();
-//    NavigationAssisiant::instance()->Orient();
-//    updateMapData();
     readAGM();
 
     //=========================
     // I2C motor and servo drive testing
 //    Logger::writeLine(this, QString("Direction Count: %1").arg(directionCount));
 
+//    static int directionCount = 0;
 //    if(directionCount == 1)
 //    {
 //        RevelesIO::instance()->SetMotorDirection(M_FWD);

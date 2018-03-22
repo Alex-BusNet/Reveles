@@ -31,7 +31,6 @@
 //---------------------------
 
 #define TIMEOUT 500000
-#define RECIEVE_READY 25
 #define SDA 8
 #define SCL 9
 
@@ -45,9 +44,23 @@
 // if we use them from here at all.
 
 // NOTE: Left and Right are what the
-//       ToF board treats as Left and Right.
+//       ToF boards treats as Left and Right.
 //       NOT what left and right are relative to
 //       Reveles.
+
+/*=================================
+ * Time Of Flight sensor locations
+ *          0-----1-----2
+ *          |   Front   |
+ *          |           |
+ *          |           |
+ *          7           3
+ *          |           |
+ *          |           |
+ *          |           |
+ *          6-----5-----4
+ *=================================
+*/
 
 #define TOF_F_CENTER        0x54
 #define TOF_F_LEFT          0x56
@@ -103,12 +116,13 @@ public:
     bool hasMag();
 
 private:
-    bool isrWait, arduinoFound;
+    bool arduinoFound;
+    bool nucleoFound[2] = {false, false};
     bool XGAvailable, MagAvailable;
 
     int fdNucleo[2];  // Array of file descriptors for Nucleo-F401RE (2)
     int fdArduino;    // File descriptor for Arduino
-    int fdToF[8];     // Array of file desriptors for Time of Flight sensors.
+    int fdToF[8];     // Array of file desriptors for Time of Flight sensors. may not be needed.
 
     int dist, inch, angle, tofDist[8];
     int8_t motorDir;
@@ -122,7 +136,6 @@ private:
 
     GPSCoord lastKnownCoord;
     LSM9DS1 *agm;
-//    std::chrono::steady_clock::time_point begin, end;
 
     // Functions
     void ParseQueue();
