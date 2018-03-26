@@ -91,7 +91,8 @@ void RevelesIO::initIO()
         cout << "Error at " << NUCLEO_REAR << ": " << errno << " " << strerror(errno) <<  endl;
 
     emit nucleoStat(res == COM_CHECK, 1);
-    nucleoFound[0] = (res == COM_CHECK);
+    //This is temporary.
+    nucleoFound[0] = true;//(res == COM_CHECK);
 
     Logger::writeLine(instance(), Reveles::ARDUINO_FOUND.arg(ARDUINO, 2, 16, QChar('0')).arg(B2STR(arduinoFound)));
     Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_FRONT, 2, 16, QChar('0')).arg((nucleoFound[0]) ? "True":"False"));
@@ -517,9 +518,10 @@ void RevelesIO::SendToFRequest(int sensorNum)
         delay(I2C_TRANSMIT_DELAY);
 
         tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[0]);
+        delay(I2C_TRANSMIT_DELAY);
         Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_FRONT).arg(tofDist[sensorNum]));
     }
-    else if(nucleoFound[1])
+    else if(nucleoFound[1] && sensorNum > 4)
     {
         wiringPiI2CWrite(fdNucleo[1], START);
         delay(I2C_TRANSMIT_DELAY);
@@ -531,6 +533,7 @@ void RevelesIO::SendToFRequest(int sensorNum)
         delay(I2C_TRANSMIT_DELAY);
 
         tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[1]);
+        delay(I2C_TRANSMIT_DELAY);
         Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_REAR).arg(tofDist[sensorNum]));
     }
 }
