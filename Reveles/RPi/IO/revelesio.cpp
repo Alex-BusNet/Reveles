@@ -138,7 +138,7 @@ void RevelesIO::StartNav()
         {
             for(int i = 0; i < 8; i++)
             {
-                Logger::writeLine(instance(), QString("Sending ToF Request for %1").arg(i));
+//                Logger::writeLine(instance(), QString("Sending ToF Request for %1").arg(i));
                 ReadTimeOfFlight(i);
             }
 
@@ -259,8 +259,8 @@ void RevelesIO::SendMotorUpdate()
 
 //    Logger::writeLine(instance(), QString("START:         0x%1").arg(START, 2, 16, QChar('0')));
 //    Logger::writeLine(instance(), QString("Motor Command: 0x%1").arg(CMD_M, 2, 16, QChar('0')));
-//    Logger::writeLine(instance(), QString("US Dist:       %1 in").arg(inch, 4, 10, QChar('0')));
-//    Logger::writeLine(instance(), QString("Motor Dir:     0x%1").arg(motorDir, 2, 16, QChar('0')));
+    Logger::writeLine(instance(), QString("US Dist:       %1 in").arg(inch, 4, 10, QChar('0')));
+    Logger::writeLine(instance(), QString("Motor Dir:     0x%1").arg(motorDir, 2, 16, QChar('0')));
 //    Logger::writeLine(instance(), QString("ToF Dist:      %1 in").arg(tofDist[1], 4, 10, QChar('0')));
 //    Logger::writeLine(instance(), QString("END:           0x%1").arg(END, 2, 16, QChar('0')));
 }
