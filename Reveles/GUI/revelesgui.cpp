@@ -388,6 +388,11 @@ void RevelesGui::on_exitBtn_clicked()
 
     if(!hasComms)
         this->close();
+
+    // This primarily to allow the GUI to close in the
+    // event the CORE is hung up and can't send the kill
+    // signal back to the GUI.
+    hasComms = false;
 }
 
 //=====================================================================

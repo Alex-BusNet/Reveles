@@ -519,6 +519,7 @@ void RevelesIO::SendToFRequest(int sensorNum)
 
         tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[0]);
         delay(I2C_TRANSMIT_DELAY);
+        delay(I2C_TRANSMIT_DELAY);
         Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_FRONT).arg(tofDist[sensorNum]));
     }
     else if(nucleoFound[1] && sensorNum > 4)
@@ -533,6 +534,7 @@ void RevelesIO::SendToFRequest(int sensorNum)
         delay(I2C_TRANSMIT_DELAY);
 
         tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[1]);
+        delay(I2C_TRANSMIT_DELAY);
         delay(I2C_TRANSMIT_DELAY);
         Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_REAR).arg(tofDist[sensorNum]));
     }
