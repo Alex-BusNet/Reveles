@@ -5,6 +5,8 @@
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QNetworkInterface>
 #include <../RPi/Common/datatypes.h>
+#include <QString>
+
 namespace Ui {
 class SettingsScreen;
 }
@@ -17,12 +19,17 @@ public:
     explicit SettingsScreen(QWidget *parent = 0);
     ~SettingsScreen();
 
+    void addToLog(QString str);
+
     void setLocUpdateStatus(bool stat);
     void setDBusStatus(bool stat);
     void setCoordText(QString coord);
-    void setUSDistReading(QString reading);
-    void addToLog(QString str);
 
+    void setUSDistReading(int idx, float value);
+    void setToFReading(int idx, float value);
+
+    void setMotorStatus(uint8_t dir);
+    void setServoStatus(bool front, uint8_t dir);
 
 private slots:
     void on_buttonBox_rejected();
@@ -46,9 +53,12 @@ public slots:
 
     void setArduino(bool good);
     void setNucleo(bool good, int idx);
-    void setPIR(bool stat);
+    void setPIR(bool stat, bool front);
 
 private:
+    float tofHistory[8] = {66.0f, 66.0f, 66.0f, 66.0f, 66.0f, 66.0f, 66.0f, 66.0f};
+    float usHistory[4] = {171.0f, 171.0f, 171.0f, 171.0f};
+
     Ui::SettingsScreen *ui;
 };
 

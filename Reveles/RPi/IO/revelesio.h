@@ -146,7 +146,12 @@ signals:
     void motorDirectionUpdate(uint8_t dir);
     void arduinoStat(bool stat);
     void nucleoStat(bool stat, int idx);
-    void pirStat(bool stat);
+    void pirStat(bool stat, bool front);
+
+    void usReady(int idx, float value);
+    void tofReady(int idx, float value);
+
+    void servoStatus(bool front, uint8_t dir);
 };
 
 #endif // REVELESIO_H

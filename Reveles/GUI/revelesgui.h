@@ -61,7 +61,7 @@ public slots:
     void gyroUpdate(GyroDirection gd);
     void ArduinoStatus(bool good);
     void NucleoStatus(bool good, int idx);
-    void PIRStatus(bool stat);
+    void PIRStatus(bool stat, bool front);
 
 private slots:
 
@@ -93,6 +93,11 @@ private slots:
     void on_startNavigationPB_clicked();
 
     void on_demoPB_clicked();
+
+    void tofUpdate(int idx, float val);
+    void usUpdate(int idx, float val);
+    void servoStat(bool front, uint8_t dir);
+    void motorStat(uint8_t dir);
 
 private:
     Ui::RevelesGui *ui;

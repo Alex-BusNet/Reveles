@@ -61,6 +61,10 @@ RevelesCore::RevelesCore(RevelesDBusAdaptor *dbusAdaptor, com::reveles::RevelesC
     connect(RevelesIO::instance(), &RevelesIO::arduinoStat, rdba, &RevelesDBusAdaptor::ArduinoFound);
     connect(RevelesIO::instance(), &RevelesIO::nucleoStat, rdba, &RevelesDBusAdaptor::NucleoFound);
     connect(RevelesIO::instance(), &RevelesIO::pirStat, rdba, &RevelesDBusAdaptor::PIRStatus);
+    connect(RevelesIO::instance(), &RevelesIO::usReady, rdba, &RevelesDBusAdaptor::USReadings);
+    connect(RevelesIO::instance(), &RevelesIO::tofReady, rdba, &RevelesDBusAdaptor::TOFReadings);
+    connect(RevelesIO::instance(), &RevelesIO::servoStatus, rdba, &RevelesDBusAdaptor::servoUpdate);
+    connect(RevelesIO::instance(), &RevelesIO::motorDirectionUpdate, rdba, &RevelesDBusAdaptor::motorUpdate);
 
     // Additional comms (CORE -> CORE)
     connect(this, &RevelesCore::currentLocation, NavigationAssisiant::instance(), &NavigationAssisiant::updateLocation);

@@ -308,6 +308,8 @@ void RevelesIO::SendServoUpdate()
 	wiringPiI2CWrite(fdArduino, END);
     delay(I2C_TRANSMIT_DELAY);
 
+    emit servoStatus(true, servoDir);
+
 //    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(START, 2, 16, QChar('0')));
 //    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(CMD_S, 2, 16, QChar('0')));
 //    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(servoDir, 2, 16, QChar('0')));
@@ -371,14 +373,29 @@ int RevelesIO::triggerUltrasonic(uint8_t sel)
 {
     // Check this, I don't believe it
     // works the way I think it does. -Alex 1/21/18
+    int idx = 0;
     if(sel == US_FRONT)
     {
-        digitalWrite(SEL_A, HIGH);         // Get the A select bit. This should already by in index 0
-        digitalWrite(SEL_B, LOW);// >> 1); // Get the B select bit and shift into index 0
+        idx = 0;
+        digitalWrite(SEL_A, LOW); // Get the A select bit. This should already by in index 0
+        digitalWrite(SEL_B, LOW); // Get the B select bit and shift into index 0
     }
-    else if(sel == US_RIGHT)
+    else if(sel == US_FRONT_STAIR)
     {
+        idx = 1;
         digitalWrite(SEL_A, LOW);
+        digitalWrite(SEL_B, HIGH);
+    }
+    else if(sel == US_BACK)
+    {
+        idx = 2;
+        digitalWrite(SEL_A, HIGH);
+        digitalWrite(SEL_B, LOW);
+    }
+    else if(sel == US_BACK_STAIR)
+    {
+        idx = 3;
+        digitalWrite(SEL_A, HIGH);
         digitalWrite(SEL_B, HIGH);
     }
 
@@ -409,7 +426,7 @@ int RevelesIO::triggerUltrasonic(uint8_t sel)
     dist /= 2.5; // Convert to inches.
 
     // Currently used for D-Bus comms back to GUI.
-    emit echoReady(dist, "in");
+    emit usReady(idx, dist);
 
     return dist;
 }
@@ -433,7 +450,7 @@ bool RevelesIO::readPIR(bool rear)
     }
 
     int val = digitalRead(SIG);
-    emit pirStat(val ? true : false);
+    emit pirStat(val ? true : false, !rear);
 
     return val ? true : false;
 }
@@ -519,7 +536,7 @@ void RevelesIO::SendToFRequest(int sensorNum)
 
         tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[0]);
         delay(I2C_TRANSMIT_DELAY);
-        delay(I2C_TRANSMIT_DELAY);
+        delay(I2C_TRANSMIT_DELAY);        
         Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_FRONT).arg(tofDist[sensorNum]));
     }
     else if(nucleoFound[1] && sensorNum > 4)
@@ -538,4 +555,6 @@ void RevelesIO::SendToFRequest(int sensorNum)
         delay(I2C_TRANSMIT_DELAY);
         Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_REAR).arg(tofDist[sensorNum]));
     }
+
+    emit tofReady(sensorNum, tofDist[sensorNum]);
 }

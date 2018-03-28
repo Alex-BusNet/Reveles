@@ -210,10 +210,10 @@ void RevelesGui::NucleoStatus(bool good, int idx)
         ss->setNucleo(good, idx);
 }
 
-void RevelesGui::PIRStatus(bool stat)
+void RevelesGui::PIRStatus(bool stat, bool front)
 {
     if(ss != NULL)
-        ss->setPIR(stat);
+        ss->setPIR(stat, front);
 }
 
 void RevelesGui::setupLocations()
@@ -353,6 +353,10 @@ void RevelesGui::setDBusInterface(com::reveles::RevelesCoreInterface *iface)
     connect(rci, &RevelesDBusInterface::ArduinoFound, this, &RevelesGui::ArduinoStatus);
     connect(rci, &RevelesDBusInterface::NucleoFound, this, &RevelesGui::NucleoStatus);
     connect(rci, &RevelesDBusInterface::PIRStatus, this, &RevelesGui::PIRStatus);
+    connect(rci, &RevelesDBusInterface::USReadings, this, &RevelesGui::usUpdate);
+    connect(rci, &RevelesDBusInterface::TOFReadings, this, &RevelesGui::tofUpdate);
+    connect(rci, &RevelesDBusInterface::motorUpdate, this, &RevelesGui::motorStat);
+    connect(rci, &RevelesDBusInterface::servoUpdate, this, &RevelesGui::servoStat);
 }
 
 void RevelesGui::setDBusAdaptor(RevelesDBusAdaptor *rda)
@@ -406,8 +410,8 @@ void RevelesGui::displayDist(float dist, QString unit)
     else
         t = (QString("%0 %1").arg(dist).arg(unit));
 
-    if (ss != NULL)
-        ss->setUSDistReading(t);
+//    if (ss != NULL)
+//        ss->setUSDistReading(t);
 }
 
 void RevelesGui::TrigDispToggle()
@@ -529,4 +533,28 @@ void RevelesGui::on_demoPB_clicked()
         ui->demoPB->setEnabled(false);
         emit StartDemoMode();
     }
+}
+
+void RevelesGui::tofUpdate(int idx, float val)
+{
+    if(ss != NULL)
+        ss->setToFReading(idx, val);
+}
+
+void RevelesGui::usUpdate(int idx, float val)
+{
+    if(ss != NULL)
+        ss->setUSDistReading(idx, val);
+}
+
+void RevelesGui::servoStat(bool front, uint8_t dir)
+{
+    if(ss != NULL)
+        ss->setServoStatus(front, dir);
+}
+
+void RevelesGui::motorStat(uint8_t dir)
+{
+    if(ss != NULL)
+        ss->setMotorStatus(dir);
 }

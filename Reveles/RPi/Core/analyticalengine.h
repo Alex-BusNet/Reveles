@@ -32,7 +32,7 @@ signals:
 
 private:
     // Variables
-    int us;
+    int us[2];
     int tof[8];
     bool pir, demoMode;
 

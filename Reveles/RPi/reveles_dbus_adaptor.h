@@ -87,6 +87,26 @@ class RevelesDBusAdaptor: public QDBusAbstractAdaptor
 "   </signal>"
 "   <signal name=\"PIRStatus\">\n"
 "       <arg direction=\"out\" type=\"b\" name=\"stat\" />\n"
+"       <arg direction=\"out\" type=\"b\" name=\"front\" />\n"
+"   </signal>"
+"   <signal name=\"TOFReadings\">\n"
+"       <arg direction=\"out\" type=\"i\" name=\"idx\" />\n"
+"       <annotation value=\"float\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
+"       <arg direction=\"out\" type=\"d\" name=\"reading\" />\n"
+"   </signal>"
+"   <signal name=\"USReadings\">\n"
+"       <arg direction=\"out\" type=\"i\" name=\"idx\" />\n"
+"       <annotation value=\"float\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
+"       <arg direction=\"out\" type=\"d\" name=\"reading\" />\n"
+"   </signal>"
+"   <signal name=\"servoUpdate\">\n"
+"       <arg direction=\"out\" type=\"b\" name=\"front\" />\n"
+"       <annotation value=\"uint8_t\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
+"       <arg direction=\"out\" type=\"i\" name=\"dir\" />\n"
+"   </signal>"
+"   <signal name=\"motorUpdate\">\n"
+"       <annotation value=\"uint8_t\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
+"       <arg direction=\"out\" type=\"i\" name=\"dir\" />\n"
 "   </signal>"
 "  </interface>\n"
         "")
@@ -116,7 +136,11 @@ Q_SIGNALS: // SIGNALS
     void EndNavigation();
     void ArduinoFound(bool good);
     void NucleoFound(bool good, int idx);
-    void PIRStatus(bool stat);
+    void PIRStatus(bool stat, bool front);
+    void TOFReadings(int idx, float reading);
+    void USReadings(int idx, float reading);
+    void servoUpdate(bool front, uint8_t dir);
+    void motorUpdate(uint8_t dir);
 };
 
 #endif
