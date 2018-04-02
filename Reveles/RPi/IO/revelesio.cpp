@@ -35,17 +35,24 @@ void RevelesIO::initIO()
     agm->setup();
 
     fdArduino = wiringPiI2CSetup(ARDUINO);
-    fdNucleo[0] = wiringPiI2CSetup(NUCLEO_FRONT);
-    fdNucleo[1] = wiringPiI2CSetup(NUCLEO_REAR);
+    fdNucleo[0] = -1; //wiringPiI2CSetup(NUCLEO_FRONT);
+    fdNucleo[1] = -1; //wiringPiI2CSetup(NUCLEO_REAR);
 
     fdToF[0] = tofInit(1, TOF_F_LEFT, 1);
-    fdToF[1] = tofInit(1, TOF_F_CENTER, 1);
-    fdToF[2] = tofInit(1, TOF_F_RIGHT, 1);
-    fdToF[3] = tofInit(1, TOF_RIGHT, 1);
-    fdToF[4] = tofInit(1, TOF_R_RIGHT, 1);
-    fdToF[5] = tofInit(1, TOF_R_CENTER, 1);
-    fdToF[6] = tofInit(1, TOF_R_LEFT, 1);
-    fdToF[7] = tofInit(1, TOF_LEFT, 1);
+//    fdToF[1] = tofInit(1, TOF_F_CENTER, 1);
+//    fdToF[2] = tofInit(1, TOF_F_RIGHT, 1);
+//    fdToF[3] = tofInit(1, TOF_RIGHT, 1);
+//    fdToF[4] = tofInit(1, TOF_R_RIGHT, 1);
+//    fdToF[5] = tofInit(1, TOF_R_CENTER, 1);
+//    fdToF[6] = tofInit(1, TOF_R_LEFT, 1);
+//    fdToF[7] = tofInit(1, TOF_LEFT, 1);
+
+    for(int i = 0; i < 8; i++)
+    {
+        if(i != 0) { fdToF[i] = -1; tofDist[i] = -1; continue;}
+        Logger::writeLine(instance(), QString("fdToF[%1]: %2").arg(i).arg(fdToF[i]));
+        tofDist[i] = -1;
+    }
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
     uint8_t res = CMD_FLUSH;
@@ -72,13 +79,13 @@ void RevelesIO::initIO()
 
     res = CMD_FLUSH;
 
-    while(true)
-    {
-        res = wiringPiI2CRead(fdNucleo[0]);
-        if(res == COM_CHECK) { break; }
-        elapsedTime = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - waitTime).count();
-        if(elapsedTime > 2000) { break; }
-    }
+//    while(true)
+//    {
+//        res = wiringPiI2CRead(fdNucleo[0]);
+//        if(res == COM_CHECK) { break; }
+//        elapsedTime = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - waitTime).count();
+//        if(elapsedTime > 2000) { break; }
+//    }
 
     if(res != COM_CHECK)
         cout << "Error at " << NUCLEO_FRONT << ": " << errno << " " << strerror(errno) <<  endl;
@@ -89,13 +96,13 @@ void RevelesIO::initIO()
 
     waitTime = chrono::steady_clock::now();
 
-    while(true)
-    {
-        res = wiringPiI2CRead(fdNucleo[1]);
-        if(res == COM_CHECK) { break; }
-        elapsedTime = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - waitTime).count();
-        if(elapsedTime > 2000) { break; }
-    }
+//    while(true)
+//    {
+//        res = wiringPiI2CRead(fdNucleo[1]);
+//        if(res == COM_CHECK) { break; }
+//        elapsedTime = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - waitTime).count();
+//        if(elapsedTime > 2000) { break; }
+//    }
 
     if(fdNucleo[1] == -1)
         cout << "Error at " << NUCLEO_REAR << ": " << errno << " " << strerror(errno) <<  endl;
@@ -111,7 +118,7 @@ void RevelesIO::initIO()
 
     for(int i = 0; i < 8; i++)
     {
-        tofDist[i] = 66;
+        tofDist[i] = -1;
     }
 
     lastKnownCoord = GPSCoord{0, 0};
@@ -140,25 +147,27 @@ void RevelesIO::EnqueueRequest(RIOData riod)
 
 void RevelesIO::StartNav()
 {
-    if(nucleoFound[0] && nucleoFound[1])
-    {
-        if(stopToF) stopToF = false;
+    if(stopToF) stopToF = false;
 
-        tofReader = QtConcurrent::run([=]()
+    tofReader = QtConcurrent::run([=]()
+    {
+        while(!stopToF)
         {
-            while(!stopToF)
+            for(int i = 0; i < 8; i++)
             {
-                for(int i = 0; i < 8; i++)
+                if(fdToF[i] != -1)
                 {
                     tofDist[i] = tofReadDistance(fdToF[i]);
-    //                Logger::writeLine(instance(), QString("Sending ToF Request for %1").arg(i));
-//                    ReadTimeOfFlight(i);
+                    Logger::writeLine(instance(), QString::number(tofDist[i]));
+                    emit tofReady(i, tofDist[i]);
                 }
-
-                delay(500);
+//                Logger::writeLine(instance(), QString("Sending ToF Request for %1").arg(i));
+//                    ReadTimeOfFlight(i);
             }
-        });
-    }
+
+            delay(500);
+        }
+    });
 }
 
 void RevelesIO::StopNav()
@@ -522,10 +531,10 @@ void RevelesIO::ParseQueue()
                 angle = riod.specData;
                 SetServoDirection(riod.data);
             }
-            else if(riod.cmd == IO_TOF)
-            {
-                ReadTimeOfFlight(riod.data);
-            }
+//            else if(riod.cmd == IO_TOF)
+//            {
+//                ReadTimeOfFlight(riod.data);
+//            }
         }
 
         delay(100);
@@ -536,38 +545,38 @@ void RevelesIO::ParseQueue()
 
 void RevelesIO::SendToFRequest(int sensorNum)
 {
-    if(nucleoFound[0] && sensorNum < 4)
-    {
-        wiringPiI2CWrite(fdNucleo[0], START);
-        delay(I2C_TRANSMIT_DELAY);
-        wiringPiI2CWrite(fdNucleo[0], CMD_T);
-        delay(I2C_TRANSMIT_DELAY);
-        wiringPiI2CWrite(fdNucleo[0], sensorNum);
-        delay(I2C_TRANSMIT_DELAY);
-        wiringPiI2CWrite(fdNucleo[0], END);
-        delay(I2C_TRANSMIT_DELAY);
+//    if(nucleoFound[0] && sensorNum < 4)
+//    {
+//        wiringPiI2CWrite(fdNucleo[0], START);
+//        delay(I2C_TRANSMIT_DELAY);
+//        wiringPiI2CWrite(fdNucleo[0], CMD_T);
+//        delay(I2C_TRANSMIT_DELAY);
+//        wiringPiI2CWrite(fdNucleo[0], sensorNum);
+//        delay(I2C_TRANSMIT_DELAY);
+//        wiringPiI2CWrite(fdNucleo[0], END);
+//        delay(I2C_TRANSMIT_DELAY);
 
-        tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[0]);
-        delay(I2C_TRANSMIT_DELAY);
-        delay(I2C_TRANSMIT_DELAY);        
-        Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_FRONT).arg(tofDist[sensorNum]));
-    }
-    else if(nucleoFound[1] && sensorNum > 4)
-    {
-        wiringPiI2CWrite(fdNucleo[1], START);
-        delay(I2C_TRANSMIT_DELAY);
-        wiringPiI2CWrite(fdNucleo[1], CMD_T);
-        delay(I2C_TRANSMIT_DELAY);
-        wiringPiI2CWrite(fdNucleo[1], (sensorNum - 4));
-        delay(I2C_TRANSMIT_DELAY);
-        wiringPiI2CWrite(fdNucleo[1], END);
-        delay(I2C_TRANSMIT_DELAY);
+//        tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[0]);
+//        delay(I2C_TRANSMIT_DELAY);
+//        delay(I2C_TRANSMIT_DELAY);
+//        Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_FRONT).arg(tofDist[sensorNum]));
+//    }
+//    else if(nucleoFound[1] && sensorNum > 4)
+//    {
+//        wiringPiI2CWrite(fdNucleo[1], START);
+//        delay(I2C_TRANSMIT_DELAY);
+//        wiringPiI2CWrite(fdNucleo[1], CMD_T);
+//        delay(I2C_TRANSMIT_DELAY);
+//        wiringPiI2CWrite(fdNucleo[1], (sensorNum - 4));
+//        delay(I2C_TRANSMIT_DELAY);
+//        wiringPiI2CWrite(fdNucleo[1], END);
+//        delay(I2C_TRANSMIT_DELAY);
 
-        tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[1]);
-        delay(I2C_TRANSMIT_DELAY);
-        delay(I2C_TRANSMIT_DELAY);
-        Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_REAR).arg(tofDist[sensorNum]));
-    }
+//        tofDist[sensorNum] = wiringPiI2CRead(fdNucleo[1]);
+//        delay(I2C_TRANSMIT_DELAY);
+//        delay(I2C_TRANSMIT_DELAY);
+//        Logger::writeLine(instance(), Reveles::TOF_I2C_RESPONSE.arg(NUCLEO_REAR).arg(tofDist[sensorNum]));
+//    }
 
-    emit tofReady(sensorNum, tofDist[sensorNum]);
+//    emit tofReady(sensorNum, tofDist[sensorNum]);
 }

@@ -26,8 +26,8 @@ public:
     void setDBusStatus(bool stat);
     void setCoordText(QString coord);
 
-    void setUSDistReading(int idx, float value);
-    void setToFReading(int idx, float value);
+    void setUSDistReading(int idx, double value);
+    void setToFReading(int idx, double value);
 
     void setMotorStatus(uint8_t dir);
     void setServoStatus(bool front, uint8_t dir);
@@ -60,8 +60,8 @@ public slots:
     void setPIR(bool stat, bool front);
 
 private:
-    float tofHistory[8] = {66.0f, 66.0f, 66.0f, 66.0f, 66.0f, 66.0f, 66.0f, 66.0f};
-    float usHistory[4] = {171.0f, 171.0f, 171.0f, 171.0f};
+    double tofHistory[8] = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
+    double usHistory[4] = {171.0f, 171.0f, 171.0f, 171.0f};
 
     Ui::SettingsScreen *ui;
 };

@@ -91,12 +91,10 @@ class RevelesDBusAdaptor: public QDBusAbstractAdaptor
 "   </signal>"
 "   <signal name=\"TOFReadings\">\n"
 "       <arg direction=\"out\" type=\"i\" name=\"idx\" />\n"
-"       <annotation value=\"float\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
 "       <arg direction=\"out\" type=\"d\" name=\"reading\" />\n"
 "   </signal>"
 "   <signal name=\"USReadings\">\n"
 "       <arg direction=\"out\" type=\"i\" name=\"idx\" />\n"
-"       <annotation value=\"float\" name=\"org.qtproject.QtDBus.QtTypeName.In0\"/>\n"
 "       <arg direction=\"out\" type=\"d\" name=\"reading\" />\n"
 "   </signal>"
 "   <signal name=\"servoUpdate\">\n"
@@ -137,8 +135,8 @@ Q_SIGNALS: // SIGNALS
     void ArduinoFound(bool good);
     void NucleoFound(bool good, int idx);
     void PIRStatus(bool stat, bool front);
-    void TOFReadings(int idx, float reading);
-    void USReadings(int idx, float reading);
+    void TOFReadings(int idx, double reading);
+    void USReadings(int idx, double reading);
     void servoUpdate(bool front, uint8_t dir);
     void motorUpdate(uint8_t dir);
 };

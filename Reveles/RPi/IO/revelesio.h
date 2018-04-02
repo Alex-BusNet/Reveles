@@ -64,7 +64,7 @@
 */
 
 #define TOF_F_CENTER        0x54
-#define TOF_F_LEFT          0x56
+#define TOF_F_LEFT          0x29
 #define TOF_F_RIGHT         0x58
 #define TOF_R_CENTER        0x60
 #define TOF_R_RIGHT         0x62
@@ -150,8 +150,8 @@ signals:
     void nucleoStat(bool stat, int idx);
     void pirStat(bool stat, bool front);
 
-    void usReady(int idx, float value);
-    void tofReady(int idx, float value);
+    void usReady(int idx, double value);
+    void tofReady(int idx, double value);
 
     void servoStatus(bool front, uint8_t dir);
 };

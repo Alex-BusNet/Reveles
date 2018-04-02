@@ -58,8 +58,8 @@ Q_SIGNALS: // SIGNALS
     void ArduinoFound(bool good);
     void NucleoFound(bool good, int idx);
     void PIRStatus(bool stat, bool front);
-    void TOFReadings(int idx, float reading);
-    void USReadings(int idx, float reading);
+    void TOFReadings(int idx, double reading);
+    void USReadings(int idx, double reading);
     void servoUpdate(bool front, uint8_t dir);
     void motorUpdate(uint8_t dir);
 };

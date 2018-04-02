@@ -27,7 +27,7 @@ void AnalyticalEngine::Init()
     presentState = NO_STATE;
     lastState = NO_STATE;
     endAnalyze = false;
-    tof[0] = tof[1] = tof[2] = tof[3] = tof[4] = tof[5] = tof[6] = tof[7] = 66; // inches
+    tof[0] = tof[1] = tof[2] = tof[3] = tof[4] = tof[5] = tof[6] = tof[7] = -1; // inches
     us[0]= us[1] = 171; // inches
     pir = false;
     demoMode = false;

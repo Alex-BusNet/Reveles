@@ -557,13 +557,13 @@ void RevelesGui::on_demoPB_clicked()
     }
 }
 
-void RevelesGui::tofUpdate(int idx, float val)
+void RevelesGui::tofUpdate(int idx, double val)
 {
     if(ss != NULL)
         ss->setToFReading(idx, val);
 }
 
-void RevelesGui::usUpdate(int idx, float val)
+void RevelesGui::usUpdate(int idx, double val)
 {
     if(ss != NULL)
         ss->setUSDistReading(idx, val);

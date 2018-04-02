@@ -93,13 +93,13 @@ void SettingsScreen::setCoordText(QString coord)
 //    ui->coordinateLabel->setText(coord);
 }
 
-void SettingsScreen::setUSDistReading(int idx, float value)
+void SettingsScreen::setUSDistReading(int idx, double value)
 {
     usHistory[idx] = value;
     ui->usDistLabel->setText( Reveles::GUI_UPTIME_STR.arg(usHistory[0], 4, 'g', 2).arg(usHistory[1], 4, 'g', 2).arg(usHistory[2], 4, 'g', 2).arg(usHistory[3], 4, 'g', 2));
 }
 
-void SettingsScreen::setToFReading(int idx, float value)
+void SettingsScreen::setToFReading(int idx, double value)
 {
     tofHistory[idx] = value;
     ui->coordinateLabel->setText(Reveles::TOF_READING_STR.arg(tofHistory[0], 4, 'g', 2).arg(tofHistory[1], 4, 'g', 2).arg(tofHistory[2], 4, 'g', 2).arg(tofHistory[3], 4, 'g', 2)

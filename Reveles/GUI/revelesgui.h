@@ -95,8 +95,8 @@ private slots:
 
     void on_demoPB_clicked();
 
-    void tofUpdate(int idx, float val);
-    void usUpdate(int idx, float val);
+    void tofUpdate(int idx, double val);
+    void usUpdate(int idx, double val);
     void servoStat(bool front, uint8_t dir);
     void motorStat(uint8_t dir);
 
