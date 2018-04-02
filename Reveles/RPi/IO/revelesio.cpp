@@ -7,6 +7,7 @@
 #include <QtConcurrent>
 #include <cstdlib>
 #include <chrono>
+#include "tof.h"
 
 Q_GLOBAL_STATIC(RevelesIO, rio)
 #define B2STR( x ) (x ? "True" : "False")
@@ -36,6 +37,15 @@ void RevelesIO::initIO()
     fdArduino = wiringPiI2CSetup(ARDUINO);
     fdNucleo[0] = wiringPiI2CSetup(NUCLEO_FRONT);
     fdNucleo[1] = wiringPiI2CSetup(NUCLEO_REAR);
+
+    fdToF[0] = tofInit(1, TOF_F_LEFT, 1);
+    fdToF[1] = tofInit(1, TOF_F_CENTER, 1);
+    fdToF[2] = tofInit(1, TOF_F_RIGHT, 1);
+    fdToF[3] = tofInit(1, TOF_RIGHT, 1);
+    fdToF[4] = tofInit(1, TOF_R_RIGHT, 1);
+    fdToF[5] = tofInit(1, TOF_R_CENTER, 1);
+    fdToF[6] = tofInit(1, TOF_R_LEFT, 1);
+    fdToF[7] = tofInit(1, TOF_LEFT, 1);
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
     uint8_t res = CMD_FLUSH;
@@ -92,7 +102,7 @@ void RevelesIO::initIO()
 
     emit nucleoStat(res == COM_CHECK, 1);
     //This is temporary.
-    nucleoFound[0] = true;//(res == COM_CHECK);
+    nucleoFound[0] = nucleoFound[1] = true;//(res == COM_CHECK);
 
     Logger::writeLine(instance(), Reveles::ARDUINO_FOUND.arg(ARDUINO, 2, 16, QChar('0')).arg(B2STR(arduinoFound)));
     Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_FRONT, 2, 16, QChar('0')).arg((nucleoFound[0]) ? "True":"False"));
@@ -140,8 +150,9 @@ void RevelesIO::StartNav()
             {
                 for(int i = 0; i < 8; i++)
                 {
+                    tofDist[i] = tofReadDistance(fdToF[i]);
     //                Logger::writeLine(instance(), QString("Sending ToF Request for %1").arg(i));
-                    ReadTimeOfFlight(i);
+//                    ReadTimeOfFlight(i);
                 }
 
                 delay(500);

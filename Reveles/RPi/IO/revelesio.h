@@ -14,6 +14,7 @@
 
 #include "Common/datatypes.h"
 #include "lsm9ds1.h"
+#include <tof.h>
 #include <QFuture>
 
 #include <wiringPi.h>
@@ -128,6 +129,7 @@ private:
     int8_t motorDir;
     int8_t servoDir;
     long durat;
+
 
     QQueue<RIOData> ioRequestQueue;
     bool stopParser, stopToF;

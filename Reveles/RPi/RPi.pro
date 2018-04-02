@@ -33,7 +33,7 @@ SOURCES += main.cpp \
     Common/vectorpolar2f.cpp \
     Common/logger.cpp \
     reveles_dbus_interface.cpp \
-#    Common/tile.cpp
+    IO/tof.cpp
 
 HEADERS += \
     Common/datatypes.h \
@@ -55,9 +55,8 @@ HEADERS += \
     Common/messages.h \
     Common/logger.h \
     reveles_dbus_interface.h \
-#    Common/tile.h \
-#    Common/noderenders.h
-    rpi.h
+    rpi.h \
+    IO/tof.h
 
 DISTFILES += \
     Data/haarcascade_fullbody.xml \
@@ -78,7 +77,7 @@ unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/local/lib  \
     -lopencv_imgproc \
     -lopencv_ml \
     -lopencv_objdetect \
-    -lopencv_video \
+    -lopencv_video
 
 # This points to the install location of the libX11.so file
 unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/lib/arm-linux-gnueabihf -lX11
@@ -96,7 +95,8 @@ unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/opt/vc/lib \
 # These point to libraries to use WiringPi and Raspicam (CV)
 unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/local/lib/ \
     -lraspicam_cv \
-    -lwiringPi
+    -lwiringPi \
+#    -ltof
 
 INCLUDEPATH += $$PWD/../../../../raspi/sysroot/usr/local/include
 DEPENDPATH += $$PWD/../../../../raspi/sysroot/usr/local/include
