@@ -82,6 +82,8 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     updateTimer->setInterval(2000);
     connect(updateTimer, &QTimer::timeout, this, &RevelesGui::draw);
 
+    guiUptime = std::chrono::steady_clock::now();
+
     updateTimer->start();
     commTimer->start();
 }
@@ -183,19 +185,28 @@ void RevelesGui::logMessage(QString msg)
 void RevelesGui::magUpdate(MagDirection md)
 {
     if(ss != NULL)
+    {
         ss->MagReading(md);
+        ss->UpdateGUIUptime(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - guiUptime).count());
+    }
 }
 
 void RevelesGui::accelUpdate(AccelDirection ad)
 {
     if(ss != NULL)
+    {
         ss->AccelReading(ad);
+        ss->UpdateGUIUptime(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - guiUptime).count());
+    }
 }
 
 void RevelesGui::gyroUpdate(GyroDirection gd)
 {
     if(ss != NULL)
+    {
         ss->GyroReading(gd);
+        ss->UpdateGUIUptime(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - guiUptime).count());
+    }
 }
 
 void RevelesGui::ArduinoStatus(bool good)
@@ -213,7 +224,10 @@ void RevelesGui::NucleoStatus(bool good, int idx)
 void RevelesGui::PIRStatus(bool stat, bool front)
 {
     if(ss != NULL)
+    {
         ss->setPIR(stat, front);
+        ss->UpdateGUIUptime(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - guiUptime).count());
+    }
 }
 
 void RevelesGui::setupLocations()
@@ -382,7 +396,10 @@ void RevelesGui::commCheck(bool good)
     hasComms = good;
 
     if(ss != NULL)
+    {
         ss->setDBusStatus(good);
+        ss->UpdateGUIUptime(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - guiUptime).count());
+    }
 }
 
 void RevelesGui::on_exitBtn_clicked()
@@ -464,6 +481,9 @@ void RevelesGui::draw()
 
 void RevelesGui::on_endNavigationPB_clicked()
 {
+    if(ss != NULL)
+        ss->UpdateTravelUptime(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - travelUptime).count());
+
     emit NavigationAbort();
     setLocation(NULL);
     ui->endNavigationPB->setEnabled(false);
@@ -506,6 +526,8 @@ void RevelesGui::on_startNavigationPB_clicked()
 
         if(hasComms)
         {
+            travelUptime = std::chrono::steady_clock::now();
+
             emit SendDestination(dest);
 
             // Switch the Screen to show the map

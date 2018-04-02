@@ -6,6 +6,7 @@
 #include <QString>
 #include <QScrollArea>
 #include <QTimer>
+#include <chrono>
 
 #include "locationpushbutton.h"
 #include "addlocationdialog.h"
@@ -107,7 +108,7 @@ private:
     MapView *mapView;
     SettingsScreen *ss;
     AddLocationDialog *ald;
-
+    std::chrono::steady_clock::time_point guiUptime, travelUptime;
     QTimer *commTimer, *updateTimer;
 
     GPSCoord currentLoc;

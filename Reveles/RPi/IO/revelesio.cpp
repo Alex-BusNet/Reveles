@@ -130,21 +130,24 @@ void RevelesIO::EnqueueRequest(RIOData riod)
 
 void RevelesIO::StartNav()
 {
-    if(stopToF) stopToF = false;
-
-    tofReader = QtConcurrent::run([=]()
+    if(nucleoFound[0] && nucleoFound[1])
     {
-        while(!stopToF)
-        {
-            for(int i = 0; i < 8; i++)
-            {
-//                Logger::writeLine(instance(), QString("Sending ToF Request for %1").arg(i));
-                ReadTimeOfFlight(i);
-            }
+        if(stopToF) stopToF = false;
 
-            delay(500);
-        }
-    });
+        tofReader = QtConcurrent::run([=]()
+        {
+            while(!stopToF)
+            {
+                for(int i = 0; i < 8; i++)
+                {
+    //                Logger::writeLine(instance(), QString("Sending ToF Request for %1").arg(i));
+                    ReadTimeOfFlight(i);
+                }
+
+                delay(500);
+            }
+        });
+    }
 }
 
 void RevelesIO::StopNav()
@@ -166,7 +169,6 @@ void RevelesIO::CloseIO()
     Logger::writeLine(instance(), QString("Closing IO..."));
     stopParser = true;
     stopToF = true;
-
 
     Logger::writeLine(instance(), QString("Exiting IO Queue parser.."));
     if(parser.isRunning())

@@ -46,6 +46,9 @@ namespace Reveles
                                            "[4]: %5  [5]: %6  [6]: %7  [7]: %8";
     static const QString US_READING_STR = " [0]: %1  [1]: %2 \n"
                                           " [2]: %3  [3]: %4";
+    // Time format: HH:MM::SS::ms
+    static const QString GUI_UPTIME_STR = "GUI Uptime: %1:%2:%3:%4";
+    static const QString TRAVEL_UPTIME_STR = "Travel time: %1:%2:%3:%4";
 
     static const QString TOF_I2C_RESPONSE = "Time of Flight reading from 0x%1: %2";
 

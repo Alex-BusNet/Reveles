@@ -21,6 +21,8 @@ SettingsScreen::SettingsScreen(QWidget *parent) :
 
     ui->usDistLabel->setText(Reveles::US_READING_STR.arg(usHistory[0], 5, 'f', 2).arg(usHistory[1], 5, 'f', 2).arg(usHistory[2], 5, 'f', 2).arg(usHistory[3], 5, 'f', 2));
 
+    ui->guiUptimeLabel->setText(Reveles::GUI_UPTIME_STR.arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')));
+    ui->travelUptimeLabel->setText(Reveles::TRAVEL_UPTIME_STR.arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')));
     QNetworkInterface wlan0 = QNetworkInterface::interfaceFromName("wlan0");
     QNetworkInterface eth0 = QNetworkInterface::interfaceFromName("eth0");
     QString wirelessIP, eth0IP;
@@ -94,18 +96,14 @@ void SettingsScreen::setCoordText(QString coord)
 void SettingsScreen::setUSDistReading(int idx, float value)
 {
     usHistory[idx] = value;
-    QString str("[0]: %1\t[1] %2\n[2] %3\t[3] %4");
-    str.arg(usHistory[0], 4, 'g', 2).arg(usHistory[1], 4, 'g', 2).arg(usHistory[2], 4, 'g', 2).arg(usHistory[3], 4, 'g', 2);
-    ui->usDistLabel->setText(str);
+    ui->usDistLabel->setText( Reveles::GUI_UPTIME_STR.arg(usHistory[0], 4, 'g', 2).arg(usHistory[1], 4, 'g', 2).arg(usHistory[2], 4, 'g', 2).arg(usHistory[3], 4, 'g', 2));
 }
 
 void SettingsScreen::setToFReading(int idx, float value)
 {
     tofHistory[idx] = value;
-    QString str("[0]: %1\t[1] %2\t[2] %3\t[3] %4\n[4]: %5\t[5]: %6\t[6]: %7\t[7]: %8");
-    str.arg(tofHistory[0], 4, 'g', 2).arg(tofHistory[1], 4, 'g', 2).arg(tofHistory[2], 4, 'g', 2).arg(tofHistory[3], 4, 'g', 2)
-            .arg(tofHistory[4], 4, 'g', 2).arg(tofHistory[5], 4, 'g', 2).arg(tofHistory[6], 4, 'g', 2).arg(tofHistory[7], 4, 'g', 2);
-    ui->coordinateLabel->setText(str);
+    ui->coordinateLabel->setText(Reveles::TOF_READING_STR.arg(tofHistory[0], 4, 'g', 2).arg(tofHistory[1], 4, 'g', 2).arg(tofHistory[2], 4, 'g', 2).arg(tofHistory[3], 4, 'g', 2)
+            .arg(tofHistory[4], 4, 'g', 2).arg(tofHistory[5], 4, 'g', 2).arg(tofHistory[6], 4, 'g', 2).arg(tofHistory[7], 4, 'g', 2));
 }
 
 void SettingsScreen::setMotorStatus(uint8_t dir)
@@ -156,6 +154,42 @@ void SettingsScreen::setServoStatus(bool front, uint8_t dir)
         else if(dir == RET_NEUTRAL)
             ui->rServoNStatusLabel->setStyleSheet("QLabel { background-color: green; }");
     }
+}
+
+void SettingsScreen::UpdateGUIUptime(int guiMs)
+{
+    float mT = guiMs / 60;
+    float hT = mT / 60;
+
+    float deltaH = hT - std::floor(hT);
+    mT = deltaH * 60;
+
+    float deltaM = mT - std::floor(mT);
+
+    int s = deltaM * 60;
+    int h = hT;
+    int m = mT;
+
+
+    ui->guiUptimeLabel->setText(Reveles::TRAVEL_UPTIME_STR.arg(h, 2, DEC, QChar('0')).arg(m, 2, DEC, QChar('0')).arg(s, 2, DEC, QChar('0')).arg(0, 3, DEC, QChar('0')));
+}
+
+void SettingsScreen::UpdateTravelUptime(int travelMs)
+{
+    float mT = travelMs / 60;
+    float hT = mT / 60;
+
+    float deltaH = hT - std::floor(hT);
+    mT = deltaH * 60;
+
+    float deltaM = mT - std::floor(mT);
+
+    int s = deltaM * 60;
+    int h = hT;
+    int m = mT;
+
+
+    ui->travelUptimeLabel->setText(Reveles::TRAVEL_UPTIME_STR.arg(h, 2, DEC, QChar('0')).arg(m, 2, DEC, QChar('0')).arg(s, 2, DEC, QChar('0')).arg(0, 3, DEC, QChar('0')));
 }
 
 void SettingsScreen::addToLog(QString str)

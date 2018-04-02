@@ -6,6 +6,7 @@
 #include <QtNetwork/QNetworkInterface>
 #include <../RPi/Common/datatypes.h>
 #include <QString>
+#include <chrono>
 
 namespace Ui {
 class SettingsScreen;
@@ -30,6 +31,9 @@ public:
 
     void setMotorStatus(uint8_t dir);
     void setServoStatus(bool front, uint8_t dir);
+
+    void UpdateGUIUptime(int guiMs);
+    void UpdateTravelUptime(int travelMs);
 
 private slots:
     void on_buttonBox_rejected();
