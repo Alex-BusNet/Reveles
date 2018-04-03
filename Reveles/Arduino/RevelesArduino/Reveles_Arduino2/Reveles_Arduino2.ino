@@ -21,6 +21,14 @@
 #define rearEchoPin     7 // echoPIN2
 #define GPS_RX_PIN      1 // HardwareSerial TX
 #define GPS_TX_PIN      0 // HardwareSerial RX
+#define TOF_1_SHUT_PIN  2
+#define TOF_2_SHUT_PIN  3
+#define TOF_3_SHUT_PIN  4
+#define TOF_4_SHUT_PIN  5
+#define TOF_5_SHUT_PIN  6
+#define TOF_6_SHUT_PIN  7
+#define TOF_7_SHUT_PIN  8
+#define TOF_8_SHUT_PIN  12
 #define LED             13
 // SCL A5
 // SDA A4
@@ -50,6 +58,7 @@
 #define CMD_M       0x10
 #define CMD_S       0x30
 #define CMD_T	    0x40
+#define CMD_P	    0x50
 #define M_REV       0x12
 #define M_STOP      0x13
 #define LATITUDE    0x21
@@ -61,19 +70,20 @@
 
 //----------------------------------
 //        I2C Comm states
-#define WAITING_FOR_START      0
-#define WAITING_FOR_US_DATA    1
-#define WAITING_FOR_MOTOR_DIR  2
-#define WAITING_FOR_TOF_DATA   3
-#define WAITING_FOR_END        4
-#define WAITING_FOR_MGS        5 // Waiting for (M)otor, (G)PS, or (S)ervo.
-#define WAITING_FOR_HELLO      6
-#define WAITING_FOR_SERVO_DIR  7
-#define WAITING_FOR_SERVO_VAL  8
+#define WAITING_FOR_START         0
+#define WAITING_FOR_US_DATA       1
+#define WAITING_FOR_MOTOR_DIR     2
+#define WAITING_FOR_TOF_DATA      3
+#define WAITING_FOR_END           4
+#define WAITING_FOR_MGS           5 // Waiting for (M)otor, (G)PS, or (S)ervo.
+#define WAITING_FOR_HELLO         6
+#define WAITING_FOR_SERVO_DIR     7
+#define WAITING_FOR_SERVO_VAL     8
+#define WAITING_FOR_TOF_SHUT_PIN 12
 
-#define READY_FOR_HELLO        9
-#define READY_FOR_GPS_RESPONSE 10
-#define NO_DATA_READY          11
+#define READY_FOR_HELLO           9
+#define READY_FOR_GPS_RESPONSE   10
+#define NO_DATA_READY            11
 
 //----------------------------------
 //        Other defines
@@ -92,6 +102,8 @@ int rD = 0;
 int destination = 0;
 int latitude = 0; // int type is temporary
 int longitude = 0; // int type is temporary
+
+int tofPins[8] = {2,3,4,5,6,7,8,12}
 
 int mState = STOP_STATE;
 int sState = NEUTRAL_STATE;
@@ -114,7 +126,7 @@ bool respond = false;       // Send GPS info back to RPi
 String commStateStrings[] = {"WAITING_FOR_START", "WAITING_FOR_US_DATA",                    //
                              "WAITING_FOR_MOTOR_DIR", "WAITING_FOR_TOF_DATA",               // This is for debugging
                              "WAITING_FOR_END\t", "WAITING_FOR_MGS\t", "WAITING_FOR_HELLO",  // purposes.
-                             "WAITING_FOR_SERVO_DIR", "WAITING_FOR_SERVO_VAL"};             //
+                             "WAITING_FOR_SERVO_DIR", "WAITING_FOR_SERVO_VAL", "WAITING_FOR_TOF_SHUT_PIN"};             //
 
 //================================================================================
 //                      I2C Command Structure (RPi -> Arduino):
@@ -157,7 +169,7 @@ void recieveData(int byteCount)
   
     while(0 < Wire.available())
     {
-        if((commState == WAITING_FOR_US_DATA) || (commState == WAITING_FOR_TOF_DATA))
+        if((commState == WAITING_FOR_US_DATA) || (commState == WAITING_FOR_TOF_DATA) || (commState == WAITING_FOR_TOF_SHUT_PIN)
             data = Wire.read();
         else
             cmd = Wire.read();
@@ -181,6 +193,7 @@ void recieveData(int byteCount)
         if(cmd == CMD_M) { commState = WAITING_FOR_US_DATA; }
         else if(cmd == CMD_G) { respond = true; commState = WAITING_FOR_END; responseState = READY_FOR_GPS_RESPONSE; }
         else if(cmd == CMD_S) { commState = WAITING_FOR_SERVO_DIR; }
+	else if(cmd == CMD_P) { commState = WAITING_FOR_TOF_SHUT_PIN; }
     }
     else if(commState == WAITING_FOR_US_DATA)
     {
@@ -213,6 +226,10 @@ void recieveData(int byteCount)
         // This command may be unneeded. -Alex
         turnValue = cmd;
         commState = WAITING_FOR_END;
+    }
+    else if (commState == WAITING_FOR_TOF_SHUT_PIN)
+    {
+	digitalWrite(tofPins[data], HIGH);
     }
     else if (commState == WAITING_FOR_END)
     {
@@ -544,6 +561,13 @@ void setup() {
     pinMode(frontEchoPin, INPUT);
     pinMode(rearEchoPin, INPUT);
     pinMode(GPS_READY_PIN, OUTPUT);
+
+    for(int i = 0; i < 8; i++)
+    {
+	pinMode(tofPins[i], OUTPUT);
+	digitalWrite(tofPins[i], LOW);
+	delay(10);
+    }
 
     // Servo I/O
     frontServo.attach(FRONT_SERVO_SIG);

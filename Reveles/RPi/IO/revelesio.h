@@ -14,6 +14,8 @@
 
 #include "Common/datatypes.h"
 #include "lsm9ds1.h"
+#include "tof.h"
+#include <mutex>
 #include <QFuture>
 
 #include <wiringPi.h>
@@ -31,7 +33,6 @@
 //---------------------------
 
 #define TIMEOUT 500000
-#define RECIEVE_READY 25
 #define SDA 8
 #define SCL 9
 
@@ -45,21 +46,38 @@
 // if we use them from here at all.
 
 // NOTE: Left and Right are what the
-//       ToF board treats as Left and Right.
+//       ToF boards treats as Left and Right.
 //       NOT what left and right are relative to
 //       Reveles.
 
-#define TOF_F_CENTER        0x54
-#define TOF_F_LEFT          0x56
-#define TOF_F_RIGHT         0x58
-#define TOF_R_CENTER        0x60
-#define TOF_R_RIGHT         0x62
-#define TOF_R_LEFT          0x64
-#define TOF_RIGHT           0x66
-#define TOF_LEFT            0x68
+/*=================================
+ * Time Of Flight sensor locations
+ *          0-----1-----2
+ *          |   Front   |
+ *          |           |
+ *          |           |
+ *          7           3
+ *          |           |
+ *          |           |
+ *          |           |
+ *          6-----5-----4
+ *=================================
+*/
+#define TOF_DEFAULT_ADDR    0x29
+#define TOF_I2C_ADDR_REG    0x008A
+#define TOF_F_CENTER        0x36
+#define TOF_F_LEFT          0x30
+#define TOF_F_RIGHT         0x31
+#define TOF_R_CENTER        0x37
+#define TOF_R_RIGHT         0x33
+#define TOF_R_LEFT          0x34
+#define TOF_RIGHT           0x32
+#define TOF_LEFT            0x35
+
 // GPIO expanders connect to the Seven-Seg displays
 // on the ToF breakout board. Each controls 2 of the
 // 4 displays.
+// NOTE: We aren't using these, I just put them here for reference. - Alex
 #define GPIO_EXPANDER_U19   0x42
 #define GPIO_EXPANDER_U21   0x43
 //-----------------------
@@ -91,8 +109,8 @@ public:
 
     void ReadGPS();
 
-    int triggerUltrasonic(uint8_t sel);
-    int ReadTimeOfFlight(int sensorNum);
+    float triggerUltrasonic(uint8_t sel);
+    float ReadTimeOfFlight(int sensorNum);
     bool readPIR(bool rear);
 
     MagDirection ReadMagnetometer();
@@ -103,17 +121,23 @@ public:
     bool hasMag();
 
 private:
-    bool isrWait, arduinoFound;
+    bool arduinoFound;
+    bool nucleoFound[2] = {false, false};
     bool XGAvailable, MagAvailable;
 
     int fdNucleo[2];  // Array of file descriptors for Nucleo-F401RE (2)
     int fdArduino;    // File descriptor for Arduino
-    int fdToF[8];     // Array of file desriptors for Time of Flight sensors.
+    int fdToF[8];     // Array of file desriptors for Time of Flight sensors. may not be needed.
+    uint8_t ToFNewAddr[8] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
 
-    int dist, inch, angle, tofDist[8];
+    int inch, angle;
+    float dist;
+    float tofDist[8];
     int8_t motorDir;
     int8_t servoDir;
     long durat;
+
+    std::mutex tofMutex;
 
     QQueue<RIOData> ioRequestQueue;
     bool stopParser, stopToF;
@@ -122,18 +146,23 @@ private:
 
     GPSCoord lastKnownCoord;
     LSM9DS1 *agm;
-//    std::chrono::steady_clock::time_point begin, end;
 
     // Functions
     void ParseQueue();
     void SendToFRequest(int sensorNum);
+    void InitToFSensors();
 
 signals:
     void echoReady(float dist, QString unit);
     void motorDirectionUpdate(uint8_t dir);
     void arduinoStat(bool stat);
     void nucleoStat(bool stat, int idx);
-    void pirStat(bool stat);
+    void pirStat(bool stat, bool front);
+
+    void usReady(int idx, double value);
+    void tofReady(int idx, double value);
+
+    void servoStatus(bool front, uint8_t dir);
 };
 
 #endif // REVELESIO_H

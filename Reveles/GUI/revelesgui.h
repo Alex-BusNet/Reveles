@@ -6,6 +6,7 @@
 #include <QString>
 #include <QScrollArea>
 #include <QTimer>
+#include <chrono>
 
 #include "locationpushbutton.h"
 #include "addlocationdialog.h"
@@ -61,7 +62,7 @@ public slots:
     void gyroUpdate(GyroDirection gd);
     void ArduinoStatus(bool good);
     void NucleoStatus(bool good, int idx);
-    void PIRStatus(bool stat);
+    void PIRStatus(bool stat, bool front);
 
 private slots:
 
@@ -94,6 +95,11 @@ private slots:
 
     void on_demoPB_clicked();
 
+    void tofUpdate(int idx, double val);
+    void usUpdate(int idx, double val);
+    void servoStat(bool front, uint8_t dir);
+    void motorStat(uint8_t dir);
+
 private:
     Ui::RevelesGui *ui;
     QScrollArea *sa;
@@ -102,7 +108,7 @@ private:
     MapView *mapView;
     SettingsScreen *ss;
     AddLocationDialog *ald;
-
+    std::chrono::steady_clock::time_point guiUptime, travelUptime;
     QTimer *commTimer, *updateTimer;
 
     GPSCoord currentLoc;

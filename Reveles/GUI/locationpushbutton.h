@@ -14,6 +14,9 @@ public:
     GPSCoord GetIndex();
     QString GetName();
 
+    void SetName(QString name);
+    void SetIndex(GPSCoord coord);
+
 private:
     GPSCoord location;
 
@@ -49,6 +52,16 @@ inline GPSCoord LocationPushButton::GetIndex()
 inline QString LocationPushButton::GetName()
 {
     return this->text();
+}
+
+inline void LocationPushButton::SetName(QString name)
+{
+    this->setText(name);
+}
+
+inline void LocationPushButton::SetIndex(GPSCoord coord)
+{
+    this->location = coord;
 }
 
 inline void LocationPushButton::lpb_click_handler()

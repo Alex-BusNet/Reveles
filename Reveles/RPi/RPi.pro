@@ -10,7 +10,7 @@ TARGET = RevelesCore
 # any feature of Qt which as been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
-DEFINES += QT_DEPRECATED_WARNINGS _GLIBCXX_USE_CXX11_ABI=0
+#DEFINES += QT_DEPRECATED_WARNINGS _GLIBCXX_USE_CXX11_ABI=0
 
 # You can also make your code fail to compile if you use deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -33,7 +33,7 @@ SOURCES += main.cpp \
     Common/vectorpolar2f.cpp \
     Common/logger.cpp \
     reveles_dbus_interface.cpp \
-#    Common/tile.cpp
+    IO/tof.cpp
 
 HEADERS += \
     Common/datatypes.h \
@@ -55,9 +55,8 @@ HEADERS += \
     Common/messages.h \
     Common/logger.h \
     reveles_dbus_interface.h \
-#    Common/tile.h \
-#    Common/noderenders.h
-    rpi.h
+    rpi.h \
+    IO/tof.h
 
 DISTFILES += \
     Data/haarcascade_fullbody.xml \
@@ -78,7 +77,7 @@ unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/local/lib  \
     -lopencv_imgproc \
     -lopencv_ml \
     -lopencv_objdetect \
-    -lopencv_video \
+    -lopencv_video
 
 # This points to the install location of the libX11.so file
 unix:!macx: LIBS += -L$$PWD/../../../../raspi/sysroot/usr/lib/arm-linux-gnueabihf -lX11

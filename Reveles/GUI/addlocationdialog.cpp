@@ -49,6 +49,9 @@ AddLocationDialog::AddLocationDialog(QWidget *parent) : QWidget(parent)
     coordLat = new QLabel("Lat: ");
     coordLong = new QLabel("Long: ");
 
+    editing = false;
+    editingLpb = NULL;
+
     exit->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
     cancel->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
     currentLoc->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
@@ -90,6 +93,15 @@ AddLocationDialog::AddLocationDialog(QWidget *parent) : QWidget(parent)
     vLayout->addLayout(kLayout);
 
     this->setLayout(vLayout);
+}
+
+void AddLocationDialog::EditLocation(LocationPushButton *lpb)
+{
+    locName->setText(lpb->GetName());
+    lat->setText(QString::number(lpb->GetIndex().latitude));
+    lon->setText(QString::number(lpb->GetIndex().longitude));
+    editing = true;
+    editingLpb = lpb;
 }
 
 void AddLocationDialog::generateKeyboard()
@@ -138,7 +150,22 @@ void AddLocationDialog::generateKeyboard()
 
 void AddLocationDialog::addNewLoc()
 {
-    RevelesGui::instance()->addLocation(locName->text(), GPSCoord{lat->text().toFloat(), lon->text().toFloat()});
+    if(editing)
+    {
+        if(editingLpb != NULL)
+        {
+            editingLpb->SetName(locName->text());
+            editingLpb->SetIndex(GPSCoord{lat->text().toFloat(), lon->text().toFloat()});
+        }
+
+        editing = false;
+        editingLpb = NULL;
+    }
+    else
+    {
+        RevelesGui::instance()->addLocation(locName->text(), GPSCoord{lat->text().toFloat(), lon->text().toFloat()});
+    }
+
     this->close();
 }
 

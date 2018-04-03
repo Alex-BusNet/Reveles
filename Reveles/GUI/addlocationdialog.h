@@ -41,6 +41,7 @@ class AddLocationDialog : public QWidget
     Q_OBJECT
 public:
     explicit AddLocationDialog(QWidget *parent = nullptr);
+    void EditLocation(LocationPushButton* lpb);
 
 private:
     void generateKeyboard();
@@ -60,6 +61,9 @@ private:
     QPushButton *currentLoc;
     QLabel *name, *coordLat, *coordLong;
     QLineEdit *locName, *lat, *lon;
+
+    bool editing;
+    LocationPushButton *editingLpb;
 
     QHBoxLayout *ctrlBtns, *nameLayout, *coordLayout;
     QHBoxLayout *kNumRow, *kQRow, *kARow, *kZRow, *kSpace;

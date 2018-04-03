@@ -32,6 +32,7 @@
 			<li><a href="#0x300b">Error = 0x300b</a></li>
 			<li><a href="#fonts-not-found">Fonts not found</a></li>
 			<li><a href="#undefined-reference-glibcxx_3421">Undefined Reference GLIBCXX_3.4.21</a></li>
+			<li><a href="#unable-to-deploy-project-to-rpi">Unable to Deploy Project to RPi</a</li>
 		</ul>
 	</li>
 	<li><a href="#updating-the-reveles-repository-with-git">Updating the Reveles Repository with Git</a>
@@ -523,7 +524,26 @@ Additional Qbs Profile Settings = (Do not change)
 
 17. On the "Projects" screen, select the Raspberry Pi Kit and select the "Run" option. Check that the "Local File Path" field is not blank.
 
-18. Ensure that the RPi is running and then build and run Reveles.
+To make sure everything gets deployed, we need to add two custom steps to the deploy process.
+
+18. Under the "Deployment" section of the "Run Settings", add two "Custom Process Step" options.
+
+19. The first custom step should be configured like so:<br>
+```
+Command		  = scp
+Arguments	  = -r /PATH/TO/REVELES/GUI/Assets pi@<IP address of pi>:/home/pi/Desktop/Reveles
+Working directory = %{buildDir}
+```
+
+20. The second custom step should be configured like so:<br>
+```
+Command		  = scp
+Arguments	  = -r /PATH/TO/REVELES/RPi/Data pi@<IP address of pi>:/home/pi/Desktop/Reveles
+Working directory = %{buildDir}
+```
+
+21. Ensure that the RPi is running and then build and run Reveles.
+
 
 ## Troubleshooting
 #### EGLFS not found.
@@ -596,6 +616,18 @@ $ ln -s libstdc++.so.6.0.22 libstdc++.so
 ```
 Reveles should now be able to compile.
 
+#### Unable to Deploy Project to RPi
+There isn't really an error message with this one, you should see a red bar in the bottom right corner of the screen (the same place that shows when a build is successful or not).<br>
+__Solution:__<br>
+First, you need to find the IP address of the RPi. Second, there are 3 places that need to be changed:<br>
+	1. Click "Projects" on the left toolbar, then select "Run" under the Raspberry Pi Kit.
+	2. Under the two "Custom Process Step" options, change the IP address to the IP address of the Pi.
+	3. Go to "Devices" (Manage Kits -> Devices) and change the IP address of the Raspberry Pi device.
+	4. Open up a new terminal window and enter the following:<br>
+		`ssh pi@<IP address of pi>`
+> Once you are ssh-ed into the RPi, you can exit out of the ssh session with `exit`, and then close the window.
+	5. Re-deploy Reveles to the RPi.
+
 	
 ## Updating the Reveles Repository with Git
 The following command assume you are in the top level folder of where the repository is located on your hard drive. (For me this is /home/USER_NAME/Reveles/Reveles)
@@ -657,7 +689,7 @@ The following command assume you are in the top level folder of where the reposi
   5. Once all all the files are conflict free (and correct), you can push your newest changes to the repo.
 
 ## D-Bus
-The Core and GUI programs communicate along the D-Bus on the service named "com.reveles.core" and through the object "/Core". The definition for the D-Bus interface and adapter is outlined in _revelesdbus.xml_ in the GUI and RPi subprojects. These two files MUST BE THE SAME in order for the two programs to communicate properly. 
+The Core and GUI programs communicate along the D-Bus on the service named "com.reveles.core" and through the object "/Core". The definition for the D-Bus interface and adapter is outlined in _revelesdbus.xml_ in the GUI and RPi subprojects. These two files MUST BE THE SAME in order for the two programs to communicate properly. You may also add the signals directly to the _reveles\_dbus\_adaptor.h_ and _reveles\_dbus\_interface.h_ in both the GUI and CORE folders. The CORE and GUI each need an D-Bus Adaptor and D-Bus Interface to communicate in two directions.
 
 ### Making Changes to the XML D-Bus Definition file
 #### Adding New Signals and Methods

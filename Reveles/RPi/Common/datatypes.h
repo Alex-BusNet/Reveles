@@ -28,11 +28,11 @@
 #define PIR_BR 0b011 // Back-right
 
 // Ultrasonic Select bits
-#define US_LEFT  0b000
-#define US_FRONT 0b001
-#define US_RIGHT 0b010
-#define US_STAIR 0b011
-#define US_BACK  0b100
+#define US_FRONT        0b000
+#define US_FRONT_STAIR  0b001
+#define US_BACK         0b010
+#define US_BACK_STAIR   0b011
+//#define US_BACK  0b100
 
 #define I2C_TRANSMIT_DELAY 100
 
@@ -299,6 +299,7 @@ enum I2C_COMMANDS
     CMD_M       = 0x10,
 	CMD_S       = 0x30,
     CMD_T       = 0x40,
+    CMD_P       = 0x50,
     M_REV       = 0x12,
     M_STOP      = 0x13,
     LATITUDE    = 0x21,

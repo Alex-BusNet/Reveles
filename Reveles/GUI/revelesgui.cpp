@@ -82,6 +82,8 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
     updateTimer->setInterval(2000);
     connect(updateTimer, &QTimer::timeout, this, &RevelesGui::draw);
 
+    guiUptime = std::chrono::steady_clock::now();
+
     updateTimer->start();
     commTimer->start();
 }
@@ -183,19 +185,28 @@ void RevelesGui::logMessage(QString msg)
 void RevelesGui::magUpdate(MagDirection md)
 {
     if(ss != NULL)
+    {
         ss->MagReading(md);
+        ss->UpdateGUIUptime(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - guiUptime).count());
+    }
 }
 
 void RevelesGui::accelUpdate(AccelDirection ad)
 {
     if(ss != NULL)
+    {
         ss->AccelReading(ad);
+        ss->UpdateGUIUptime(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - guiUptime).count());
+    }
 }
 
 void RevelesGui::gyroUpdate(GyroDirection gd)
 {
     if(ss != NULL)
+    {
         ss->GyroReading(gd);
+        ss->UpdateGUIUptime(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - guiUptime).count());
+    }
 }
 
 void RevelesGui::ArduinoStatus(bool good)
@@ -210,10 +221,13 @@ void RevelesGui::NucleoStatus(bool good, int idx)
         ss->setNucleo(good, idx);
 }
 
-void RevelesGui::PIRStatus(bool stat)
+void RevelesGui::PIRStatus(bool stat, bool front)
 {
     if(ss != NULL)
-        ss->setPIR(stat);
+    {
+        ss->setPIR(stat, front);
+        ss->UpdateGUIUptime(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - guiUptime).count());
+    }
 }
 
 void RevelesGui::setupLocations()
@@ -353,6 +367,10 @@ void RevelesGui::setDBusInterface(com::reveles::RevelesCoreInterface *iface)
     connect(rci, &RevelesDBusInterface::ArduinoFound, this, &RevelesGui::ArduinoStatus);
     connect(rci, &RevelesDBusInterface::NucleoFound, this, &RevelesGui::NucleoStatus);
     connect(rci, &RevelesDBusInterface::PIRStatus, this, &RevelesGui::PIRStatus);
+    connect(rci, &RevelesDBusInterface::USReadings, this, &RevelesGui::usUpdate);
+    connect(rci, &RevelesDBusInterface::TOFReadings, this, &RevelesGui::tofUpdate);
+    connect(rci, &RevelesDBusInterface::motorUpdate, this, &RevelesGui::motorStat);
+    connect(rci, &RevelesDBusInterface::servoUpdate, this, &RevelesGui::servoStat);
 }
 
 void RevelesGui::setDBusAdaptor(RevelesDBusAdaptor *rda)
@@ -378,7 +396,10 @@ void RevelesGui::commCheck(bool good)
     hasComms = good;
 
     if(ss != NULL)
+    {
         ss->setDBusStatus(good);
+        ss->UpdateGUIUptime(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - guiUptime).count());
+    }
 }
 
 void RevelesGui::on_exitBtn_clicked()
@@ -388,6 +409,11 @@ void RevelesGui::on_exitBtn_clicked()
 
     if(!hasComms)
         this->close();
+
+    // This primarily to allow the GUI to close in the
+    // event the CORE is hung up and can't send the kill
+    // signal back to the GUI.
+    hasComms = false;
 }
 
 //=====================================================================
@@ -401,8 +427,8 @@ void RevelesGui::displayDist(float dist, QString unit)
     else
         t = (QString("%0 %1").arg(dist).arg(unit));
 
-    if (ss != NULL)
-        ss->setUSDistReading(t);
+//    if (ss != NULL)
+//        ss->setUSDistReading(t);
 }
 
 void RevelesGui::TrigDispToggle()
@@ -455,6 +481,9 @@ void RevelesGui::draw()
 
 void RevelesGui::on_endNavigationPB_clicked()
 {
+    if(ss != NULL)
+        ss->UpdateTravelUptime(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - travelUptime).count());
+
     emit NavigationAbort();
     setLocation(NULL);
     ui->endNavigationPB->setEnabled(false);
@@ -497,6 +526,8 @@ void RevelesGui::on_startNavigationPB_clicked()
 
         if(hasComms)
         {
+            travelUptime = std::chrono::steady_clock::now();
+
             emit SendDestination(dest);
 
             // Switch the Screen to show the map
@@ -518,10 +549,34 @@ void RevelesGui::on_demoPB_clicked()
         }
 
         demoOn = true;
-        ui->tabWidget->setCurrentIndex(1);
+        ui->tabWidget->setCurrentIndex(0);
         ui->endNavigationPB->setEnabled(true);
         ui->startNavigationPB->setEnabled(false);
         ui->demoPB->setEnabled(false);
         emit StartDemoMode();
     }
+}
+
+void RevelesGui::tofUpdate(int idx, double val)
+{
+    if(ss != NULL)
+        ss->setToFReading(idx, val);
+}
+
+void RevelesGui::usUpdate(int idx, double val)
+{
+    if(ss != NULL)
+        ss->setUSDistReading(idx, val);
+}
+
+void RevelesGui::servoStat(bool front, uint8_t dir)
+{
+    if(ss != NULL)
+        ss->setServoStatus(front, dir);
+}
+
+void RevelesGui::motorStat(uint8_t dir)
+{
+    if(ss != NULL)
+        ss->setMotorStatus(dir);
 }

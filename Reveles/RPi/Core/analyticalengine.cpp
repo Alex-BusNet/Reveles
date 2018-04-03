@@ -27,8 +27,8 @@ void AnalyticalEngine::Init()
     presentState = NO_STATE;
     lastState = NO_STATE;
     endAnalyze = false;
-    tof[0] = tof[1] = tof[2] = tof[3] = tof[4] = tof[5] = tof[6] = tof[7] = 66; // inches
-    us = 160; // inches
+    tof[0] = tof[1] = tof[2] = tof[3] = tof[4] = tof[5] = tof[6] = tof[7] = -1; // inches
+    us[0]= us[1] = -1; // inches
     pir = false;
     demoMode = false;
     motorDir = M_STOP;
@@ -146,17 +146,20 @@ void AnalyticalEngine::CheckEnv()
     if(motorDir == M_FWD)
     {
         pir = RevelesIO::instance()->readPIR(false);
-        us = RevelesIO::instance()->triggerUltrasonic(US_FRONT); // Stair US
-        tof[1] = 65;    // RevelesIO::instance()->ReadTimeOfFlight(1);
-        Logger::writeLine(instance(), QString("Front US Reading: %1").arg(us));
+        us[0] = RevelesIO::instance()->triggerUltrasonic(US_FRONT);
+        us[1] = RevelesIO::instance()->triggerUltrasonic(US_FRONT_STAIR); // Stair US
+        tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
+        Logger::writeLine(instance(), QString("Front US Reading: %1").arg(us[0]));
+        Logger::writeLine(instance(), QString("Front Stair US Reading: %1").arg(us[1]));
     }
     else if(motorDir == M_REV)
     {
         pir = RevelesIO::instance()->readPIR(true);
-        us = RevelesIO::instance()->triggerUltrasonic(US_RIGHT); // Stair US
-        //tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
-        tof[5] = 65;
-        Logger::writeLine(instance(), QString("Rear US reading: %1").arg(us));
+        us[0] = RevelesIO::instance()->triggerUltrasonic(US_BACK);
+        us[1] = RevelesIO::instance()->triggerUltrasonic(US_BACK_STAIR); // Stair US
+        tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
+        Logger::writeLine(instance(), QString("Rear US reading: %1").arg(us[0]));
+        Logger::writeLine(instance(), QString("Rear Stair US Reading: %1").arg(us[1]));
     }
 
     if(servoDir == TURN_LEFT)
@@ -193,9 +196,9 @@ void AnalyticalEngine::CheckEnv()
                                   "             [0]: %1 [1]: %2 [2]: %3\n"
                                   "             [7]: %4         [3]: %5\n"
                                   "             [6]: %6 [5]: %7 [4]: %8")
-                      .arg(tof[0], 2, DEC).arg(tof[1], 2, DEC).arg(tof[2], 2, DEC)
-                      .arg(tof[7], 2, DEC).arg(tof[3], 2, DEC)
-                      .arg(tof[6], 2, DEC).arg(tof[5], 2, DEC).arg(tof[4], 2, DEC));
+                      .arg(tof[0], 4, 'f', 1, QChar('0')).arg(tof[1], 4, 'f', 1, QChar('0')).arg(tof[2], 4, 'f', 1,QChar('0'))
+                      .arg(tof[7], 4, 'f', 1, QChar('0')).arg(tof[3], 4, 'f', 1, QChar('0'))
+                      .arg(tof[6], 4, 'f', 1, QChar('0')).arg(tof[5], 4, 'f', 1, QChar('0')).arg(tof[4], 4, 'f', 1,QChar('0')));
 }
 
 /*!
@@ -205,10 +208,10 @@ void AnalyticalEngine::ProcessEnv()
 {
     Logger::writeLine(instance(), QString("ProcessEnv()"));
     // DON'T GO DOWN THE STAIRS!!!
-    if(us < 12 /* inches */)
+    if(us[1] < 12 /* inches */)
     {
         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
-//        delay(1000); // Give the stop command some time to be processed and take effect.
+        delay(1000); // Give the stop command some time to be processed and take effect.
 
         if(motorDir == M_FWD)
             motorDir = M_REV;
@@ -223,15 +226,15 @@ void AnalyticalEngine::ProcessEnv()
         return;
     }
     else
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us });
+        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[0] });
 
     // Simple path adjustment for now. Values are estimates.
     // Person found (distance unknown) or ToF return distance less than max
-    if(pir || ((motorDir == M_FWD) && (tof[1] < 66)))
+    if(pir || ((motorDir == M_FWD) && ((us[0] < 66) || (tof[1] < 66))))
     {
         AdjustPath_Inanimate();
     }
-    else if(pir || (motorDir == M_REV) && (tof[5] < 66))
+    else if(pir || (motorDir == M_REV) && ((us[0] < 66) || (tof[5] < 66)))
     {
         AdjustPath_Inanimate();
     }
