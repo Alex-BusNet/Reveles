@@ -7,7 +7,6 @@
 #include <QtConcurrent>
 #include <cstdlib>
 #include <chrono>
-#include "tof.h"
 
 Q_GLOBAL_STATIC(RevelesIO, rio)
 #define B2STR( x ) (x ? "True" : "False")
@@ -39,17 +38,16 @@ void RevelesIO::initIO()
     fdNucleo[1] = -1; //wiringPiI2CSetup(NUCLEO_REAR);
 
     fdToF[0] = tofInit(1, TOF_F_LEFT, 1);
-//    fdToF[1] = tofInit(1, TOF_F_CENTER, 1);
-//    fdToF[2] = tofInit(1, TOF_F_RIGHT, 1);
-//    fdToF[3] = tofInit(1, TOF_RIGHT, 1);
-//    fdToF[4] = tofInit(1, TOF_R_RIGHT, 1);
-//    fdToF[5] = tofInit(1, TOF_R_CENTER, 1);
-//    fdToF[6] = tofInit(1, TOF_R_LEFT, 1);
-//    fdToF[7] = tofInit(1, TOF_LEFT, 1);
+    fdToF[1] = tofInit(1, TOF_F_CENTER, 1);
+    fdToF[2] = tofInit(1, TOF_F_RIGHT, 1);
+    fdToF[3] = tofInit(1, TOF_RIGHT, 1);
+    fdToF[4] = tofInit(1, TOF_R_RIGHT, 1);
+    fdToF[5] = tofInit(1, TOF_R_CENTER, 1);
+    fdToF[6] = tofInit(1, TOF_R_LEFT, 1);
+    fdToF[7] = tofInit(1, TOF_LEFT, 1);
 
     for(int i = 0; i < 8; i++)
     {
-        if(i != 0) { fdToF[i] = -1; tofDist[i] = -1; continue;}
         Logger::writeLine(instance(), QString("fdToF[%1]: %2").arg(i).arg(fdToF[i]));
         tofDist[i] = -1;
     }
@@ -87,29 +85,21 @@ void RevelesIO::initIO()
 //        if(elapsedTime > 2000) { break; }
 //    }
 
-    if(res != COM_CHECK)
-        cout << "Error at " << NUCLEO_FRONT << ": " << errno << " " << strerror(errno) <<  endl;
+//    if(res != COM_CHECK)
+//        cout << "Error at " << NUCLEO_FRONT << ": " << errno << " " << strerror(errno) <<  endl;
 
-    emit nucleoStat(res == COM_CHECK, 0);
-    nucleoFound[0] = (res == COM_CHECK);
-    res = CMD_FLUSH;
+//    emit nucleoStat(res == COM_CHECK, 0);
+//    nucleoFound[0] = (res == COM_CHECK);
+//    res = CMD_FLUSH;
 
-    waitTime = chrono::steady_clock::now();
+//    waitTime = chrono::steady_clock::now();
 
-//    while(true)
-//    {
-//        res = wiringPiI2CRead(fdNucleo[1]);
-//        if(res == COM_CHECK) { break; }
-//        elapsedTime = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - waitTime).count();
-//        if(elapsedTime > 2000) { break; }
-//    }
+//    if(fdNucleo[1] == -1)
+//        cout << "Error at " << NUCLEO_REAR << ": " << errno << " " << strerror(errno) <<  endl;
 
-    if(fdNucleo[1] == -1)
-        cout << "Error at " << NUCLEO_REAR << ": " << errno << " " << strerror(errno) <<  endl;
-
-    emit nucleoStat(res == COM_CHECK, 1);
-    //This is temporary.
-    nucleoFound[0] = nucleoFound[1] = true;//(res == COM_CHECK);
+//    emit nucleoStat(res == COM_CHECK, 1);
+//    //This is temporary.
+//    nucleoFound[1] = (res == COM_CHECK);
 
     Logger::writeLine(instance(), Reveles::ARDUINO_FOUND.arg(ARDUINO, 2, 16, QChar('0')).arg(B2STR(arduinoFound)));
     Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_FRONT, 2, 16, QChar('0')).arg((nucleoFound[0]) ? "True":"False"));
@@ -151,18 +141,21 @@ void RevelesIO::StartNav()
 
     tofReader = QtConcurrent::run([=]()
     {
+        float distMM = 0.0f;
         while(!stopToF)
         {
             for(int i = 0; i < 8; i++)
             {
                 if(fdToF[i] != -1)
                 {
-                    tofDist[i] = tofReadDistance(fdToF[i]);
+                    distMM = tofReadDistance(fdToF[i]);
+                    tofMutex.lock();
+                    tofDist[i] = (distMM / 25.4f); // mm to inches
+                    tofMutex.unlock();
                     Logger::writeLine(instance(), QString::number(tofDist[i]));
                     emit tofReady(i, tofDist[i]);
+                    distMM = 0.0f;
                 }
-//                Logger::writeLine(instance(), QString("Sending ToF Request for %1").arg(i));
-//                    ReadTimeOfFlight(i);
             }
 
             delay(500);
@@ -197,6 +190,15 @@ void RevelesIO::CloseIO()
     Logger::writeLine(instance(), QString("Exiting ToF reader..."));
     if(tofReader.isRunning())
         tofReader.cancel();
+
+    for(int i = 0; i < 8; i++)
+    {
+        if(fdToF[i] != -1)
+        {
+            closeToF(fdToF[i]);
+            fdToF[i] = -1;
+        }
+    }
 
     Logger::writeLine(instance(), QString("Disconnecting Arduino..."));
     wiringPiI2CWrite(fdArduino, END);
@@ -391,7 +393,7 @@ void RevelesIO::ReadGPS()
  * triggerUltrasonic written based of hc-sr04.c
  * from https://github.com/dmeziere/rpi-hc-sr04/blob/master/util/hc-sr04.c
  */
-int RevelesIO::triggerUltrasonic(uint8_t sel)
+float RevelesIO::triggerUltrasonic(uint8_t sel)
 {
     // Check this, I don't believe it
     // works the way I think it does. -Alex 1/21/18
@@ -445,7 +447,7 @@ int RevelesIO::triggerUltrasonic(uint8_t sel)
     pong = micros();
 
     dist = (float)(pong - ping) * 0.017150;
-    dist /= 2.5; // Convert to inches.
+    dist /= 2.5f; // Convert to inches.
 
     // Currently used for D-Bus comms back to GUI.
     emit usReady(idx, dist);
@@ -453,9 +455,11 @@ int RevelesIO::triggerUltrasonic(uint8_t sel)
     return dist;
 }
 
-int RevelesIO::ReadTimeOfFlight(int sensorNum)
+float RevelesIO::ReadTimeOfFlight(int sensorNum)
 {
+    tofMutex.lock();
     return tofDist[sensorNum];
+    tofMutex.unlock();
 }
 
 bool RevelesIO::readPIR(bool rear)
@@ -531,10 +535,6 @@ void RevelesIO::ParseQueue()
                 angle = riod.specData;
                 SetServoDirection(riod.data);
             }
-//            else if(riod.cmd == IO_TOF)
-//            {
-//                ReadTimeOfFlight(riod.data);
-//            }
         }
 
         delay(100);

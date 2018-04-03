@@ -13,8 +13,8 @@ SettingsScreen::SettingsScreen(QWidget *parent) :
     ui->usDistLabel->setText(QChar(0x221E));
     ui->tabWidget->setCurrentIndex(1);
 
-    tofHistory[0] = tofHistory[1] = tofHistory[2] = tofHistory[3] = tofHistory[4] = tofHistory[5] = tofHistory[6] = tofHistory[7] = 66.0f;
-    usHistory[0] = usHistory[1] = usHistory[2] = usHistory[3] = 171.0f;
+    tofHistory[0] = tofHistory[1] = tofHistory[2] = tofHistory[3] = tofHistory[4] = tofHistory[5] = tofHistory[6] = tofHistory[7] = -1.0f;
+    usHistory[0] = usHistory[1] = usHistory[2] = usHistory[3] = -1.0f;
 
     ui->coordinateLabel->setText(Reveles::TOF_READING_STR.arg(tofHistory[0], 4, 'f', 2).arg(tofHistory[1], 4, 'f', 2).arg(tofHistory[2], 4, 'f', 2).arg(tofHistory[3], 4, 'f', 2)
             .arg(tofHistory[4], 4, 'f', 2).arg(tofHistory[5], 4, 'f', 2).arg(tofHistory[6], 4, 'f', 2).arg(tofHistory[7], 4, 'f', 2));

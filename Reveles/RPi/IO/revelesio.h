@@ -14,7 +14,8 @@
 
 #include "Common/datatypes.h"
 #include "lsm9ds1.h"
-#include <tof.h>
+#include "tof.h"
+#include <mutex>
 #include <QFuture>
 
 #include <wiringPi.h>
@@ -71,9 +72,11 @@
 #define TOF_R_LEFT          0x64
 #define TOF_RIGHT           0x66
 #define TOF_LEFT            0x68
+
 // GPIO expanders connect to the Seven-Seg displays
 // on the ToF breakout board. Each controls 2 of the
 // 4 displays.
+// NOTE: We aren't using these, I just put them here for reference. - Alex
 #define GPIO_EXPANDER_U19   0x42
 #define GPIO_EXPANDER_U21   0x43
 //-----------------------
@@ -105,8 +108,8 @@ public:
 
     void ReadGPS();
 
-    int triggerUltrasonic(uint8_t sel);
-    int ReadTimeOfFlight(int sensorNum);
+    float triggerUltrasonic(uint8_t sel);
+    float ReadTimeOfFlight(int sensorNum);
     bool readPIR(bool rear);
 
     MagDirection ReadMagnetometer();
@@ -125,11 +128,14 @@ private:
     int fdArduino;    // File descriptor for Arduino
     int fdToF[8];     // Array of file desriptors for Time of Flight sensors. may not be needed.
 
-    int dist, inch, angle, tofDist[8];
+    int inch, angle;
+    float dist;
+    float tofDist[8];
     int8_t motorDir;
     int8_t servoDir;
     long durat;
 
+    std::mutex tofMutex;
 
     QQueue<RIOData> ioRequestQueue;
     bool stopParser, stopToF;

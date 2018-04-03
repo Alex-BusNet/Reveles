@@ -36,4 +36,6 @@ int tofReadDistance(int file_i2c);
 //
 int tofInit(int iChan, int iAddr, int bLongRange);
 
+int closeToF(int iAddr);
+
 #endif // _TOFLIB_H

@@ -28,7 +28,7 @@ void AnalyticalEngine::Init()
     lastState = NO_STATE;
     endAnalyze = false;
     tof[0] = tof[1] = tof[2] = tof[3] = tof[4] = tof[5] = tof[6] = tof[7] = -1; // inches
-    us[0]= us[1] = 171; // inches
+    us[0]= us[1] = -1; // inches
     pir = false;
     demoMode = false;
     motorDir = M_STOP;
@@ -196,9 +196,9 @@ void AnalyticalEngine::CheckEnv()
                                   "             [0]: %1 [1]: %2 [2]: %3\n"
                                   "             [7]: %4         [3]: %5\n"
                                   "             [6]: %6 [5]: %7 [4]: %8")
-                      .arg(tof[0], 2, DEC).arg(tof[1], 2, DEC).arg(tof[2], 2, DEC)
-                      .arg(tof[7], 2, DEC).arg(tof[3], 2, DEC)
-                      .arg(tof[6], 2, DEC).arg(tof[5], 2, DEC).arg(tof[4], 2, DEC));
+                      .arg(tof[0], 4, 'f', 1, QChar('0')).arg(tof[1], 4, 'f', 1, QChar('0')).arg(tof[2], 4, 'f', 1,QChar('0'))
+                      .arg(tof[7], 4, 'f', 1, QChar('0')).arg(tof[3], 4, 'f', 1, QChar('0'))
+                      .arg(tof[6], 4, 'f', 1, QChar('0')).arg(tof[5], 4, 'f', 1, QChar('0')).arg(tof[4], 4, 'f', 1,QChar('0')));
 }
 
 /*!

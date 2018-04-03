@@ -61,7 +61,7 @@ public slots:
 
 private:
     double tofHistory[8] = {-1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f};
-    double usHistory[4] = {171.0f, 171.0f, 171.0f, 171.0f};
+    double usHistory[4] = {-1.0f, -1.0f, -1.0f, -1.0f};
 
     Ui::SettingsScreen *ui;
 };
