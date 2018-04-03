@@ -63,15 +63,16 @@
  *          6-----5-----4
  *=================================
 */
-
-#define TOF_F_CENTER        0x54
-#define TOF_F_LEFT          0x29
-#define TOF_F_RIGHT         0x58
-#define TOF_R_CENTER        0x60
-#define TOF_R_RIGHT         0x62
-#define TOF_R_LEFT          0x64
-#define TOF_RIGHT           0x66
-#define TOF_LEFT            0x68
+#define TOF_DEFAULT_ADDR    0x29
+#define TOF_I2C_ADDR_REG    0x008A
+#define TOF_F_CENTER        0x36
+#define TOF_F_LEFT          0x30
+#define TOF_F_RIGHT         0x31
+#define TOF_R_CENTER        0x37
+#define TOF_R_RIGHT         0x33
+#define TOF_R_LEFT          0x34
+#define TOF_RIGHT           0x32
+#define TOF_LEFT            0x35
 
 // GPIO expanders connect to the Seven-Seg displays
 // on the ToF breakout board. Each controls 2 of the
@@ -127,6 +128,7 @@ private:
     int fdNucleo[2];  // Array of file descriptors for Nucleo-F401RE (2)
     int fdArduino;    // File descriptor for Arduino
     int fdToF[8];     // Array of file desriptors for Time of Flight sensors. may not be needed.
+    uint8_t ToFNewAddr[8] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
 
     int inch, angle;
     float dist;
@@ -148,6 +150,7 @@ private:
     // Functions
     void ParseQueue();
     void SendToFRequest(int sensorNum);
+    void InitToFSensors();
 
 signals:
     void echoReady(float dist, QString unit);

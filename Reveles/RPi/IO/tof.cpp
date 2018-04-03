@@ -111,6 +111,8 @@ int tofInit(int iChan, int iAddr, int bLongRange)
 		return 0;
 	}
 
+    printf("file_i2c: %d\n", file_i2c);
+
 	if (ioctl(file_i2c, I2C_SLAVE, iAddr) < 0)
 	{
 		fprintf(stderr, "Failed to acquire bus access or talk to slave\n");

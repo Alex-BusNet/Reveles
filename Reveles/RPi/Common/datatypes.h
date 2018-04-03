@@ -299,6 +299,7 @@ enum I2C_COMMANDS
     CMD_M       = 0x10,
 	CMD_S       = 0x30,
     CMD_T       = 0x40,
+    CMD_P       = 0x50,
     M_REV       = 0x12,
     M_STOP      = 0x13,
     LATITUDE    = 0x21,
