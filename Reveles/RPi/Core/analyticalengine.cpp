@@ -145,7 +145,9 @@ void AnalyticalEngine::CheckEnv()
 
     if(motorDir == M_FWD)
     {
+        // Check the front PIR
         pir = RevelesIO::instance()->readPIR(false);
+        // Read the two front Ultrasonics
         us[0] = RevelesIO::instance()->triggerUltrasonic(US_FRONT);
         us[1] = RevelesIO::instance()->triggerUltrasonic(US_FRONT_STAIR); // Stair US
         tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
@@ -154,7 +156,9 @@ void AnalyticalEngine::CheckEnv()
     }
     else if(motorDir == M_REV)
     {
+        // Check the rear PIR
         pir = RevelesIO::instance()->readPIR(true);
+        // Check two rear Ultrasonics
         us[0] = RevelesIO::instance()->triggerUltrasonic(US_BACK);
         us[1] = RevelesIO::instance()->triggerUltrasonic(US_BACK_STAIR); // Stair US
         tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
@@ -189,7 +193,9 @@ void AnalyticalEngine::CheckEnv()
         }
     }
 
+    // Right side sensor
     tof[3] = RevelesIO::instance()->ReadTimeOfFlight(3);
+    // Left side sensor
     tof[7] = RevelesIO::instance()->ReadTimeOfFlight(7);
     Logger::writeLine(instance(), QString("PIR: %1").arg(B2STR(pir)));
     Logger::writeLine(instance(), QString("ToF readings:\n"

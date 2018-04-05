@@ -128,6 +128,7 @@ private:
     int fdNucleo[2];  // Array of file descriptors for Nucleo-F401RE (2)
     int fdArduino;    // File descriptor for Arduino
     int fdToF[8];     // Array of file desriptors for Time of Flight sensors. may not be needed.
+    // Array of new addresses for Time of Flight sensors.
     uint8_t ToFNewAddr[8] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
 
     int inch, angle;

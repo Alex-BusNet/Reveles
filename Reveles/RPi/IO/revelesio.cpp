@@ -1,4 +1,4 @@
-#include "revelesio.h"
+﻿#include "revelesio.h"
 #include <iostream>
 #include <random>
 #include <math.h>
@@ -37,13 +37,7 @@ void RevelesIO::initIO()
     fdNucleo[0] = -1; //wiringPiI2CSetup(NUCLEO_FRONT);
     fdNucleo[1] = -1; //wiringPiI2CSetup(NUCLEO_REAR);
 
-    system("i2cdetect -y 1");
 
-    for(int i = 0; i < 8; i++)
-    {
-        Logger::writeLine(instance(), QString("fdToF[%1]: %2").arg(i).arg(fdToF[i]));
-        tofDist[i] = -1;
-    }
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
     uint8_t res = CMD_FLUSH;
@@ -70,13 +64,21 @@ void RevelesIO::initIO()
     InitToFSensors();
 
     fdToF[0] = tofInit(1, TOF_F_LEFT, 1);
-    fdToF[1] = tofInit(1, TOF_F_CENTER, 1);
+    fdToF[1] = -1; //tofInit(1, TOF_F_CENTER, 1);
     fdToF[2] = tofInit(1, TOF_F_RIGHT, 1);
     fdToF[3] = tofInit(1, TOF_RIGHT, 1);
     fdToF[4] = tofInit(1, TOF_R_RIGHT, 1);
-    fdToF[5] = tofInit(1, TOF_R_CENTER, 1);
+    fdToF[5] = -1; //tofInit(1, TOF_R_CENTER, 1);
     fdToF[6] = tofInit(1, TOF_R_LEFT, 1);
     fdToF[7] = tofInit(1, TOF_LEFT, 1);
+
+    system("i2cdetect -y 1");
+
+    for(int i = 0; i < 8; i++)
+    {
+        Logger::writeLine(instance(), QString("fdToF[%1]: %2").arg(i).arg(fdToF[i]));
+        tofDist[i] = -1;
+    }
 
     res = CMD_FLUSH;
 
@@ -148,10 +150,9 @@ void RevelesIO::StopNav()
 
     stopToF = true;
     if(tofReader.isRunning())
-        tofReader.waitForFinished();
+        tofReader.cancel();
 
     ioRequestQueue.clear();
-
 
     Logger::writeLine(instance(), QString("Done."));
 }
@@ -212,6 +213,7 @@ RevelesIO::~RevelesIO()
 //      CMD_M - RPi is sending drive instructions.
 //      CMD_G - RPi is requesting GPS coordinates.
 //      CMD_S - RPi is sending turning instructions.
+//      CMD_P - RPi is sending which ToF Shutdown pin to release
 //    US Value: Floating Point value for PWM signal.
 //      (Motor command only)
 //      Value is in inches.
@@ -223,6 +225,7 @@ RevelesIO::~RevelesIO()
 //    ToF value: Floating point value from Time of Flight sensors.
 //      (Motor command only)
 //      Value is in inches.
+//    ToF Shutdown pin: Integer indicating sensor to restart.
 //    Servo Direction: (Servo command only)
 //      TURN_RIGHT - Indicates Reveles should turn to the right. (Relative to self).
 //      TURN_LEFT  - Indicates Reveles shoudl turn to the left. (Relative to self).
@@ -230,18 +233,6 @@ RevelesIO::~RevelesIO()
 //      Degrees servo should turn.
 //      Value is always positive.
 //      Value is not mapped to PWM output.
-//================================================================================
-
-//================================================================================
-//                      I2C Command Structure (RPi -> Nucleo):
-//                  <START> -> <Function> -> <ToF number> -> <END>
-//--------------------------------------------------------------------------------
-//                     [ ALL COMMANDS ARE SENT IN HEXADECIMAL ]
-// Possible values
-//    Function:
-//      CMD_T - RPi is requesting Time of Flight Sensor data.
-//    ToF number: (ToF command only)
-//      Index or I2C address of desired ToF sensor.
 //================================================================================
 
 void RevelesIO::SendMotorUpdate()
@@ -561,12 +552,19 @@ void RevelesIO::SendToFRequest(int sensorNum)
     //    emit tofReady(sensorNum, tofDist[sensorNum]);
 }
 
+/**
+ * @brief Initializes the Time of Flight sensors with their new I2C addresses
+ */
 void RevelesIO::InitToFSensors()
 {
     if(arduinoFound)
     {
         for(int i = 0; i < 8; i++)
         {
+            // Currently, the Front and Rear center ToFs are not being used.
+            if(ToFNewAddr[i] == TOF_F_CENTER || ToFNewAddr[i] == TOF_R_CENTER)
+                continue;
+
             wiringPiI2CWrite(fdArduino, START);
             delay(I2C_TRANSMIT_DELAY);
             wiringPiI2CWrite(fdArduino, CMD_P);
@@ -574,6 +572,7 @@ void RevelesIO::InitToFSensors()
             wiringPiI2CWrite(fdArduino, i);
             delay(I2C_TRANSMIT_DELAY);
             wiringPiI2CWrite(fdArduino, END);
+            delay(I2C_TRANSMIT_DELAY);
 
             wiringPiI2CWriteReg8(TOF_DEFAULT_ADDR, TOF_I2C_ADDR_REG, ToFNewAddr[i]);
             delay(I2C_TRANSMIT_DELAY);
