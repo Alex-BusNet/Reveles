@@ -96,7 +96,7 @@ void SettingsScreen::setCoordText(QString coord)
 void SettingsScreen::setUSDistReading(int idx, double value)
 {
     usHistory[idx] = value;
-    ui->usDistLabel->setText( Reveles::GUI_UPTIME_STR.arg(usHistory[0], 4, 'g', 2).arg(usHistory[1], 4, 'g', 2).arg(usHistory[2], 4, 'g', 2).arg(usHistory[3], 4, 'g', 2));
+    ui->usDistLabel->setText( Reveles::US_READING_STR.arg(usHistory[0], 4, 'g', 2).arg(usHistory[1], 4, 'g', 2).arg(usHistory[2], 4, 'g', 2).arg(usHistory[3], 4, 'g', 2));
 }
 
 void SettingsScreen::setToFReading(int idx, double value)
@@ -171,7 +171,7 @@ void SettingsScreen::UpdateGUIUptime(int guiMs)
     int m = mT;
 
 
-    ui->guiUptimeLabel->setText(Reveles::TRAVEL_UPTIME_STR.arg(h, 2, DEC, QChar('0')).arg(m, 2, DEC, QChar('0')).arg(s, 2, DEC, QChar('0')).arg(0, 3, DEC, QChar('0')));
+//    ui->guiUptimeLabel->setText(Reveles::TRAVEL_UPTIME_STR.arg(h, 2, DEC, QChar('0')).arg(m, 2, DEC, QChar('0')).arg(s, 2, DEC, QChar('0')).arg(0, 3, DEC, QChar('0')));
 }
 
 void SettingsScreen::UpdateTravelUptime(int travelMs)
@@ -189,7 +189,7 @@ void SettingsScreen::UpdateTravelUptime(int travelMs)
     int m = mT;
 
 
-    ui->travelUptimeLabel->setText(Reveles::TRAVEL_UPTIME_STR.arg(h, 2, DEC, QChar('0')).arg(m, 2, DEC, QChar('0')).arg(s, 2, DEC, QChar('0')).arg(0, 3, DEC, QChar('0')));
+//    ui->travelUptimeLabel->setText(Reveles::TRAVEL_UPTIME_STR.arg(h, 2, DEC, QChar('0')).arg(m, 2, DEC, QChar('0')).arg(s, 2, DEC, QChar('0')).arg(0, 3, DEC, QChar('0')));
 }
 
 void SettingsScreen::addToLog(QString str)

@@ -97,7 +97,7 @@ void AnalyticalEngine::Start(bool demo)
         {
             CheckEnv();
             ProcessEnv();
-            delay(500);
+//            delay(500);
         }
     });
 }
@@ -214,7 +214,7 @@ void AnalyticalEngine::ProcessEnv()
 {
     Logger::writeLine(instance(), QString("ProcessEnv()"));
     // DON'T GO DOWN THE STAIRS!!!
-    if(us[1] < 12 /* inches */)
+    if((motorDir == M_FWD && us[1] < 12) || (motorDir == M_REV && us[3] < 12) /* inches */)
     {
         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
         delay(1000); // Give the stop command some time to be processed and take effect.

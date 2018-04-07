@@ -133,7 +133,7 @@ void RevelesIO::StartNav()
 //                    tofMutex.lock();
                     tofDist[i] = (distMM / 25.4f); // mm to inches
 //                    tofMutex.unlock();
-                    Logger::writeLine(instance(), QString::number(tofDist[i]));
+//                    Logger::writeLine(instance(), QString::number(tofDist[i]));
                     emit tofReady(i, tofDist[i]);
                     distMM = 0.0f;
                 }
@@ -428,9 +428,9 @@ float RevelesIO::triggerUltrasonic(uint8_t sel)
 
 float RevelesIO::ReadTimeOfFlight(int sensorNum)
 {
-    tofMutex.lock();
+//    tofMutex.lock();
     return tofDist[sensorNum];
-    tofMutex.unlock();
+//    tofMutex.unlock();
 }
 
 bool RevelesIO::readPIR(bool rear)
@@ -447,9 +447,10 @@ bool RevelesIO::readPIR(bool rear)
     }
 
     int val = digitalRead(SIG);
-    emit pirStat(val ? true : false, !rear);
+    Logger::writeLine(instance(), QString::number(val));
+    emit pirStat((val == 1) ? true : false, !rear);
 
-    return val ? true : false;
+    return (val == 1) ? true : false;
 }
 
 MagDirection RevelesIO::ReadMagnetometer()
