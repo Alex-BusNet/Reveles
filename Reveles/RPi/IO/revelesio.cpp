@@ -130,16 +130,14 @@ void RevelesIO::StartNav()
                 if(fdToF[i] != -1)
                 {
                     distMM = tofReadDistance(fdToF[i]);
-//                    tofMutex.lock();
                     tofDist[i] = (distMM / 25.4f); // mm to inches
-//                    tofMutex.unlock();
 //                    Logger::writeLine(instance(), QString::number(tofDist[i]));
                     emit tofReady(i, tofDist[i]);
                     distMM = 0.0f;
                 }
             }
 
-            delay(500);
+            delay(250);
         }
     });
 }
@@ -366,8 +364,6 @@ void RevelesIO::ReadGPS()
  */
 float RevelesIO::triggerUltrasonic(uint8_t sel)
 {
-    // Check this, I don't believe it
-    // works the way I think it does. -Alex 1/21/18
     int idx = 0;
     if(sel == US_FRONT)
     {
@@ -418,7 +414,7 @@ float RevelesIO::triggerUltrasonic(uint8_t sel)
     pong = micros();
 
     dist = (float)(pong - ping) * 0.017150;
-    dist /= 2.5f; // Convert to inches.
+    dist /= 25.4f; // Convert to inches.
 
     // Currently used for D-Bus comms back to GUI.
     emit usReady(idx, dist);
@@ -428,17 +424,15 @@ float RevelesIO::triggerUltrasonic(uint8_t sel)
 
 float RevelesIO::ReadTimeOfFlight(int sensorNum)
 {
-//    tofMutex.lock();
     return tofDist[sensorNum];
-//    tofMutex.unlock();
 }
 
 bool RevelesIO::readPIR(bool rear)
 {
     if(rear)
     {
-        digitalWrite(SEL_A, LOW);  // Get the A select bit. This should already by in index 0
-        digitalWrite(SEL_B, HIGH); // Get the B select bit and shift into index 0
+        digitalWrite(SEL_A, LOW);
+        digitalWrite(SEL_B, HIGH);
     }
     else
     {
@@ -447,10 +441,9 @@ bool RevelesIO::readPIR(bool rear)
     }
 
     int val = digitalRead(SIG);
-    Logger::writeLine(instance(), QString::number(val));
     emit pirStat((val == 1) ? true : false, !rear);
 
-    return (val == 1) ? true : false;
+    return ((val == 1) ? true : false);
 }
 
 MagDirection RevelesIO::ReadMagnetometer()

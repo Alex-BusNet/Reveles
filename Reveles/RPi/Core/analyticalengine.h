@@ -34,7 +34,7 @@ private:
     // Variables
     float us[2];
     float tof[8];
-    bool pir, demoMode;
+    bool pir[2], demoMode;
 
 
     // The transition matrix is a 7x7 array

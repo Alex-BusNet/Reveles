@@ -29,7 +29,7 @@ void AnalyticalEngine::Init()
     endAnalyze = false;
     tof[0] = tof[1] = tof[2] = tof[3] = tof[4] = tof[5] = tof[6] = tof[7] = -1; // inches
     us[0]= us[1] = -1; // inches
-    pir = false;
+    pir[0] = pir[1] = false;
     demoMode = false;
     motorDir = M_STOP;
     servoDir = RET_NEUTRAL;
@@ -143,55 +143,54 @@ void AnalyticalEngine::CheckEnv()
     Logger::writeLine(instance(), QString("Motor: 0x%1").arg(motorDir, 2, HEX));
     Logger::writeLine(instance(), QString("Servo: 0x%1").arg(servoDir, 2, HEX));
 
-    if(motorDir == M_FWD)
-    {
-        // Check the front PIR
-        pir = RevelesIO::instance()->readPIR(false);
+    pir[0] = RevelesIO::instance()->readPIR(false); // Front PIR
+    pir[1] = RevelesIO::instance()->readPIR(true); // Rear PIR
+
+//    if(motorDir == M_FWD)
+//    {
         // Read the two front Ultrasonics
         us[0] = RevelesIO::instance()->triggerUltrasonic(US_FRONT);
         us[1] = RevelesIO::instance()->triggerUltrasonic(US_FRONT_STAIR); // Stair US
         tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
         Logger::writeLine(instance(), QString("Front US Reading: %1").arg(us[0]));
         Logger::writeLine(instance(), QString("Front Stair US Reading: %1").arg(us[1]));
-    }
-    else if(motorDir == M_REV)
-    {
-        // Check the rear PIR
-        pir = RevelesIO::instance()->readPIR(true);
+//    }
+//    else if(motorDir == M_REV)
+//    {
         // Check two rear Ultrasonics
-        us[0] = RevelesIO::instance()->triggerUltrasonic(US_BACK);
-        us[1] = RevelesIO::instance()->triggerUltrasonic(US_BACK_STAIR); // Stair US
+        us[2] = RevelesIO::instance()->triggerUltrasonic(US_BACK);
+        us[3] = RevelesIO::instance()->triggerUltrasonic(US_BACK_STAIR); // Stair US
         tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
         Logger::writeLine(instance(), QString("Rear US reading: %1").arg(us[0]));
         Logger::writeLine(instance(), QString("Rear Stair US Reading: %1").arg(us[1]));
-    }
+//    }
 
-    if(servoDir == TURN_LEFT)
-    {
-        if(motorDir == M_FWD)
-        {
-            tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
+//    if(servoDir == TURN_LEFT)
+//    {
+//        if(motorDir == M_FWD)
+//        {
+//            tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
             tof[0] = RevelesIO::instance()->ReadTimeOfFlight(0);
-        }
-        else if(motorDir == M_REV)
-        {
-            tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
+//        }
+//        else if(motorDir == M_REV)
+//        {
+//            tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
             tof[6] = RevelesIO::instance()->ReadTimeOfFlight(6);
-        }
-    }
-    else if(servoDir == TURN_RIGHT)
-    {
-        if(motorDir == M_FWD)
-        {
-            tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
+//        }
+//    }
+//    else if(servoDir == TURN_RIGHT)
+//    {
+//        if(motorDir == M_FWD)
+//        {
+//            tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
             tof[2] = RevelesIO::instance()->ReadTimeOfFlight(2);
-        }
-        else if(motorDir == M_REV)
-        {
+//        }
+//        else if(motorDir == M_REV)
+//        {
             tof[4] = RevelesIO::instance()->ReadTimeOfFlight(4);
-            tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
-        }
-    }
+//            tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
+//        }
+//    }
 
     // Right side sensor
     tof[3] = RevelesIO::instance()->ReadTimeOfFlight(3);
@@ -232,15 +231,20 @@ void AnalyticalEngine::ProcessEnv()
         return;
     }
     else
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[0] });
+    {
+        if(motorDir == M_FWD)
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[0] });
+        else if(motorDir == M_REV)
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[2] });
+    }
 
     // Simple path adjustment for now. Values are estimates.
     // Person found (distance unknown) or ToF return distance less than max
-    if(pir || ((motorDir == M_FWD) && ((us[0] < 66) || (tof[1] < 66))))
+    if((pir[0] && (motorDir == M_FWD))|| ((motorDir == M_FWD) && ((us[0] < 66) || (tof[1] < 66))))
     {
         AdjustPath_Inanimate();
     }
-    else if(pir || (motorDir == M_REV) && ((us[0] < 66) || (tof[5] < 66)))
+    else if((pir[1] && (motorDir == M_REV)) || ((motorDir == M_REV) && ((us[0] < 66) || (tof[5] < 66))))
     {
         AdjustPath_Inanimate();
     }
