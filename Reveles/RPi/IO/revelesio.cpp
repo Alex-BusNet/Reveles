@@ -69,7 +69,7 @@ void RevelesIO::initIO()
     fdToF[6] = tofInit(1, TOF_R_LEFT, 1);
     fdToF[7] = tofInit(1, TOF_LEFT, 1);
 
-    system("i2cdetect -y 1");
+//    system("i2cdetect -y 1");
 
     res = CMD_FLUSH;
 

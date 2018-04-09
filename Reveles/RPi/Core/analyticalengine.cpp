@@ -219,8 +219,8 @@ void AnalyticalEngine::ProcessEnv()
 {
     Logger::writeLine(instance(), QString("ProcessEnv()"));
     // DON'T GO DOWN THE STAIRS!!!
-    if((motorDir == M_FWD && (us[1] < 10 || us[1] > 14))
-            || (motorDir == M_REV && (us[3] < 10 || us[3] > 14)))
+    if((motorDir == M_FWD && (us[1] < 8.5 || us[1] > 9.5))
+            || (motorDir == M_REV && (us[3] < 8.5 || us[3] > 9.5)))
     {
         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
         delay(1000); // Give the stop command some time to be processed and take effect.
@@ -253,6 +253,19 @@ void AnalyticalEngine::ProcessEnv()
             RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[0] });
         else if(motorDir == M_REV)
             RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[2] });
+        else if (motorDir == M_STOP)
+        {
+            if(us[0] > 60)
+            {
+                motorDir = M_FWD;
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[0]});
+            }
+            else if(us[2] > 60)
+            {
+                motorDir = M_REV;
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[2]});
+            }
+        }
     }
 
     // Simple path adjustment for now. Values are estimates.
