@@ -219,7 +219,8 @@ void AnalyticalEngine::ProcessEnv()
 {
     Logger::writeLine(instance(), QString("ProcessEnv()"));
     // DON'T GO DOWN THE STAIRS!!!
-    if((motorDir == M_FWD && us[1] < 12) || (motorDir == M_REV && us[3] < 12) /* inches */)
+    if((motorDir == M_FWD && (us[1] < 10 || us[1] > 14))
+            || (motorDir == M_REV && (us[3] < 10 || us[3] > 14)))
     {
         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
         delay(1000); // Give the stop command some time to be processed and take effect.
@@ -229,10 +230,20 @@ void AnalyticalEngine::ProcessEnv()
         else if(motorDir == M_REV)
             motorDir = M_FWD;
 
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
 
         Logger::writeLine(instance(), QString("STAIRS FOUND! Backtracking..."));
+        // Alerts the NavigationAssistant that stairs were found,
+        // and that it should recalculate Reveles' path.
         if(!demoMode) { emit StairsDetected(); }
+
+        if(us[2] > 15 && motorDir == M_REV)
+        {
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[2] });
+        }
+        else if(us[0] > 15 && motorDir == M_FWD)
+        {
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[0] });
+        }
 
         return;
     }
@@ -246,13 +257,14 @@ void AnalyticalEngine::ProcessEnv()
 
     // Simple path adjustment for now. Values are estimates.
     // Person found (distance unknown) or ToF return distance less than max
-    if(/*(pir[0] && (motorDir == M_FWD))||*/ ((motorDir == M_FWD) && ((us[0] < 66) || (tof[1] < 66))))
+    if((pir[0] && (motorDir == M_FWD) && (us[0] < 66))
+            || (pir[1] && (motorDir == M_REV) && (us[2] < 66)))
     {
-        AdjustPath_Inanimate();
+        AdjustPath_Animate();
     }
-    else if(/*(pir[1] && (motorDir == M_REV)) ||*/ ((motorDir == M_REV) && ((us[0] < 66) || (tof[5] < 66))))
+    else if(((motorDir == M_FWD) && (us[0] < 36)) || ((motorDir == M_REV) && (us[2] < 36)))
     {
-        AdjustPath_Inanimate();
+        AdjustPath_Inanimate((motorDir == M_FWD));
     }
 
     // if we get a signal from the PIR and the corresponding ToF 
@@ -280,12 +292,84 @@ void AnalyticalEngine::ProcessEnv()
     ///             is a foreign object or a wall.
 }
 
-void AnalyticalEngine::AdjustPath_Inanimate()
+void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
 {
     Logger::writeLine(instance(), QString("AdjustPath_Inanimate()"));
-//    RevelesIO::instance()->EnqueueRequest(RIOData {IO_MOTOR, motorDir, MOTOR_HALF_SPEED});
-    RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
 
+    if(forward)
+    {
+        if(tof[3] > 36)
+        {
+            if(tof[7] > 12)
+            {
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                delay(3000);
+
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+            }
+            else
+            {
+                int angle = 0;
+                while(angle < 45)
+                {
+                    angle += 5;
+                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_RIGHT, angle});
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, tof[2]});
+                    delay(250);
+                }
+
+                while(angle > 0)
+                {
+                    angle -= 5;
+                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_LEFT, angle});
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, tof[2]});
+                    delay(250);
+                }
+            }
+        }
+        else if(tof[7] > 36)
+        {
+            if(tof[3] > 12)
+            {
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+
+                delay(3000);
+
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+            }
+            else
+            {
+                int angle = 0;
+                while(angle < 45)
+                {
+                    angle += 5;
+                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_LEFT, angle});
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, tof[0]});
+                    delay(500);
+                }
+
+                while(angle > 0)
+                {
+                    angle -= 5;
+                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_RIGHT, angle});
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, tof[2]});
+                    delay(250);
+                }
+            }
+        }
+    }
+}
+
+/*!
+ * \brief Alter path to avoid people.
+ */
+void AnalyticalEngine::AdjustPath_Animate()
+{
+    Logger::writeLine(instance(), QString("AdjustPath_Animate()"));
     // Read ToF for right side
     if (tof[3] > 36) // inches
     {
@@ -321,14 +405,6 @@ void AnalyticalEngine::AdjustPath_Inanimate()
             servoDir = RET_NEUTRAL;
         }
     }
-}
-
-/*!
- * \brief Alter path to avoid people.
- */
-void AnalyticalEngine::AdjustPath_Animate()
-{
-
 }
 
 void AnalyticalEngine::updateProbabilities()

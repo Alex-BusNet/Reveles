@@ -136,7 +136,7 @@ void RevelesIO::StartNav()
                     tofDist[i] = ((float)distMM / 25.4f); // mm to inches
                     if(tofDist[i] > 66.0f)
                     {
-                        tofDist[i] = 66.0f;
+                        tofDist[i] = 66.0f; /* inches */
                     }
 
                     emit tofReady(i, tofDist[i]);

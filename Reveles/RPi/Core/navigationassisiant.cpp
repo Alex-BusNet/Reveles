@@ -75,7 +75,7 @@ void NavigationAssisiant::DemoMode()
     destVec.set(FA_SW_CORNER);
     path = new MapNode(); // Navigate() stops if this is NULL
     RevelesIO::instance()->StartNav();
-    AnalyticalEngine::instance()->SetMotorDirection(M_FWD);
+    AnalyticalEngine::instance()->SetMotorDirection(M_STOP);
     AnalyticalEngine::instance()->Start(true);
 //    future = QtConcurrent::run([=]() { Navigate(true); });
 }
