@@ -160,7 +160,7 @@ RevelesCore::~RevelesCore()
 
 void RevelesCore::commCheck()
 {
-    Logger::writeLine(this, Reveles::CORE_COMM_RECIEVED);
+//    Logger::writeLine(this, Reveles::CORE_COMM_RECIEVED);
     commsGood = true;
     emit commResponse(commsGood);
 }

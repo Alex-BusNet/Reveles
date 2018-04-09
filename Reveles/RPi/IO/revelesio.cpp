@@ -25,19 +25,14 @@ void RevelesIO::initIO()
     pinMode(SEL_B, OUTPUT);
     pinMode(ECHO, INPUT);
     pinMode(SIG, INPUT);
-    pinMode(NUCLEO_ISR, OUTPUT);
+//    pinMode(NUCLEO_ISR, OUTPUT);
     pinMode(TRIG, OUTPUT);
 
     arduinoFound = false;
 
-    agm = new LSM9DS1();
-    agm->setup();
-
     fdArduino = wiringPiI2CSetup(ARDUINO);
     fdNucleo[0] = -1; //wiringPiI2CSetup(NUCLEO_FRONT);
     fdNucleo[1] = -1; //wiringPiI2CSetup(NUCLEO_REAR);
-
-
 
     wiringPiI2CWrite(fdArduino, COM_CHECK);
     uint8_t res = CMD_FLUSH;
@@ -61,6 +56,8 @@ void RevelesIO::initIO()
     arduinoFound = (res == COM_CHECK);
 
     emit arduinoStat(arduinoFound);
+
+    Logger::writeLine(instance(), QString("Initializing Time of Flight sensors..."));
     InitToFSensors();
 
     fdToF[0] = tofInit(1, TOF_F_LEFT, 1);
@@ -74,32 +71,38 @@ void RevelesIO::initIO()
 
     system("i2cdetect -y 1");
 
+    res = CMD_FLUSH;
+
+    Logger::writeLine(instance(), Reveles::ARDUINO_FOUND.arg(ARDUINO, 2, 16, QChar('0')).arg(B2STR(arduinoFound)));
+//    Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_FRONT, 2, 16, QChar('0')).arg((nucleoFound[0]) ? "True":"False"));
+//    Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_REAR, 2, 16, QChar('0')).arg((nucleoFound[1]) ? "True":"False"));
+
+    int *m = new int(1), *r = new int(1);
     for(int i = 0; i < 8; i++)
     {
         Logger::writeLine(instance(), QString("fdToF[%1]: %2").arg(i).arg(fdToF[i]));
         tofDist[i] = -1;
-    }
 
-    res = CMD_FLUSH;
-
-    Logger::writeLine(instance(), Reveles::ARDUINO_FOUND.arg(ARDUINO, 2, 16, QChar('0')).arg(B2STR(arduinoFound)));
-    Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_FRONT, 2, 16, QChar('0')).arg((nucleoFound[0]) ? "True":"False"));
-    Logger::writeLine(instance(), Reveles::NUCLEO_FOUND.arg(NUCLEO_REAR, 2, 16, QChar('0')).arg((nucleoFound[1]) ? "True":"False"));
-    Logger::writeLine(instance(), Reveles::FILE_DESCRIPTORS.arg(agm->XGFD()).arg(agm->MagFD()).arg(fdArduino).arg(fdNucleo[0]).arg(fdNucleo[1]));
-
-    for(int i = 0; i < 8; i++)
-    {
-        tofDist[i] = -1;
+        if(fdToF[i] != -1)
+        {
+            tofGetModel(m, r, fdToF[i]);
+            Logger::writeLine(instance(), QString("[%1] %2\t%3").arg(i).arg(*m).arg(*r));
+        }
     }
 
     lastKnownCoord = GPSCoord{0, 0};
+
+    agm = new LSM9DS1();
+    agm->setup();
+
+    Logger::writeLine(instance(), Reveles::FILE_DESCRIPTORS.arg(agm->XGFD()).arg(agm->MagFD()).arg(fdArduino).arg(fdNucleo[0]).arg(fdNucleo[1]));
 
     XGAvailable = agm->AccelGyroFound();
     MagAvailable = agm->MagFound();
 
     stopParser = false;
     stopToF = false;
-    dist = 0;
+    dist = 0.0f;
     inch = 156;
     angle = 90;
     motorDir = M_FWD;
@@ -130,14 +133,18 @@ void RevelesIO::StartNav()
                 if(fdToF[i] != -1)
                 {
                     distMM = tofReadDistance(fdToF[i]);
-                    tofDist[i] = (distMM / 25.4f); // mm to inches
-//                    Logger::writeLine(instance(), QString::number(tofDist[i]));
+                    tofDist[i] = ((float)distMM / 25.4f); // mm to inches
+                    if(tofDist[i] > 66.0f)
+                    {
+                        tofDist[i] = 66.0f;
+                    }
+
                     emit tofReady(i, tofDist[i]);
                     distMM = 0.0f;
                 }
             }
 
-            delay(250);
+            delay(49);
         }
     });
 }
@@ -245,7 +252,7 @@ void RevelesIO::SendMotorUpdate()
     wiringPiI2CWrite(fdArduino, motorDir);
     delay(I2C_TRANSMIT_DELAY);
     /// NOTE: We need to update this part based on travel direction.
-    wiringPiI2CWrite(fdArduino, tofDist[1]);
+    wiringPiI2CWrite(fdArduino, tofDist[0]);
     delay(I2C_TRANSMIT_DELAY);
     wiringPiI2CWrite(fdArduino, END);
     delay(I2C_TRANSMIT_DELAY);
@@ -374,14 +381,14 @@ float RevelesIO::triggerUltrasonic(uint8_t sel)
     else if(sel == US_FRONT_STAIR)
     {
         idx = 1;
-        digitalWrite(SEL_A, LOW);
-        digitalWrite(SEL_B, HIGH);
+        digitalWrite(SEL_A, HIGH);
+        digitalWrite(SEL_B, LOW);
     }
     else if(sel == US_BACK)
     {
         idx = 2;
-        digitalWrite(SEL_A, HIGH);
-        digitalWrite(SEL_B, LOW);
+        digitalWrite(SEL_A, LOW);
+        digitalWrite(SEL_B, HIGH);
     }
     else if(sel == US_BACK_STAIR)
     {
@@ -403,18 +410,21 @@ float RevelesIO::triggerUltrasonic(uint8_t sel)
 
     while(digitalRead(ECHO) == LOW && ((micros() - trigStart) < TIMEOUT)){;}
 
-    if(((micros() - trigStart) > TIMEOUT)) { emit echoReady(-1, ""); return -1;}
+    if(((micros() - trigStart) > TIMEOUT)) { emit usReady(idx, -1); return -1;}
 
     ping = micros();
 
     while(digitalRead(ECHO) == HIGH && ((micros() - trigStart) < TIMEOUT)) {;}
 
-    if(((micros() - trigStart) > TIMEOUT)) { emit echoReady(-1, ""); return -1; }
+    if(((micros() - trigStart) > TIMEOUT)) { emit usReady(idx, -1); return -1; }
 
     pong = micros();
 
-    dist = (float)(pong - ping) * 0.017150;
-    dist /= 25.4f; // Convert to inches.
+    dist = (float)(pong - ping) * 0.017150; // Convert to cm
+    dist /= 2.54f; // Convert to inches
+
+    if(dist > 171.0f)
+        dist = 171.0f;
 
     // Currently used for D-Bus comms back to GUI.
     emit usReady(idx, dist);
@@ -553,6 +563,8 @@ void RevelesIO::InitToFSensors()
 {
     if(arduinoFound)
     {
+        int defFd = wiringPiI2CSetup(TOF_DEFAULT_ADDR);
+
         for(int i = 0; i < 8; i++)
         {
             // Currently, the Front and Rear center ToFs are not being used.
@@ -568,8 +580,12 @@ void RevelesIO::InitToFSensors()
             wiringPiI2CWrite(fdArduino, END);
             delay(I2C_TRANSMIT_DELAY);
 
-            wiringPiI2CWriteReg8(TOF_DEFAULT_ADDR, TOF_I2C_ADDR_REG, ToFNewAddr[i]);
+            delay(100);
+
+            wiringPiI2CWriteReg8(defFd, TOF_I2C_ADDR_REG, ToFNewAddr[i]);
             delay(I2C_TRANSMIT_DELAY);
+
+            delay(100);
         }
     }
 }

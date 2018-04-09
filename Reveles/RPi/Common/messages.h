@@ -42,10 +42,10 @@ namespace Reveles
                                          "Z: %3 rad/s";
     static const QString GPS_DATA =   "Latitude:  %1 \n"
                                       "Longitude: %2";
-    static const QString TOF_READING_STR = "[0]: %1  [1]: %2  [2]: %3  [3]: %4 \n"
-                                           "[4]: %5  [5]: %6  [6]: %7  [7]: %8";
-    static const QString US_READING_STR = " [0]: %1  [1]: %2 \n"
-                                          " [2]: %3  [3]: %4";
+    static const QString TOF_READING_STR = "[0]: %1\t[1]: %2\t[2]: %3\t[3]: %4 \n"
+                                           "[4]: %5\t[5]: %6\t[6]: %7\t[7]: %8";
+    static const QString US_READING_STR = " [0]: %1\t[1]: %2 \n"
+                                          " [2]: %3\t[3]: %4";
     // Time format: HH:MM::SS::ms
     static const QString GUI_UPTIME_STR = "GUI Uptime: %1:%2:%3:%4";
     static const QString TRAVEL_UPTIME_STR = "Travel time: %1:%2:%3:%4";
@@ -83,7 +83,7 @@ namespace Reveles
     static const QString OD_STOPPING = "Stopping Object Detector...";
     static const QString FRAME_READ_FAIL = "No frame to read.";
 
-    static const QString REVELES_VERSION = "0.10.0327";
+    static const QString REVELES_VERSION = "0.11.0408";
     static const QString REVELES_CORE_INFO = "========================================\n"
                                              "RevelesCore            Version: %1\n"
                                              "                                        \n"

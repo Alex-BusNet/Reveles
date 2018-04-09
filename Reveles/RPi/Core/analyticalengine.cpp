@@ -97,7 +97,7 @@ void AnalyticalEngine::Start(bool demo)
         {
             CheckEnv();
             ProcessEnv();
-//            delay(500);
+            delay(101);
         }
     });
 }
@@ -148,19 +148,19 @@ void AnalyticalEngine::CheckEnv()
 
 //    if(motorDir == M_FWD)
 //    {
-        // Read the two front Ultrasonics
+        // Check the two front Ultrasonics
         us[0] = RevelesIO::instance()->triggerUltrasonic(US_FRONT);
         us[1] = RevelesIO::instance()->triggerUltrasonic(US_FRONT_STAIR); // Stair US
-        tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
+//        tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
         Logger::writeLine(instance(), QString("Front US Reading: %1").arg(us[0]));
         Logger::writeLine(instance(), QString("Front Stair US Reading: %1").arg(us[1]));
 //    }
 //    else if(motorDir == M_REV)
 //    {
-        // Check two rear Ultrasonics
+        // Check the two rear Ultrasonics
         us[2] = RevelesIO::instance()->triggerUltrasonic(US_BACK);
         us[3] = RevelesIO::instance()->triggerUltrasonic(US_BACK_STAIR); // Stair US
-        tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
+//        tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
         Logger::writeLine(instance(), QString("Rear US reading: %1").arg(us[0]));
         Logger::writeLine(instance(), QString("Rear Stair US Reading: %1").arg(us[1]));
 //    }
@@ -170,12 +170,12 @@ void AnalyticalEngine::CheckEnv()
 //        if(motorDir == M_FWD)
 //        {
 //            tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
-            tof[0] = RevelesIO::instance()->ReadTimeOfFlight(0);
+//            tof[0] = RevelesIO::instance()->ReadTimeOfFlight(0);
 //        }
 //        else if(motorDir == M_REV)
 //        {
 //            tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
-            tof[6] = RevelesIO::instance()->ReadTimeOfFlight(6);
+//            tof[6] = RevelesIO::instance()->ReadTimeOfFlight(6);
 //        }
 //    }
 //    else if(servoDir == TURN_RIGHT)
@@ -183,27 +183,33 @@ void AnalyticalEngine::CheckEnv()
 //        if(motorDir == M_FWD)
 //        {
 //            tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
-            tof[2] = RevelesIO::instance()->ReadTimeOfFlight(2);
+//            tof[2] = RevelesIO::instance()->ReadTimeOfFlight(2);
 //        }
 //        else if(motorDir == M_REV)
 //        {
-            tof[4] = RevelesIO::instance()->ReadTimeOfFlight(4);
+//            tof[4] = RevelesIO::instance()->ReadTimeOfFlight(4);
 //            tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
 //        }
 //    }
 
     // Right side sensor
-    tof[3] = RevelesIO::instance()->ReadTimeOfFlight(3);
+//    tof[3] = RevelesIO::instance()->ReadTimeOfFlight(3);
     // Left side sensor
-    tof[7] = RevelesIO::instance()->ReadTimeOfFlight(7);
-    Logger::writeLine(instance(), QString("PIR: %1").arg(B2STR(pir)));
-    Logger::writeLine(instance(), QString("ToF readings:\n"
-                                  "             [0]: %1 [1]: %2 [2]: %3\n"
-                                  "             [7]: %4         [3]: %5\n"
-                                  "             [6]: %6 [5]: %7 [4]: %8")
-                      .arg(tof[0], 4, 'f', 1, QChar('0')).arg(tof[1], 4, 'f', 1, QChar('0')).arg(tof[2], 4, 'f', 1,QChar('0'))
-                      .arg(tof[7], 4, 'f', 1, QChar('0')).arg(tof[3], 4, 'f', 1, QChar('0'))
-                      .arg(tof[6], 4, 'f', 1, QChar('0')).arg(tof[5], 4, 'f', 1, QChar('0')).arg(tof[4], 4, 'f', 1,QChar('0')));
+//    tof[7] = RevelesIO::instance()->ReadTimeOfFlight(7);
+
+    for(int i = 0; i < 8; i++)
+    {
+        tof[i] = RevelesIO::instance()->ReadTimeOfFlight(i);
+    }
+
+//    Logger::writeLine(instance(), QString("PIR: %1").arg(B2STR(pir)));
+//    Logger::writeLine(instance(), QString("ToF readings:\n"
+//                                  "             [0]: %1 [1]: %2 [2]: %3\n"
+//                                  "             [7]: %4         [3]: %5\n"
+//                                  "             [6]: %6 [5]: %7 [4]: %8")
+//                      .arg(tof[0], 4, 'f', 1, QChar('0')).arg(tof[1], 4, 'f', 1, QChar('0')).arg(tof[2], 4, 'f', 1,QChar('0'))
+//                      .arg(tof[7], 4, 'f', 1, QChar('0')).arg(tof[3], 4, 'f', 1, QChar('0'))
+//                      .arg(tof[6], 4, 'f', 1, QChar('0')).arg(tof[5], 4, 'f', 1, QChar('0')).arg(tof[4], 4, 'f', 1,QChar('0')));
 }
 
 /*!
@@ -240,11 +246,11 @@ void AnalyticalEngine::ProcessEnv()
 
     // Simple path adjustment for now. Values are estimates.
     // Person found (distance unknown) or ToF return distance less than max
-    if((pir[0] && (motorDir == M_FWD))|| ((motorDir == M_FWD) && ((us[0] < 66) || (tof[1] < 66))))
+    if(/*(pir[0] && (motorDir == M_FWD))||*/ ((motorDir == M_FWD) && ((us[0] < 66) || (tof[1] < 66))))
     {
         AdjustPath_Inanimate();
     }
-    else if((pir[1] && (motorDir == M_REV)) || ((motorDir == M_REV) && ((us[0] < 66) || (tof[5] < 66))))
+    else if(/*(pir[1] && (motorDir == M_REV)) ||*/ ((motorDir == M_REV) && ((us[0] < 66) || (tof[5] < 66))))
     {
         AdjustPath_Inanimate();
     }

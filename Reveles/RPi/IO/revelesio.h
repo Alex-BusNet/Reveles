@@ -65,6 +65,7 @@
 */
 #define TOF_DEFAULT_ADDR    0x29
 #define TOF_I2C_ADDR_REG    0x008A
+
 #define TOF_F_CENTER        0x36
 #define TOF_F_LEFT          0x30
 #define TOF_F_RIGHT         0x31

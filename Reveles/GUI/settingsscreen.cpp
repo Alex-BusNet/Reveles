@@ -16,10 +16,10 @@ SettingsScreen::SettingsScreen(QWidget *parent) :
     tofHistory[0] = tofHistory[1] = tofHistory[2] = tofHistory[3] = tofHistory[4] = tofHistory[5] = tofHistory[6] = tofHistory[7] = -1.0f;
     usHistory[0] = usHistory[1] = usHistory[2] = usHistory[3] = -1.0f;
 
-    ui->coordinateLabel->setText(Reveles::TOF_READING_STR.arg(tofHistory[0], 4, 'f', 2).arg(tofHistory[1], 4, 'f', 2).arg(tofHistory[2], 4, 'f', 2).arg(tofHistory[3], 4, 'f', 2)
-            .arg(tofHistory[4], 4, 'f', 2).arg(tofHistory[5], 4, 'f', 2).arg(tofHistory[6], 4, 'f', 2).arg(tofHistory[7], 4, 'f', 2));
+    ui->coordinateLabel->setText(Reveles::TOF_READING_STR.arg(tofHistory[0], 4, 'f', 2, QChar('0')).arg(tofHistory[1], 4, 'f', 2, QChar('0')).arg(tofHistory[2], 4, 'f', 2, QChar('0')).arg(tofHistory[3], 4, 'f', 2, QChar('0'))
+            .arg(tofHistory[4], 4, 'f', 2, QChar('0')).arg(tofHistory[5], 4, 'f', 2, QChar('0')).arg(tofHistory[6], 4, 'f', 2, QChar('0')).arg(tofHistory[7], 4, 'f', 2, QChar('0')));
 
-    ui->usDistLabel->setText(Reveles::US_READING_STR.arg(usHistory[0], 5, 'f', 2).arg(usHistory[1], 5, 'f', 2).arg(usHistory[2], 5, 'f', 2).arg(usHistory[3], 5, 'f', 2));
+    ui->usDistLabel->setText(Reveles::US_READING_STR.arg(usHistory[0], 4, 'f', 1, QChar('0')).arg(usHistory[1], 4, 'f', 1, QChar('0')).arg(usHistory[2], 4, 'f', 1, QChar('0')).arg(usHistory[3], 4, 'f', 1, QChar('0')));
 
     ui->guiUptimeLabel->setText(Reveles::GUI_UPTIME_STR.arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')));
     ui->travelUptimeLabel->setText(Reveles::TRAVEL_UPTIME_STR.arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')).arg(0, 2, DEC, QChar('0')));
@@ -96,14 +96,14 @@ void SettingsScreen::setCoordText(QString coord)
 void SettingsScreen::setUSDistReading(int idx, double value)
 {
     usHistory[idx] = value;
-    ui->usDistLabel->setText( Reveles::US_READING_STR.arg(usHistory[0], 4, 'g', 2).arg(usHistory[1], 4, 'g', 2).arg(usHistory[2], 4, 'g', 2).arg(usHistory[3], 4, 'g', 2));
+    ui->usDistLabel->setText( Reveles::US_READING_STR.arg(usHistory[0], 5, 'f', 2, QChar('0')).arg(usHistory[1], 5, 'f', 2, QChar('0')).arg(usHistory[2], 5, 'f', 2, QChar('0')).arg(usHistory[3], 5, 'f', 2, QChar('0')));
 }
 
 void SettingsScreen::setToFReading(int idx, double value)
 {
     tofHistory[idx] = value;
-    ui->coordinateLabel->setText(Reveles::TOF_READING_STR.arg(tofHistory[0], 4, 'g', 2).arg(tofHistory[1], 4, 'g', 2).arg(tofHistory[2], 4, 'g', 2).arg(tofHistory[3], 4, 'g', 2)
-            .arg(tofHistory[4], 4, 'g', 2).arg(tofHistory[5], 4, 'g', 2).arg(tofHistory[6], 4, 'g', 2).arg(tofHistory[7], 4, 'g', 2));
+    ui->coordinateLabel->setText(Reveles::TOF_READING_STR.arg(tofHistory[0], 5, 'f', 2, QChar('0')).arg(tofHistory[1], 5, 'f', 2, QChar('0')).arg(tofHistory[2], 5, 'f', 2, QChar('0')).arg(tofHistory[3], 5, 'f', 2, QChar('0'))
+            .arg(tofHistory[4], 5, 'f', 2, QChar('0')).arg(tofHistory[5], 5, 'f', 2, QChar('0')).arg(tofHistory[6], 5, 'f', 2, QChar('0')).arg(tofHistory[7], 5, 'f', 2, QChar('0')));
 }
 
 void SettingsScreen::setMotorStatus(uint8_t dir)
