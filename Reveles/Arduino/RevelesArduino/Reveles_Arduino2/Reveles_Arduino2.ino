@@ -2,7 +2,7 @@
  * Reveles DC Motor Control Program
  * Motor Control written by Frank Hittel
  * I2C communication written by Alisha Johnson
-*/
+*/ 
 
 #include <Wire.h>
 #include <SPI.h>
@@ -15,26 +15,24 @@
 #define enableA         10
 #define input1          11
 #define input2          12
-#define frontTrigPin    2 // trigPIN1
-#define frontEchoPin    3 // echoPIN1
-#define rearTrigPin     6 // trigPIN2
-#define rearEchoPin     7 // echoPIN2
+
 #define GPS_RX_PIN      1 // HardwareSerial TX
 #define GPS_TX_PIN      0 // HardwareSerial RX
+
 #define TOF_1_SHUT_PIN  2
 #define TOF_2_SHUT_PIN  3
 #define TOF_3_SHUT_PIN  4
 #define TOF_4_SHUT_PIN  5
 #define TOF_5_SHUT_PIN  6
 #define TOF_6_SHUT_PIN  7
-#define TOF_7_SHUT_PIN  8
-#define TOF_8_SHUT_PIN  12
-#define LED             13
+//#define TOF_7_SHUT_PIN  8
+//#define TOF_8_SHUT_PIN  9
+
 // SCL A5
 // SDA A4
-#define GPS_READY_PIN   8
-#define FRONT_SERVO_SIG 4
-#define REAR_SERVO_SIG  5
+
+#define FRONT_SERVO_SIG 8
+#define REAR_SERVO_SIG  9
 
 //----------------------------------
 //        Motor Drive states
@@ -75,15 +73,15 @@
 #define WAITING_FOR_MOTOR_DIR     2
 #define WAITING_FOR_TOF_DATA      3
 #define WAITING_FOR_END           4
-#define WAITING_FOR_MGS           5 // Waiting for (M)otor, (G)PS, or (S)ervo.
+#define WAITING_FOR_MGSP          5 // Waiting for (M)otor, (G)PS, (S)ervo, or Shutdown (P)in.
 #define WAITING_FOR_HELLO         6
 #define WAITING_FOR_SERVO_DIR     7
 #define WAITING_FOR_SERVO_VAL     8
-#define WAITING_FOR_TOF_SHUT_PIN 12
+#define WAITING_FOR_TOF_SHUT_PIN  9
 
-#define READY_FOR_HELLO           9
-#define READY_FOR_GPS_RESPONSE   10
-#define NO_DATA_READY            11
+#define READY_FOR_HELLO          10
+#define READY_FOR_GPS_RESPONSE   11
+#define NO_DATA_READY            12
 
 //----------------------------------
 //        Other defines
@@ -103,8 +101,6 @@ int destination = 0;
 int latitude = 0; // int type is temporary
 int longitude = 0; // int type is temporary
 
-int tofPins[8] = {2,3,4,5,6,7,8,12}
-
 int mState = STOP_STATE;
 int sState = NEUTRAL_STATE;
 bool fwd = true;                // Direction switch (temp)
@@ -122,16 +118,22 @@ Servo rearServo;
 //          I2C variables
 int commState = WAITING_FOR_HELLO;
 int responseState = NO_DATA_READY;
+
+int tofPins[6] = { 2, 3, 4, 5, 6, 7 };
+int nextToFPin = -1;
+bool activateNextToF = false;
+
 bool respond = false;       // Send GPS info back to RPi
 String commStateStrings[] = {"WAITING_FOR_START", "WAITING_FOR_US_DATA",                    //
                              "WAITING_FOR_MOTOR_DIR", "WAITING_FOR_TOF_DATA",               // This is for debugging
-                             "WAITING_FOR_END\t", "WAITING_FOR_MGS\t", "WAITING_FOR_HELLO",  // purposes.
+                             "WAITING_FOR_END\t", "WAITING_FOR_MGSP", "WAITING_FOR_HELLO",  // purposes.
                              "WAITING_FOR_SERVO_DIR", "WAITING_FOR_SERVO_VAL", "WAITING_FOR_TOF_SHUT_PIN"};             //
 
 //================================================================================
 //                      I2C Command Structure (RPi -> Arduino):
 // <START> -> <Function>|-> <US reading> -> <Direction> -> <ToF reading> -> <END>
 //                      |-> <Servo Direction> -> <Servo value> -> <END>
+//                      |-> <ToF sensor num> -> <END>
 //                      |-> <END> (GPS Command)
 //--------------------------------------------------------------------------------
 //          [ ALL COMMANDS ARE SENT IN HEXADECIMAL, VALUES ARE IN DECIMAL ]
@@ -141,6 +143,7 @@ String commStateStrings[] = {"WAITING_FOR_START", "WAITING_FOR_US_DATA",        
 //      CMD_M - RPi is sending drive instructions.
 //      CMD_G - RPi is requesting GPS coordinates.
 //      CMD_S - RPi is sending turning instructions.
+//      CMD_P - RPi is sending which ToF sensor to turn on.
 //    US Value: Floating Point value for PWM signal.
 //      (Motor command only)
 //      Value is in inches.
@@ -159,6 +162,7 @@ String commStateStrings[] = {"WAITING_FOR_START", "WAITING_FOR_US_DATA",        
 //      Degrees servo should turn.
 //      Value is always positive.
 //      Value is not mapped to PWM output.
+//    ToF Sensor num: integer value representing ToF sensor.
 //================================================================================
 
 void recieveData(int byteCount)
@@ -169,13 +173,13 @@ void recieveData(int byteCount)
   
     while(0 < Wire.available())
     {
-        if((commState == WAITING_FOR_US_DATA) || (commState == WAITING_FOR_TOF_DATA) || (commState == WAITING_FOR_TOF_SHUT_PIN)
+        if((commState == WAITING_FOR_US_DATA) || (commState == WAITING_FOR_TOF_DATA) || (commState == WAITING_FOR_TOF_SHUT_PIN))
             data = Wire.read();
         else
             cmd = Wire.read();
     }
    
-    if((commState != WAITING_FOR_US_DATA) && (commState != WAITING_FOR_TOF_DATA))
+    if((commState != WAITING_FOR_US_DATA) && (commState != WAITING_FOR_TOF_DATA) && (commState != WAITING_FOR_TOF_SHUT_PIN))
         Serial.print("\tCommand: 0x" + String(cmd, HEX));
     else
         Serial.print("\t   Data: " + String(data));
@@ -186,14 +190,14 @@ void recieveData(int byteCount)
     }
     else if (commState == WAITING_FOR_START)
     {
-        if(cmd == START_CMD) { commState = WAITING_FOR_MGS; }
+        if(cmd == START_CMD) { commState = WAITING_FOR_MGSP; }
     }
-    else if (commState == WAITING_FOR_MGS)
+    else if (commState == WAITING_FOR_MGSP)
     {
         if(cmd == CMD_M) { commState = WAITING_FOR_US_DATA; }
         else if(cmd == CMD_G) { respond = true; commState = WAITING_FOR_END; responseState = READY_FOR_GPS_RESPONSE; }
         else if(cmd == CMD_S) { commState = WAITING_FOR_SERVO_DIR; }
-	else if(cmd == CMD_P) { commState = WAITING_FOR_TOF_SHUT_PIN; }
+	    else if(cmd == CMD_P) { commState = WAITING_FOR_TOF_SHUT_PIN; }
     }
     else if(commState == WAITING_FOR_US_DATA)
     {
@@ -202,7 +206,7 @@ void recieveData(int byteCount)
     }
     else if (commState == WAITING_FOR_MOTOR_DIR)
     {
-        if(cmd == M_STOP)      { mState = STOP_STATE; updateMotorState = true; }
+        if(cmd == M_STOP)       { mState = STOP_STATE; updateMotorState = true; }
         else if(cmd == M_FWD)   { mState = FORWARD_STATE; updateMotorState = true; }
         else if(cmd == M_REV)   { mState = REVERSE_STATE; updateMotorState = true; }
       
@@ -223,13 +227,14 @@ void recieveData(int byteCount)
     }
     else if (commState == WAITING_FOR_SERVO_VAL)
     {
-        // This command may be unneeded. -Alex
-        turnValue = cmd;
+        turnValue = data;
         commState = WAITING_FOR_END;
     }
     else if (commState == WAITING_FOR_TOF_SHUT_PIN)
     {
-	digitalWrite(tofPins[data], HIGH);
+        nextToFPin = data;
+        activateNextToF = true;
+        commState = WAITING_FOR_END;
     }
     else if (commState == WAITING_FOR_END)
     {
@@ -302,12 +307,6 @@ void readGPS()
     else
         Serial.println("No GPS Fix!");
 
-    
-    digitalWrite(GPS_READY_PIN, LOW);
-    delay(5);
-    digitalWrite(GPS_READY_PIN, HIGH);
-    delay(5);
-    digitalWrite(GPS_READY_PIN, LOW);
     respond = false;
 }
 
@@ -353,7 +352,6 @@ void forward()
 //    Serial.println("Driving Forward");
     digitalWrite(input1, HIGH);
     digitalWrite(input2, LOW);
-//    driveFORWARD();
 }
 
 /*This function is designed to enable the robot to move forward. The inputs are adjusted to
@@ -363,7 +361,6 @@ void backward()
 //    Serial.println("Driving Backwards");
     digitalWrite(input1, LOW);
     digitalWrite(input2, HIGH);
-//    driveBACKWARD();
 }
 
 /*This function is designed to stop movement while still ready to move. The input pins will be turned high to prevent current flow,
@@ -373,7 +370,6 @@ void motorSTOP()
 //    Serial.println("Stopping");
     digitalWrite(input1, HIGH);
     digitalWrite(input2, HIGH);
-//    readGPS(); // Temporary; used for testing.
 }
 
 /*This function is designed for use in the initial startup of the robot. When the robot is booted up, the enable pin on the motor
@@ -400,19 +396,6 @@ sensor is flagged, the function will go into the the steeper section. If the tim
 is flagged, then the system will go into an emergency stop function. */
 void driveFORWARD()
 {
-  //----------------------------
-  // US temp code
-//  digitalWrite(LED, HIGH);
-//  digitalWrite(frontTrigPin, LOW);
-//  delayMicroseconds(2);
-//  digitalWrite(frontTrigPin, HIGH);
-//  delayMicroseconds(10);
-//  digitalWrite(frontTrigPin, LOW);
-//  duration = pulseIn(frontEchoPin, HIGH);
-//  distance = duration*0.034/2;//calculate distance in cm
-//  inch = distance/2.5; //calculate in inches 
-  //----------------------------
-  // Final code starts here
     pwmOUT = (inch * 2)-1;
     if(pwmOUT < 48)
     {
@@ -435,19 +418,6 @@ sensor is flagged, the function will go into the the steeper section. If the tim
 is flagged, then the system will go into an emergency stop function. */
 void driveBACKWARD()
 {
-  //----------------------------
-  // US temp code
-//  digitalWrite(LED, LOW);
-//  digitalWrite(rearTrigPin, LOW);
-//  delayMicroseconds(2);
-//  digitalWrite(rearTrigPin, HIGH);
-//  delayMicroseconds(10);
-//  digitalWrite(rearTrigPin, LOW);
-//  duration = pulseIn(rearEchoPin, HIGH);
-//  distance = duration*0.034/2;//calculate distance in cm
-//  inch = distance/2.5; //calculate in inches
-  //----------------------------
-  // Final code starts here
     pwmOUT = (inch * 2)-1;
     if(pwmOUT < 48)
     {
@@ -556,17 +526,11 @@ void setup() {
     pinMode(enableA, OUTPUT);
     pinMode(input1, OUTPUT);
     pinMode(input2, OUTPUT);
-    pinMode(frontTrigPin, OUTPUT);
-    pinMode(rearTrigPin, OUTPUT);
-    pinMode(frontEchoPin, INPUT);
-    pinMode(rearEchoPin, INPUT);
-    pinMode(GPS_READY_PIN, OUTPUT);
 
     for(int i = 0; i < 8; i++)
     {
-	pinMode(tofPins[i], OUTPUT);
-	digitalWrite(tofPins[i], LOW);
-	delay(10);
+	    pinMode(tofPins[i], OUTPUT);
+	    digitalWrite(tofPins[i], LOW);
     }
 
     // Servo I/O
@@ -585,9 +549,6 @@ void setup() {
     Wire.onReceive(recieveData);
     Wire.onRequest(sendData);
     
-    // Make sure the interrupt pin is low.
-    digitalWrite(GPS_READY_PIN, LOW);
-    
     // Setup motor drive flags.
     on = false;
     mState = STOP_STATE;
@@ -596,17 +557,33 @@ void setup() {
     inch = 156;
     frontServo.write(sPosition);
     rearServo.write(sPosition);
-    initialized = true;
+//    initialized = true;
 }
 
 void loop()
-{ 
+{   
     if(initialized == true)
     {
         start();
     
         if(respond)
             readGPS();
+    }
+    else 
+    {
+        if(activateNextToF)
+        {
+            activateNextToF = false;
+            if(nextToFPin > -1 && nextToFPin < 6)
+            {
+                digitalWrite(tofPins[nextToFPin], HIGH);
+                
+                if(nextToFPin == 5)
+                    initialized = true;
+                    
+                nextToFPin = -1;
+            }
+        }
     }
 }
 
