@@ -309,6 +309,7 @@ void RevelesIO::SendServoUpdate()
     delay(I2C_TRANSMIT_DELAY);
 
     emit servoStatus(true, servoDir);
+    emit servoStatus(false, servoDir);
 
 //    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(START, 2, 16, QChar('0')));
 //    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(CMD_S, 2, 16, QChar('0')));

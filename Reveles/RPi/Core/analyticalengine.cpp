@@ -97,7 +97,7 @@ void AnalyticalEngine::Start(bool demo)
         {
             CheckEnv();
             ProcessEnv();
-            delay(101);
+            delay(250);
         }
     });
 }
@@ -146,56 +146,18 @@ void AnalyticalEngine::CheckEnv()
     pir[0] = RevelesIO::instance()->readPIR(false); // Front PIR
     pir[1] = RevelesIO::instance()->readPIR(true); // Rear PIR
 
-//    if(motorDir == M_FWD)
-//    {
-        // Check the two front Ultrasonics
-        us[0] = RevelesIO::instance()->triggerUltrasonic(US_FRONT);
-        us[1] = RevelesIO::instance()->triggerUltrasonic(US_FRONT_STAIR); // Stair US
-//        tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
-        Logger::writeLine(instance(), QString("Front US Reading: %1").arg(us[0]));
-        Logger::writeLine(instance(), QString("Front Stair US Reading: %1").arg(us[1]));
-//    }
-//    else if(motorDir == M_REV)
-//    {
-        // Check the two rear Ultrasonics
-        us[2] = RevelesIO::instance()->triggerUltrasonic(US_BACK);
-        us[3] = RevelesIO::instance()->triggerUltrasonic(US_BACK_STAIR); // Stair US
-//        tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
-        Logger::writeLine(instance(), QString("Rear US reading: %1").arg(us[0]));
-        Logger::writeLine(instance(), QString("Rear Stair US Reading: %1").arg(us[1]));
-//    }
+    // Check the two front Ultrasonics
+    us[0] = RevelesIO::instance()->triggerUltrasonic(US_FRONT);
+    us[1] = RevelesIO::instance()->triggerUltrasonic(US_FRONT_STAIR); // Stair US
+    Logger::writeLine(instance(), QString("Front US Reading: %1").arg(us[0]));
+    Logger::writeLine(instance(), QString("Front Stair US Reading: %1").arg(us[1]));
 
-//    if(servoDir == TURN_LEFT)
-//    {
-//        if(motorDir == M_FWD)
-//        {
-//            tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
-//            tof[0] = RevelesIO::instance()->ReadTimeOfFlight(0);
-//        }
-//        else if(motorDir == M_REV)
-//        {
-//            tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
-//            tof[6] = RevelesIO::instance()->ReadTimeOfFlight(6);
-//        }
-//    }
-//    else if(servoDir == TURN_RIGHT)
-//    {
-//        if(motorDir == M_FWD)
-//        {
-//            tof[1] = RevelesIO::instance()->ReadTimeOfFlight(1);
-//            tof[2] = RevelesIO::instance()->ReadTimeOfFlight(2);
-//        }
-//        else if(motorDir == M_REV)
-//        {
-//            tof[4] = RevelesIO::instance()->ReadTimeOfFlight(4);
-//            tof[5] = RevelesIO::instance()->ReadTimeOfFlight(5);
-//        }
-//    }
+    // Check the two rear Ultrasonics
+    us[2] = RevelesIO::instance()->triggerUltrasonic(US_BACK);
+    us[3] = RevelesIO::instance()->triggerUltrasonic(US_BACK_STAIR); // Stair US
 
-    // Right side sensor
-//    tof[3] = RevelesIO::instance()->ReadTimeOfFlight(3);
-    // Left side sensor
-//    tof[7] = RevelesIO::instance()->ReadTimeOfFlight(7);
+    Logger::writeLine(instance(), QString("Rear US reading: %1").arg(us[0]));
+    Logger::writeLine(instance(), QString("Rear Stair US Reading: %1").arg(us[1]));
 
     for(int i = 0; i < 8; i++)
     {
@@ -219,11 +181,12 @@ void AnalyticalEngine::ProcessEnv()
 {
     Logger::writeLine(instance(), QString("ProcessEnv()"));
     // DON'T GO DOWN THE STAIRS!!!
-    if((motorDir == M_FWD && (us[1] < 8.5 || us[1] > 9.5))
-            || (motorDir == M_REV && (us[3] < 8.5 || us[3] > 9.5)))
+    if((motorDir == M_FWD && (us[1] > 30))
+            || (motorDir == M_REV && (us[3] > 30)))
     {
+        Logger::writeLine(instance(), QString("STAIRS FOUND! Backtracking..."));
         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
-        delay(1000); // Give the stop command some time to be processed and take effect.
+        delay(2000); // Give the stop command some time to be processed and take effect.
 
         if(motorDir == M_FWD)
             motorDir = M_REV;
@@ -231,18 +194,17 @@ void AnalyticalEngine::ProcessEnv()
             motorDir = M_FWD;
 
 
-        Logger::writeLine(instance(), QString("STAIRS FOUND! Backtracking..."));
         // Alerts the NavigationAssistant that stairs were found,
         // and that it should recalculate Reveles' path.
         if(!demoMode) { emit StairsDetected(); }
 
         if(us[2] > 15 && motorDir == M_REV)
         {
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[2] });
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
         }
         else if(us[0] > 15 && motorDir == M_FWD)
         {
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[0] });
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
         }
 
         return;
@@ -250,20 +212,20 @@ void AnalyticalEngine::ProcessEnv()
     else
     {
         if(motorDir == M_FWD)
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[0] });
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
         else if(motorDir == M_REV)
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[2] });
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
         else if (motorDir == M_STOP)
         {
             if(us[0] > 60)
             {
                 motorDir = M_FWD;
-                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[0]});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
             }
             else if(us[2] > 60)
             {
                 motorDir = M_REV;
-                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, us[2]});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
             }
         }
     }
@@ -313,65 +275,111 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
     {
         if(tof[3] > 36)
         {
-            if(tof[7] > 12)
+            if(tof[2] > 24)
             {
-                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
                 delay(3000);
 
-                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
-                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
             }
             else
             {
-                int angle = 0;
-                while(angle < 45)
+                if(tof[7] > 36)
                 {
-                    angle += 5;
-                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_RIGHT, angle});
-                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, tof[2]});
-                    delay(250);
-                }
+                    if(tof[0] > 24)
+                    {
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
 
-                while(angle > 0)
+                        delay(3000);
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+                    }
+                }
+                else
                 {
-                    angle -= 5;
-                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_LEFT, angle});
-                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, tof[2]});
-                    delay(250);
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+                    motorDir = M_STOP;
                 }
             }
         }
         else if(tof[7] > 36)
         {
-            if(tof[3] > 12)
+            if(tof[0] > 24)
             {
-                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
 
                 delay(3000);
-
-                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
-                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
             }
             else
             {
-                int angle = 0;
-                while(angle < 45)
+                if(tof[7] > 36)
                 {
-                    angle += 5;
-                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_LEFT, angle});
-                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, tof[0]});
-                    delay(500);
-                }
+                    if(tof[0] > 24)
+                    {
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
 
-                while(angle > 0)
-                {
-                    angle -= 5;
-                    RevelesIO::instance()->EnqueueRequest(RIOData{IO_SERVO, TURN_RIGHT, angle});
-                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, tof[2]});
-                    delay(250);
+                        delay(3000);
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+                    }
                 }
+                else
+                {
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+                    motorDir = M_STOP;
+                }
+            }
+        }
+    }
+    else // Reverse
+    {
+        if(tof[3] > 36)
+        {
+            if(tof[4] > 24)
+            {
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
+                delay(3000);
+
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+            }
+            else
+            {
+                if(tof[7] > 36)
+                {
+                    if(tof[6] > 24)
+                    {
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+
+                        delay(3000);
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+                    }
+                }
+                else
+                {
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+                    motorDir = M_STOP;
+                }
+            }
+        }
+        else if(tof[7] > 36)
+        {
+            if(tof[6] > 24)
+            {
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+
+                delay(3000);
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+            }
+            else
+            {
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+                    motorDir = M_STOP;
             }
         }
     }
@@ -383,41 +391,119 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
 void AnalyticalEngine::AdjustPath_Animate()
 {
     Logger::writeLine(instance(), QString("AdjustPath_Animate()"));
-    // Read ToF for right side
-    if (tof[3] > 36) // inches
+    if(pir[0] && motorDir == M_FWD)
     {
-        // Timing between commands may need to be adjusted.
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
-        servoDir = TURN_RIGHT;
-        delay(1000);
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
-        servoDir = RET_NEUTRAL;
-        delay(1000);
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
-        servoDir = TURN_LEFT;
-        delay(1000);
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
-        servoDir = RET_NEUTRAL;
-    }
-    else
-    {
-        // Read ToF for left side
-        if (tof[7] > 36) // inches
+        if(tof[3] > 36)
         {
-            // Timing between commands may need to be adjusted
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
-            servoDir = TURN_LEFT;
-            delay(1000);
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
-            servoDir = RET_NEUTRAL;
-            delay(1000);
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
-            servoDir = TURN_RIGHT;
-            delay(1000);
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
-            servoDir = RET_NEUTRAL;
+            if(tof[2] > 24)
+            {
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
+                delay(3000);
+
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+            }
+            else
+            {
+                if(tof[7] > 36)
+                {
+                    if(tof[0] > 24)
+                    {
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+
+                        delay(3000);
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+                    }
+                }
+                else
+                {
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+                    motorDir = M_STOP;
+                }
+            }
+        }
+        else if(tof[7] > 36)
+        {
+            if(tof[0] > 24)
+            {
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+
+                delay(3000);
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+            }
+            else
+            {
+                if(tof[7] > 36)
+                {
+                    if(tof[0] > 24)
+                    {
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+
+                        delay(3000);
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+                    }
+                }
+                else
+                {
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+                    motorDir = M_STOP;
+                }
+            }
         }
     }
+    else if(pir[1] && motorDir == M_REV) // Reverse
+    {
+        if(tof[3] > 36)
+        {
+            if(tof[4] > 24)
+            {
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
+                delay(3000);
+
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+            }
+            else
+            {
+                if(tof[7] > 36)
+                {
+                    if(tof[6] > 24)
+                    {
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+
+                        delay(3000);
+                        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+                    }
+                }
+                else
+                {
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+                    motorDir = M_STOP;
+                }
+            }
+        }
+        else if(tof[7] > 36)
+        {
+            if(tof[6] > 24)
+            {
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
+
+                delay(3000);
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
+            }
+            else
+            {
+                    RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+                    motorDir = M_STOP;
+            }
+        }
+    }
+
 }
 
 void AnalyticalEngine::updateProbabilities()
