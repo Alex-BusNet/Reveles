@@ -212,9 +212,29 @@ void AnalyticalEngine::ProcessEnv()
     else
     {
         if(motorDir == M_FWD)
+        {
+            if(us[0] < 24)
+            {
+                motorDir = M_REV;
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
+                delay(2000);
+                AdjustPath_Inanimate(false);
+            }
+            
             RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
+        }
         else if(motorDir == M_REV)
+        {
+            if(us[2] < 24)
+            {
+                motorDir = M_FWD;
+                RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+                delay(2000);
+                AdjustPath_Inanimate(true);
+            }
+            
             RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
+        }
         else if (motorDir == M_STOP)
         {
             if(us[0] > 60)
