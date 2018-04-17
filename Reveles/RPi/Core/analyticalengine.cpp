@@ -353,6 +353,11 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
                 }
             }
         }
+        else
+        {
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+            motorDir = M_STOP;
+        }
     }
     else // Reverse
     {
@@ -401,6 +406,11 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
                     RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
                     motorDir = M_STOP;
             }
+        }
+        else
+        {
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+            motorDir = M_STOP;
         }
     }
 }
@@ -473,6 +483,11 @@ void AnalyticalEngine::AdjustPath_Animate()
                 }
             }
         }
+        else
+        {
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+            motorDir = M_STOP;
+        }
     }
     else if(pir[1] && motorDir == M_REV) // Reverse
     {
@@ -521,6 +536,11 @@ void AnalyticalEngine::AdjustPath_Animate()
                     RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
                     motorDir = M_STOP;
             }
+        }
+        else
+        {
+            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
+            motorDir = M_STOP;
         }
     }
 
