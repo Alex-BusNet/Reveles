@@ -266,7 +266,15 @@ We should now be ready to build OpenCV.
 
 2. **[RPi]** First we need to configure OpenCV with CMake. There are a few variables we need to pass to CMake in order to get proper configuration. If you setup the directory the same as this tutorial, then you can copy the command exactly as writen. If you did not, match the folder structure, or you are using a user other than "pi", then make sure you change the directories to match your system.
 ```ShellSession
-$ cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D OPENCV_EXTRA_MODULES_PATH=/home/pi/opencv/contrib/modules -D INSTALL_PYTHON_EXAMPLES=OFF -D INSTALL_C_EXAMPLES=OFF -D BUILD_EXAMPLES=OFF -D _GLIBCXX_USE_CXX11_ABI=0 -D CMAKE_C_COMPILER=/usr/bin/gcc-D CMAKE_CXX_COMPILER=/usr/bin/g++ ../sources
+$ cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local \
+-D OPENCV_EXTRA_MODULES_PATH=/home/pi/opencv/contrib/modules \
+-D INSTALL_PYTHON_EXAMPLES=OFF \
+-D INSTALL_C_EXAMPLES=OFF \
+-D BUILD_EXAMPLES=OFF \
+-D _GLIBCXX_USE_CXX11_ABI=0 \
+-D CMAKE_C_COMPILER=/usr/bin/gcc \
+-D CMAKE_CXX_COMPILER=/usr/bin/g++ \
+../sources
 ```
 > NOTE (1): The _GLIBCXX_USE_CXX11_ABI flag is for some compatibility fixes. Newer versions of GCC work with the newer standards of C++ (C++14 for GCC 6+) which has brought changes to how some functions are defined in the C++ Standard Library (found in libstdc++11.so on Linux systems). Since we are using GCC 4.8, this flag may be unneeded, but I have included it anyways.<br>
 
@@ -413,7 +421,15 @@ Now we are ready to set up Qt for Raspberry Pi
 ```ShellSession
 $ git clone git://code.qt.io/qt/qtbase.git -b 5.9.4
 $ cd qtbase
-$ ./configure -release -opengl es2 -device linux-rasp-pi3-g++ -device-option CROSS_COMPILE=/home/USER_NAME/CrossDevelopment/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- -sysroot /home/USER_NAME/CrossDevelopment/raspi/sysroot -opensource -confirm-license -make libs -prefix /usr/local/qt5pi -extprefix /home/USER_NAME/CrossDevelopment/raspi/qt5pi -hostprefix /home/USER_NAME/CrossDevelopment/raspi/qt5
+$ ./configure -release -opengl es2 -device linux-rasp-pi3-g++ \
+-device-option CROSS_COMPILE=/home/USER_NAME/CrossDevelopment/raspi/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf- \
+-sysroot /home/USER_NAME/CrossDevelopment/raspi/sysroot \
+-opensource \
+-confirm-license \
+-make libs \
+-prefix /usr/local/qt5pi \
+-extprefix /home/USER_NAME/CrossDevelopment/raspi/qt5pi \
+-hostprefix /home/USER_NAME/CrossDevelopment/raspi/qt5
 $ make -jN
 $ make install
 ```
@@ -825,9 +841,11 @@ If changes are made to _revelesdbus.xml_ the following commands will generate th
 ```ShellSession
 $ export PATH=/path/to/Qt/%VERSION%/gcc_64/bin:$PATH	
 $ cd /path/to/reveles/RPi
-$ qdbusxml2cpp -i Common/datatypes.h -c RevelesDBusAdaptor -a reveles_dbus_adaptor.h:reveles_dbus_adaptor.cpp revelesdbus.xml
+$ qdbusxml2cpp -i Common/datatypes.h -c RevelesDBusAdaptor \
+-a reveles_dbus_adaptor.h:reveles_dbus_adaptor.cpp revelesdbus.xml
 $ cd ../GUI
-$ qdbusxml2cpp -c RevelesDBusInterface -p reveles_dbus_interface.h:reveles_dbus_interface.cpp -i ../RPi/Common/datatypes.h revelesdbus.xml
+$ qdbusxml2cpp -c RevelesDBusInterface -p reveles_dbus_interface.h:reveles_dbus_interface.cpp \
+-i ../RPi/Common/datatypes.h revelesdbus.xml
 ```
 
 ## Credits
