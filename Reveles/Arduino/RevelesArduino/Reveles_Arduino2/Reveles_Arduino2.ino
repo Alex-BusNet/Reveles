@@ -109,8 +109,8 @@ bool updateMotorState = true;   // Was a command given to change motor direction
 bool updateServoState = false;  // Was a command given to change the servo position.
 bool initialized = false;       // Sanity check
 
-Adafruit_GPS gps(&Serial);
-HardwareSerial hs = Serial;
+//Adafruit_GPS gps(&Serial);
+//HardwareSerial hs = Serial;
 Servo frontServo;
 Servo rearServo;
 
@@ -191,6 +191,7 @@ void recieveData(int byteCount)
     else if (commState == WAITING_FOR_START)
     {
         if(cmd == START_CMD) { commState = WAITING_FOR_MGSP; }
+//        el    se if(cmd == END_CMD) { commState = WAITING_FOR_HELLO; Reset(); }
     }
     else if (commState == WAITING_FOR_MGSP)
     {
@@ -278,36 +279,63 @@ void sendData()
 
 void readGPS()
 {
-    char c = gps.read();
+//    char c = gps.read();
+//
+//    if (c) { Serial.write(c); }
+//
+//    if(gps.newNMEAreceived())
+//    {
+//        Serial.println("New NMEA sententence");
+//        if(!gps.parse(gps.lastNMEA()))
+//        {
+//            Serial.println("Failed to parse!");
+//            return;
+//        }
+//    }
+//    
+//    if(gps.fix)
+//    {
+//        latitude = gps.latitude;
+//        longitude = gps.longitude;
+//        
+//        Serial.print("Latitude: ");
+//        Serial.print(gps.latitude, 4);
+//        Serial.println(gps.lat);
+//        Serial.print("Longitude: ");
+//        Serial.print(gps.longitude, 4);
+//        Serial.println(gps.lon);
+//    }
+//    else
+//        Serial.println("No GPS Fix!");
+//
+//    respond = false;
+}
 
-    if (c) { Serial.write(c); }
-
-    if(gps.newNMEAreceived())
+void Reset()
+{
+    fwd = true;
+    initialized = false;
+    sPosition = 0;
+    pwmOUT = 0;
+    for(int i = 0; i < 6; i++)
     {
-        Serial.println("New NMEA sententence");
-        if(!gps.parse(gps.lastNMEA()))
-        {
-            Serial.println("Failed to parse!");
-            return;
-        }
+        pinMode(tofPins[i], OUTPUT);
+        digitalWrite(tofPins[i], LOW);
     }
     
-    if(gps.fix)
-    {
-        latitude = gps.latitude;
-        longitude = gps.longitude;
-        
-        Serial.print("Latitude: ");
-        Serial.print(gps.latitude, 4);
-        Serial.println(gps.lat);
-        Serial.print("Longitude: ");
-        Serial.print(gps.longitude, 4);
-        Serial.println(gps.lon);
-    }
-    else
-        Serial.println("No GPS Fix!");
-
-    respond = false;
+    digitalWrite(enableA, LOW);
+    digitalWrite(input1, LOW);
+    digitalWrite(input2, LOW);
+    
+    nextToFPin = -1;
+    activateNextToF = false;
+    
+    on = false;
+    mState = STOP_STATE;
+    sState = NEUTRAL_STATE;
+    commState = WAITING_FOR_HELLO;
+    responseState = NO_DATA_READY;
+    inch = 156;
 }
 
 /*This function is designed for use in the initial boot-up of the robot. The motors will be turned on if not already and begin moving forward,
@@ -443,20 +471,20 @@ void turnLeft()
      * and may not work properly
      */
      
-     frontServo.write(sPosition);
-     rearServo.write(sPosition);
+     frontServo.write(0);
+     rearServo.write(180);
 
-     for(; sPosition <= 180; sPosition++)
-     {
-        frontServo.write(sPosition);
-        rearServo.write(sPosition);
-     }
-
-     for(; sPosition >= 90; sPosition--)
-     {
-        frontServo.write(sPosition);
-        rearServo.write(sPosition);
-     }
+//     for(; sPosition <= 180; sPosition++)
+//     {
+//        frontServo.write(sPosition);
+//        rearServo.write(sPosition);
+//     }
+//
+//     for(; sPosition >= 90; sPosition--)
+//     {
+//        frontServo.write(sPosition);
+//        rearServo.write(sPosition);
+//     }
 }
 
 void turnRight()
@@ -466,43 +494,45 @@ void turnRight()
      * and may not work properly
      */
          
-     frontServo.write(sPosition);
-     rearServo.write(sPosition);
+     frontServo.write(180);
+     rearServo.write(0);
 
-     for(; sPosition >= 0; sPosition--)
-     {
-        frontServo.write(sPosition);
-        rearServo.write(sPosition);
-     }
-
-     // Wait 1 second before returning servos to center.
-     delay(1000);
-
-     for(; sPosition <= 90; sPosition++)
-     {
-        frontServo.write(sPosition);
-        rearServo.write(sPosition);
-     }
+//     for(; sPosition >= 0; sPosition--)
+//     {
+//        frontServo.write(sPosition);
+//        rearServo.write(sPosition);
+//     }
+//
+//     // Wait 1 second before returning servos to center.
+//     delay(1000);
+//
+//     for(; sPosition <= 90; sPosition++)
+//     {
+//        frontServo.write(sPosition);
+//        rearServo.write(sPosition);
+//     }
 }
 
 void returnToNeutral()
 {
-    if(sPosition < 90)
-    {
-        for(; sPosition <= 90; sPosition++)
-        {
-            frontServo.write(sPosition);
-            rearServo.write(sPosition);
-        }
-    }
-    else if(sPosition > 90)
-    {
-         for(; sPosition >= 90; sPosition--)
-         {
-            frontServo.write(sPosition);
-            rearServo.write(sPosition);
-         }
-    }
+    frontServo.write(90);
+    rearServo.write(90);
+//    if(sPosition < 90)
+//    {
+//        for(; sPosition <= 90; sPosition++)
+//        {
+//            frontServo.write(sPosition);
+//            rearServo.write(sPosition);
+//        }
+//    }
+//    else if(sPosition > 90)
+//    {
+//         for(; sPosition >= 90; sPosition--)
+//         {
+//            frontServo.write(sPosition);
+//            rearServo.write(sPosition);
+//         }
+//    }
 }
 
 void setup() {
@@ -512,22 +542,22 @@ void setup() {
 //    delay(5000);
 
     // Start reading GPS with passed baud rate
-    gps.begin(9600); 
+//    gps.begin(9600); 
     // Turn on RMC (recommended minimum) and GGA (fix data) including altitude
-    gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+//    gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
     // Set update rate to 1Hz
-    gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
+//    gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
     // Request updates on antenna status.
-    gps.sendCommand(PGCMD_ANTENNA);
-    delay(1000);
-    Serial.println(PMTK_Q_RELEASE);
+//    gps.sendCommand(PGCMD_ANTENNA);
+//    delay(1000);
+//    Serial.println(PMTK_Q_RELEASE);
 
     // Motor Control I/O
     pinMode(enableA, OUTPUT);
     pinMode(input1, OUTPUT);
     pinMode(input2, OUTPUT);
 
-    for(int i = 0; i < 8; i++)
+    for(int i = 0; i < 6; i++)
     {
 	    pinMode(tofPins[i], OUTPUT);
 	    digitalWrite(tofPins[i], LOW);
@@ -555,6 +585,22 @@ void setup() {
     sState = NEUTRAL_STATE;
     commState = WAITING_FOR_HELLO;
     inch = 156;
+    
+    frontServo.write(0);
+    rearServo.write(180);
+
+    delay(2000);
+
+    frontServo.write(180);
+    rearServo.write(0);
+
+    delay(2000);
+
+    frontServo.write(90);
+    rearServo.write(90);
+
+    delay(2000);
+    
     frontServo.write(sPosition);
     rearServo.write(sPosition);
 //    initialized = true;
@@ -566,8 +612,8 @@ void loop()
     {
         start();
     
-        if(respond)
-            readGPS();
+//        if(respond)
+//            readGPS();
     }
     else 
     {
