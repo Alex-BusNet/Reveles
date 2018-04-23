@@ -32,7 +32,7 @@ signals:
 
 private:
     // Variables
-    float us[2];
+    float us[4];
     float tof[8];
     bool pir[2], demoMode;
 
@@ -99,7 +99,7 @@ private:
     void CheckEnv();
     void ProcessEnv();
 
-    void AdjustPath_Inanimate();
+    void AdjustPath_Inanimate(bool forward);
     void AdjustPath_Animate();
 
     void updateProbabilities();

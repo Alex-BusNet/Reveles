@@ -235,28 +235,24 @@ void RevelesCore::coreLoop()
 
     //=========================
     // I2C motor and servo drive testing
+//    static int directionCount = 0;
 //    Logger::writeLine(this, QString("Direction Count: %1").arg(directionCount));
 
-//    static int directionCount = 0;
 //    if(directionCount == 1)
 //    {
-//        RevelesIO::instance()->SetMotorDirection(M_FWD);
-//        RevelesIO::instance()->SetServoDirection(TURN_LEFT);
+//        RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_FWD, 171});
 //    }
-//	  else if(directionCount == 10)
+//      else if(directionCount == 10)
 //    {
-//		  RevelesIO::instance()->SetMotorDirection(M_STOP);
-//		  RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+//        RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});
 //    }
-//	  else if (directionCount == 12)
+//      else if (directionCount == 12)
 //    {
-//		  RevelesIO::instance()->SetMotorDirection(M_REV);
-//		  RevelesIO::instance()->SetServoDirection(TURN_RIGHT);
+//        RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_REV, 171});
 //    }
-//	  else if(directionCount == 22)
+//      else if(directionCount == 22)
 //    {
-//        RevelesIO::instance()->SetMotorDirection(M_STOP);
-//		  RevelesIO::instance()->SetServoDirection(RET_NEUTRAL);
+//        RevelesIO::instance()->EnqueueRequest(RIOData{IO_MOTOR, M_STOP, 0});
 //        directionCount = -1;
 //    }
 

@@ -90,8 +90,6 @@ RevelesGui::RevelesGui(com::reveles::RevelesCoreInterface *iface, RevelesDBusAda
 
 RevelesGui::~RevelesGui()
 {
-    delete ui;
-
     if(commTimer != NULL)
     {
         if(commTimer->isActive())
@@ -118,6 +116,40 @@ RevelesGui::~RevelesGui()
 
     if(ss != NULL)
         delete ss;
+
+    if(rci != NULL)
+    {
+        disconnect(rci, &RevelesDBusInterface::commResponse, this, &RevelesGui::commCheck);
+        disconnect(rci, &RevelesDBusInterface::locationUpdate, this, &RevelesGui::updateLocation);
+        disconnect(rci, &RevelesDBusInterface::aboutToQuit, this, &RevelesGui::close);
+        disconnect(rci, &RevelesDBusInterface::getAGStatus, this, &RevelesGui::agStatus);
+        disconnect(rci, &RevelesDBusInterface::getMagStatus, this, &RevelesGui::magStatus);
+        disconnect(rci, &RevelesDBusInterface::sendLogMessage, this, &RevelesGui::logMessage);
+        disconnect(rci, &RevelesDBusInterface::sendPathInfo, mapView, &MapView::SetPathInfo);
+        disconnect(rci, &RevelesDBusInterface::AccelUpdate, this, &RevelesGui::accelUpdate);
+        disconnect(rci, &RevelesDBusInterface::MagUpdate, this, &RevelesGui::magUpdate);
+        disconnect(rci, &RevelesDBusInterface::GyroUpdate, this, &RevelesGui::gyroUpdate);
+        disconnect(rci, &RevelesDBusInterface::ArduinoFound, this, &RevelesGui::ArduinoStatus);
+        disconnect(rci, &RevelesDBusInterface::NucleoFound, this, &RevelesGui::NucleoStatus);
+        disconnect(rci, &RevelesDBusInterface::PIRStatus, this, &RevelesGui::PIRStatus);
+        disconnect(rci, &RevelesDBusInterface::USReadings, this, &RevelesGui::usUpdate);
+        disconnect(rci, &RevelesDBusInterface::TOFReadings, this, &RevelesGui::tofUpdate);
+        disconnect(rci, &RevelesDBusInterface::motorUpdate, this, &RevelesGui::motorStat);
+        disconnect(rci, &RevelesDBusInterface::servoUpdate, this, &RevelesGui::servoStat);
+    }
+
+    if(rdba != NULL)
+    {
+        disconnect(this, &RevelesGui::sendCommCheck, rdba, &RevelesDBusAdaptor::commQuery);
+        disconnect(this, &RevelesGui::aboutToQuit, rdba, &RevelesDBusAdaptor::aboutToQuit);
+        disconnect(this, &RevelesGui::RequestLocation, rdba, &RevelesDBusAdaptor::requestCurrentLocation);
+        disconnect(this, &RevelesGui::SendDestination, rdba, &RevelesDBusAdaptor::setDestination);
+        disconnect(this, &RevelesGui::SendMapUpdateInterval, rdba, &RevelesDBusAdaptor::setMapUpdateInterval);
+        disconnect(this, &RevelesGui::NavigationAbort, rdba, &RevelesDBusAdaptor::EndNavigation);
+        disconnect(this, &RevelesGui::StartDemoMode, rdba, &RevelesDBusAdaptor::StartDemo);
+    }
+
+    delete ui;
 }
 
 void RevelesGui::setLocation(LocationPushButton *pb)
@@ -407,8 +439,16 @@ void RevelesGui::on_exitBtn_clicked()
     this->saveLocations();
     emit aboutToQuit();
 
+    if(commTimer->isActive())
+        commTimer->stop();
+
+    if(ss != NULL && ss->isVisible())
+        ss->close();
+
     if(!hasComms)
+    {
         this->close();
+    }
 
     // This primarily to allow the GUI to close in the
     // event the CORE is hung up and can't send the kill

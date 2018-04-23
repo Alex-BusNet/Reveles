@@ -69,7 +69,7 @@ void RevelesIO::initIO()
     fdToF[6] = tofInit(1, TOF_R_LEFT, 1);
     fdToF[7] = tofInit(1, TOF_LEFT, 1);
 
-    system("i2cdetect -y 1");
+//    system("i2cdetect -y 1");
 
     res = CMD_FLUSH;
 
@@ -136,7 +136,7 @@ void RevelesIO::StartNav()
                     tofDist[i] = ((float)distMM / 25.4f); // mm to inches
                     if(tofDist[i] > 66.0f)
                     {
-                        tofDist[i] = 66.0f;
+                        tofDist[i] = 66.0f; /* inches */
                     }
 
                     emit tofReady(i, tofDist[i]);
@@ -309,6 +309,7 @@ void RevelesIO::SendServoUpdate()
     delay(I2C_TRANSMIT_DELAY);
 
     emit servoStatus(true, servoDir);
+    emit servoStatus(false, servoDir);
 
 //    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(START, 2, 16, QChar('0')));
 //    Logger::writeLine(instance(), Reveles::I2C_SERVO_SEND.arg(CMD_S, 2, 16, QChar('0')));
