@@ -97,7 +97,7 @@ void AnalyticalEngine::Start(bool demo)
         {
             CheckEnv();
             ProcessEnv();
-            delay(250);
+//            delay(250);
         }
     });
 }
@@ -181,86 +181,90 @@ void AnalyticalEngine::ProcessEnv()
 {
     Logger::writeLine(instance(), QString("ProcessEnv()"));
     // DON'T GO DOWN THE STAIRS!!!
-    if((motorDir == M_FWD && (us[1] > 30))
-            || (motorDir == M_REV && (us[3] > 30)))
-    {
-        Logger::writeLine(instance(), QString("STAIRS FOUND! Backtracking..."));
-        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
-        delay(2000); // Give the stop command some time to be processed and take effect.
+//    if((motorDir == M_FWD && (us[1] > 30))
+//            || (motorDir == M_REV && (us[3] > 30)))
+//    {
+//        Logger::writeLine(instance(), QString("STAIRS FOUND! Backtracking..."));
+//        RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
+//        delay(2000); // Give the stop command some time to be processed and take effect.
 
-        if(motorDir == M_FWD)
-            motorDir = M_REV;
-        else if(motorDir == M_REV)
-            motorDir = M_FWD;
+//        if(motorDir == M_FWD)
+//            motorDir = M_REV;
+//        else if(motorDir == M_REV)
+//            motorDir = M_FWD;
 
 
-        // Alerts the NavigationAssistant that stairs were found,
-        // and that it should recalculate Reveles' path.
-        if(!demoMode) { emit StairsDetected(); }
+//        // Alerts the NavigationAssistant that stairs were found,
+//        // and that it should recalculate Reveles' path.
+//        if(!demoMode) { emit StairsDetected(); }
 
-        if(us[2] > 15 && motorDir == M_REV)
-        {
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
-        }
-        else if(us[0] > 15 && motorDir == M_FWD)
-        {
-            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
-        }
+//        if(us[2] > 15 && motorDir == M_REV)
+//        {
+//            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
+//        }
+//        else if(us[0] > 15 && motorDir == M_FWD)
+//        {
+//            RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
+//        }
 
-        return;
-    }
-    else
-    {
+//        return;
+//    }
+//    else
+//    {
         if(motorDir == M_FWD)
         {
             if(us[0] < 24)
             {
                 motorDir = M_REV;
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0 });
-                delay(2000);
+                delay(500);
                 AdjustPath_Inanimate(false);
+                return;
             }
             
             RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
         }
-        else if(motorDir == M_REV)
+
+        if(motorDir == M_REV)
         {
             if(us[2] < 24)
             {
                 motorDir = M_FWD;
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, M_STOP, 0});
-                delay(2000);
+                delay(500);
                 AdjustPath_Inanimate(true);
+                return;
             }
             
             RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED });
         }
-        else if (motorDir == M_STOP)
+
+        if (motorDir == M_STOP)
         {
-            if(us[0] > 60)
+            if(us[0] > 36)
             {
                 motorDir = M_FWD;
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
             }
-            else if(us[2] > 60)
+            else if(us[2] > 36)
             {
                 motorDir = M_REV;
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
             }
         }
-    }
+//    }
 
     // Simple path adjustment for now. Values are estimates.
     // Person found (distance unknown) or ToF return distance less than max
-    if((pir[0] && (motorDir == M_FWD) && (us[0] < 66))
-            || (pir[1] && (motorDir == M_REV) && (us[2] < 66)))
-    {
-        AdjustPath_Animate();
-    }
-    else if(((motorDir == M_FWD) && (us[0] < 36)) || ((motorDir == M_REV) && (us[2] < 36)))
-    {
-        AdjustPath_Inanimate((motorDir == M_FWD));
-    }
+//    if((pir[0] && (motorDir == M_FWD) && (us[0] < 66))
+//            || (pir[1] && (motorDir == M_REV) && (us[2] < 66)))
+//    {
+//        AdjustPath_Animate();
+//    }
+//    else if(((motorDir == M_FWD) && (us[0] < 36)) || ((motorDir == M_REV) && (us[2] < 36)))
+//    {
+//        AdjustPath_Inanimate((motorDir == M_FWD));
+//    }
 
     // if we get a signal from the PIR and the corresponding ToF 
     // sensor reads more than E-Stop distance, then we know we still
@@ -299,7 +303,7 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
             {
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
-                delay(3000);
+                delay(250);
 
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
             }
@@ -312,7 +316,7 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
 
-                        delay(3000);
+                        delay(250);
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
                     }
                 }
@@ -330,7 +334,7 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
 
-                delay(3000);
+                delay(250);
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
             }
             else
@@ -342,7 +346,7 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
 
-                        delay(3000);
+                        delay(250);
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
                     }
                 }
@@ -367,7 +371,7 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
             {
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
-                delay(3000);
+                delay(250);
 
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
             }
@@ -380,7 +384,7 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
 
-                        delay(3000);
+                        delay(500);
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
                     }
                 }
@@ -398,7 +402,7 @@ void AnalyticalEngine::AdjustPath_Inanimate(bool forward)
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
 
-                delay(3000);
+                delay(250);
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
             }
             else
@@ -429,7 +433,7 @@ void AnalyticalEngine::AdjustPath_Animate()
             {
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_RIGHT, 45 });
-                delay(3000);
+                delay(250);
 
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
             }
@@ -442,7 +446,7 @@ void AnalyticalEngine::AdjustPath_Animate()
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
 
-                        delay(3000);
+                        delay(250);
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
                     }
                 }
@@ -460,7 +464,7 @@ void AnalyticalEngine::AdjustPath_Animate()
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
 
-                delay(3000);
+                delay(250);
                 RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
             }
             else
@@ -472,7 +476,7 @@ void AnalyticalEngine::AdjustPath_Animate()
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
 
-                        delay(3000);
+                        delay(250);
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
                     }
                 }
@@ -510,7 +514,7 @@ void AnalyticalEngine::AdjustPath_Animate()
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, TURN_LEFT, 45 });
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_MOTOR, motorDir, MOTOR_MAX_SPEED});
 
-                        delay(3000);
+                        delay(500);
                         RevelesIO::instance()->EnqueueRequest(RIOData{ IO_SERVO, RET_NEUTRAL, 0 });
                     }
                 }

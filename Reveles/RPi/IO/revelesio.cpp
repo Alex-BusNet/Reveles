@@ -152,6 +152,7 @@ void RevelesIO::StartNav()
 void RevelesIO::StopNav()
 {
     Logger::writeLine(instance(), QString("Ending Navigation..."));
+    SetMotorDirection(M_STOP);
 
     stopToF = true;
     if(tofReader.isRunning())
