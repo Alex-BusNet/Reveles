@@ -416,7 +416,7 @@ $ chmod +x sysroot-relativelinks.py
 $ ./sysroot-relativelinks.py sysroot
 ```
 
-Now we are ready to set up Qt for Raspberry Pi
+Now we are ready to set up Qt for Raspberry Pi<br>
 8.**[Host PC]** Get the qtbase and configure Qt with the following:
 ```ShellSession
 $ git clone git://code.qt.io/qt/qtbase.git -b 5.9.4
@@ -836,7 +836,7 @@ In our _.xml_ file we would then use our `MyStruct` object like so:
 ```
 
 ### Updating the Interface and Adaptor
-If changes are made to _revelesdbus.xml_ the following commands will generate the corresponding _.cpp_ and _.h_ files. The commands will NOT update anyother source file, so make sure any changes to the slots or signals are properly reflected in _revelesgui.cpp_ and _revelescore.cpp_<br>
+If changes are made to _revelesdbus.xml_ the following commands will generate the corresponding _.cpp_ and _.h_ files. The commands will NOT update any other source file, so make sure any changes to the slots or signals are properly reflected in _revelesgui.cpp_ and _revelescore.cpp_<br>
 
 ```ShellSession
 $ export PATH=/path/to/Qt/%VERSION%/gcc_64/bin:$PATH	
@@ -849,8 +849,8 @@ $ qdbusxml2cpp -c RevelesDBusInterface -p reveles_dbus_interface.h:reveles_dbus_
 ```
 
 ## Credits
-Code base for Trine University ECE Senior Design Project 2017-18.
-Created by Frank Hittel, Alisha Johnson, and Alex Portoelse.<br>
+Code base for Trine University ECE Senior Design Project 2017-18.<br>
+Created by Frank Hittel, Alisha Johnson, and Alex Portolese.<br>
 All rights reserved. &copy; 2017
 
 Walkthrough written against the following resources:
